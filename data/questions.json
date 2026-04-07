@@ -1,0 +1,52 @@
+[
+  {
+    "question": "Which planet is known as the Red Planet?",
+    "choices": ["Venus", "Mars", "Jupiter", "Saturn"],
+    "answer_index": 1
+  },
+  {
+    "question": "What is the largest ocean on Earth?",
+    "choices": ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
+    "answer_index": 3
+  },
+  {
+    "question": "Who wrote the play 'Romeo and Juliet'?",
+    "choices": ["William Shakespeare", "Charles Dickens", "Jane Austen", "Mark Twain"],
+    "answer_index": 0
+  },
+  {
+    "question": "What is the chemical symbol for water?",
+    "choices": ["H2O", "CO2", "NaCl", "O2"],
+    "answer_index": 0
+  },
+  {
+    "question": "Which country is famous for the pyramids?",
+    "choices": ["Mexico", "Egypt", "India", "Greece"],
+    "answer_index": 1
+  },
+  {
+    "question": "What is the hardest natural substance on Earth?",
+    "choices": ["Gold", "Iron", "Diamond", "Quartz"],
+    "answer_index": 2
+  },
+  {
+    "question": "Which animal is known as the King of the Jungle?",
+    "choices": ["Tiger", "Lion", "Elephant", "Giraffe"],
+    "answer_index": 1
+  },
+  {
+    "question": "How many continents are there on Earth?",
+    "choices": ["5", "6", "7", "8"],
+    "answer_index": 2
+  },
+  {
+    "question": "Which element has the chemical symbol 'O'?",
+    "choices": ["Oxygen", "Gold", "Osmium", "Iron"],
+    "answer_index": 0
+  },
+  {
+    "question": "What is the largest planet in our Solar System?",
+    "choices": ["Earth", "Mars", "Jupiter", "Saturn"],
+    "answer_index": 2
+  }
+]
