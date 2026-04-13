@@ -19,9 +19,9 @@ class App:
         self.frame.columnconfigure(0, weight=1)
 
         style = ttk.Style()
-        style.configure("BigBtn.TButton", font=("Segoe UI", 16))
-        style.configure("MediumBtn.TButton", font=("Segoe UI", 12))
-        style.configure("SmallBtn.TButton", font=("Segoe UI", 10))
+        style.configure("Big.TButton", font=("Segoe UI", 16))
+        style.configure("Medium.TButton", font=("Segoe UI", 12))
+        style.configure("Small.TButton", font=("Segoe UI", 10))
 
         ttk.Label(
             self.frame,
@@ -38,14 +38,14 @@ class App:
         ttk.Button(
             self.frame,
             text="Start as Server",
-            style="BigBtn.TButton",
+            style="Big.TButton",
             padding=(50, 10),
             width=15,
         ).grid(row=2, column=0, sticky="n", pady=(30, 0))
         ttk.Button(
             self.frame,
             text="Join as Client",
-            style="BigBtn.TButton",
+            style="Big.TButton",
             padding=(50, 10),
             width=15,
         ).grid(row=3, column=0, sticky="n", pady=(10, 0))
@@ -53,14 +53,14 @@ class App:
         ttk.Button(
             self.frame,
             text="Manage Quizzes",
-            style="MediumBtn.TButton",
+            style="Medium.TButton",
             padding=(50, 7),
             width=18,
         ).grid(row=4, column=0, sticky="n", pady=(40, 0))
         ttk.Button(
             self.frame,
             text="Settings / Stats",
-            style="MediumBtn.TButton",
+            style="Medium.TButton",
             padding=(50, 7),
             width=18,
         ).grid(row=5, column=0, sticky="n", pady=(10, 0))
@@ -74,14 +74,14 @@ class App:
         ttk.Button(
             self.small_btn_frame,
             text="About / Help",
-            style="SmallBtn.TButton",
+            style="Small.TButton",
             padding=(8, 5),
             width=15,
         ).grid(row=0, column=0, padx=(2, 5), sticky="e")
         ttk.Button(
             self.small_btn_frame,
             text="Exit",
-            style="SmallBtn.TButton",
+            style="Small.TButton",
             padding=(8, 5),
             width=15,
         ).grid(row=0, column=1, padx=(2, 0), sticky="w")
