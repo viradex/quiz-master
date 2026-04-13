@@ -46,7 +46,7 @@ cat_contents = r"""Will I get extra marks for this cat hes so cute
 """
 
 
-class App:
+class About:
     def __init__(self):
         self.sequence = []
 
@@ -122,4 +122,4 @@ class App:
 
 
 if __name__ == "__main__":
-    App().run()
+    About().run()
