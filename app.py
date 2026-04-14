@@ -10,7 +10,7 @@ class App:
         self.root.geometry("1000x600")
         self.root.minsize(800, 600)
 
-        self.frame = ttk.Frame(self.root, padding=20)
+        self.frame = ttk.Frame(self.root, padding=40)
         self.frame.grid(row=0, column=0, sticky="nsew")
 
         self.root.columnconfigure(0, weight=1)
