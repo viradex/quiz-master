@@ -19,6 +19,7 @@ class Setup:
         self.frame.columnconfigure(0, weight=0)
         self.frame.columnconfigure(1, weight=1)
 
+        # TODO remove default value for prod
         self.server_ip_var = tk.StringVar(value="127.0.0.1")
         self.nickname_var = tk.StringVar()
 
@@ -33,6 +34,8 @@ class Setup:
             font=("Segoe UI", 20),
         ).grid(row=0, column=0, columnspan=2, sticky="w")
 
+        # TODO add IP hint if users get confused in testing
+        # something like "see server screen for IP"
         ttk.Label(
             self.frame,
             text="Server IP:",

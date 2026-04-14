@@ -40,13 +40,13 @@ class Lobby:
             font=("Segoe UI", 12),
         ).grid(row=1, column=0, sticky="w", pady=(5, 0), padx=(40, 0))
 
-        # Treeview container frame (important for proper layout)
         tree_frame = ttk.Frame(self.frame)
         tree_frame.grid(row=2, column=0, sticky="nsew", pady=(20, 0), padx=(40, 0))
 
         tree_frame.columnconfigure(0, weight=1)
         tree_frame.rowconfigure(0, weight=1)
 
+        # TODO can the scrollbar arrows be removed if the treeview can't be scrolled?
         scrollbar = ttk.Scrollbar(tree_frame, orient="vertical")
         scrollbar.grid(row=0, column=1, sticky="ns")
 
