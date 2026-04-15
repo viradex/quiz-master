@@ -11,6 +11,9 @@ REM === CLIENT SCREENS ===
 python ./client/setup.py
 python ./client/lobby.py
 python ./client/multi_question.py
+python ./client/multi_result.py
+python ./client/entry_question.py
+python ./client/entry_result.py
 
 REM === COMMON SCREENS ===
 python ./common/about.py
