@@ -62,7 +62,7 @@ class Lobby:
         self.tree.grid(row=0, column=0, sticky="nsew")
         self.tree.tag_configure("you", font=("Segoe UI", 12, "bold"))
 
-        # FOR PROTOTYPE ONLY
+        # TODO for prototype only
         players = (
             "Viradex (you)",
             "Peptalker101",

@@ -24,6 +24,11 @@ class MultiQuestion:
         self.frame.rowconfigure(2, weight=1)
         self.frame.rowconfigure(3, weight=0)
 
+        style = ttk.Style()
+        style.configure("Red.TLabel", foreground="#C0392B", font=("Segoe UI", 20))
+        style.configure("RedSmall.TLabel", foreground="#C0392B", font=("Segoe UI", 10))
+        style.configure("Small.TButton", font=("Segoe UI", 10))
+
         ttk.Label(
             self.frame,
             text="Question 1 / 2",
@@ -54,9 +59,12 @@ class MultiQuestion:
 
         colors = {
             "red": ("#E74C3C", "#C0392B"),
-            "yellow": ("#F1C40F", "#D4AC0D"),
-            "green": ("#2ECC71", "#27AE60"),
             "blue": ("#3498DB", "#2E86C1"),
+            "yellow": (
+                "#F1C40F",
+                "#D4AC0D",
+            ),  # TODO ("#c9a200", "#a68800") darker bg for better contrast?
+            "green": ("#2ECC71", "#27AE60"),
         }
 
         answer_frame = ttk.Frame(self.frame)
@@ -67,15 +75,18 @@ class MultiQuestion:
         answer_frame.rowconfigure(0, weight=1)
         answer_frame.rowconfigure(1, weight=1)
 
+        # TODO improve contrast for yellow btn, white text can be hard to read
+        # maybe switch text to black, but black text breaks consistency
+        # or make bg darker, see colors dict above
         red_btn = self.create_answer_button(answer_frame, "3", *colors["red"])
+        blue_btn = self.create_answer_button(answer_frame, "6", *colors["blue"])
         yellow_btn = self.create_answer_button(answer_frame, "4", *colors["yellow"])
         green_btn = self.create_answer_button(answer_frame, "5", *colors["green"])
-        blue_btn = self.create_answer_button(answer_frame, "6", *colors["blue"])
 
         red_btn.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        yellow_btn.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
-        green_btn.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
-        blue_btn.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
+        blue_btn.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
+        yellow_btn.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+        green_btn.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
 
         ttk.Label(
             self.frame,
