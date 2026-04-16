@@ -1,4 +1,5 @@
 # Entry results screen
+# TODO This and MultiResult should be merged
 import tkinter as tk
 from tkinter import ttk
 
@@ -67,12 +68,7 @@ class EntryResult:
         left = ttk.Frame(self.content)
         left.grid(row=0, column=0, sticky="nsew", padx=(40, 0))
 
-        # TODO very reptitive, maybe use different frames?
         left.columnconfigure(0, weight=1)
-        left.rowconfigure(0, weight=0)
-        left.rowconfigure(1, weight=0)
-        left.rowconfigure(2, weight=0)
-        left.rowconfigure(3, weight=0)
         left.rowconfigure(4, weight=1)
 
         ttk.Label(
@@ -125,7 +121,7 @@ class EntryResult:
 
         ttk.Label(
             right,
-            text="Place: #5",
+            text="Place: #3",
             font=("Segoe UI", 16),
         ).grid(row=2, column=0, sticky="n", pady=(5, 0))
 

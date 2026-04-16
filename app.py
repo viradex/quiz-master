@@ -19,7 +19,7 @@ class App:
         self.frame.columnconfigure(0, weight=1)
 
         style = ttk.Style()
-        style.configure("Big.TButton", font=("Segoe UI", 16))
+        style.configure("Large.TButton", font=("Segoe UI", 16))
         style.configure("Medium.TButton", font=("Segoe UI", 12))
         style.configure("Small.TButton", font=("Segoe UI", 10))
 
@@ -38,14 +38,14 @@ class App:
         ttk.Button(
             self.frame,
             text="Start as Server",
-            style="Big.TButton",
+            style="Large.TButton",
             padding=(50, 10),
             width=15,
         ).grid(row=2, column=0, sticky="n", pady=(30, 0))
         ttk.Button(
             self.frame,
             text="Join as Client",
-            style="Big.TButton",
+            style="Large.TButton",
             padding=(50, 10),
             width=15,
         ).grid(row=3, column=0, sticky="n", pady=(10, 0))
