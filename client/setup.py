@@ -62,7 +62,7 @@ class Setup:
 
         ttk.Button(
             self.frame,
-            text="Back to Menu",
+            text="Return to Menu",
             style="Medium.TButton",
             padding=(30, 5),
             width=15,

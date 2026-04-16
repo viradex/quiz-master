@@ -79,16 +79,7 @@ class MultiResult:
         left = ttk.Frame(self.content)
         left.grid(row=0, column=0, sticky="nsew", padx=(40, 0))
 
-        # TODO very reptitive, maybe use different frames?
         left.columnconfigure(0, weight=1)
-        left.rowconfigure(0, weight=0)
-        left.rowconfigure(1, weight=0)
-        left.rowconfigure(2, weight=0)
-        left.rowconfigure(3, weight=0)
-        left.rowconfigure(4, weight=0)
-        left.rowconfigure(5, weight=0)
-        left.rowconfigure(6, weight=0)
-        left.rowconfigure(7, weight=0)
         left.rowconfigure(8, weight=1)
 
         ttk.Label(
@@ -120,7 +111,7 @@ class MultiResult:
         # TODO this is here for demonstrational purposes
         # if the answer is already correct, this will be hidden
         ttk.Label(
-            left, text="✓ Correct answer: B", style="WrongAnswer.TLabel"
+            left, text="✓ Correct answer: B", style="CorrectAnswer.TLabel"
         ).grid_forget()
         # .grid(row=7, column=0, sticky="w")
 
