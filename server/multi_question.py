@@ -27,7 +27,9 @@ class MultiQuestion:
         style = ttk.Style()
         style.configure("Red.TLabel", foreground="#C0392B", font=("Segoe UI", 20))
         style.configure("RedSmall.TLabel", foreground="#C0392B", font=("Segoe UI", 10))
+
         style.configure("Small.TButton", font=("Segoe UI", 10))
+        style.configure("Gray.TLabel", foreground="#828790", font=("Segoe UI", 12))
 
         ttk.Label(
             self.frame,
@@ -58,69 +60,65 @@ class MultiQuestion:
         )
 
         colors = {
-            "red": ("#E74C3C", "#C0392B"),
-            "blue": ("#3498DB", "#2E86C1"),
-            "yellow": (
-                "#F1C40F",
-                "#D4AC0D",
-            ),  # TODO ("#c9a200", "#a68800") darker bg for better contrast?
-            "green": ("#2ECC71", "#27AE60"),
+            "red": "#E74C3C",
+            "blue": "#3498DB",
+            "yellow": "#F1C40F",
+            "green": "#2ECC71",
         }
 
         answer_frame = ttk.Frame(self.frame)
         answer_frame.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(20, 0))
 
-        answer_frame.columnconfigure(0, weight=1)
-        answer_frame.columnconfigure(1, weight=1)
-        answer_frame.rowconfigure(0, weight=1)
+        answer_frame.columnconfigure(0, weight=1, uniform="equal")
+        answer_frame.columnconfigure(1, weight=1, uniform="equal")
         answer_frame.rowconfigure(1, weight=1)
+        answer_frame.rowconfigure(2, weight=1)
+
+        ttk.Label(
+            answer_frame, text="Enter the answer on your screens", style="Gray.TLabel"
+        ).grid(row=0, column=0, sticky="sw", pady=(0, 5), padx=(40, 0))
 
         # TODO improve contrast for yellow btn, white text can be hard to read
         # maybe switch text to black, but black text breaks consistency
         # or make bg darker, see colors dict above
-        red_btn = self.create_answer_button(answer_frame, "3", *colors["red"])
-        blue_btn = self.create_answer_button(answer_frame, "4", *colors["blue"])
-        yellow_btn = self.create_answer_button(answer_frame, "5", *colors["yellow"])
-        green_btn = self.create_answer_button(answer_frame, "6", *colors["green"])
+        red_btn = self.create_answer_button(answer_frame, "3", colors["red"])
+        blue_btn = self.create_answer_button(answer_frame, "4", colors["blue"])
+        yellow_btn = self.create_answer_button(answer_frame, "5", colors["yellow"])
+        green_btn = self.create_answer_button(answer_frame, "6", colors["green"])
 
-        red_btn.grid(row=0, column=0, padx=5, pady=5, sticky="nsew")
-        blue_btn.grid(row=0, column=1, padx=5, pady=5, sticky="nsew")
-        yellow_btn.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
-        green_btn.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
+        red_btn.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
+        blue_btn.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
+        yellow_btn.grid(row=2, column=0, padx=5, pady=5, sticky="nsew")
+        green_btn.grid(row=2, column=1, padx=5, pady=5, sticky="nsew")
 
         ttk.Label(
             self.frame,
-            text="Not submitted!",
+            text="Responses: 1",
             font=("Segoe UI", 12),
         ).grid(row=3, column=0, sticky="sw", pady=(30, 0), padx=(40, 0))
 
         ttk.Button(
             self.frame,
-            text="Leave Game",
+            text="Skip Question",
             style="Small.TButton",
             padding=(8, 5),
             width=15,
         ).grid(row=3, column=1, sticky="ne", pady=(40, 0), padx=(0, 40))
 
-    def create_answer_button(self, parent, text, bg, hover):
-        # TODO add appropriate styling when btn is disabled
+    def create_answer_button(self, parent, text, bg):
         btn = tk.Button(
             parent,
             text=text,
             bg=bg,
-            fg="white",
-            activebackground=hover,
-            activeforeground="white",
+            disabledforeground="white",
             font=("Segoe UI", 24, "bold"),
             bd=0,
             relief="flat",
             highlightthickness=0,
             padx=20,
             pady=18,
+            state="disabled",
         )
-
-        btn.bind("<Enter>", lambda e: btn.config(bg=hover))
-        btn.bind("<Leave>", lambda e: btn.config(bg=bg))
 
         return btn
 
