@@ -17,5 +17,8 @@ python ./client/entry_result.py
 python ./client/final_result.py
 python ./client/disconnect.py
 
+REM === SERVER SCREENS ===
+python ./server/lobby.py
+
 REM === COMMON SCREENS ===
 python ./common/about.py
