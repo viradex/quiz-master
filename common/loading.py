@@ -10,8 +10,11 @@ class Loading:
         self.root.geometry("1000x600")
         self.root.minsize(800, 600)
 
-        self.frame = ttk.Frame(self.root)
-        self.frame.place(relx=0.5, rely=0.5, anchor="center")
+        self.frame = ttk.Frame(self.root, padding=40)
+        self.frame.pack(expand=True)
+
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
 
         ttk.Label(
             self.frame, text="Loading, please wait...", font=("Segoe UI", 24)

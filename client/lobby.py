@@ -36,7 +36,7 @@ class Lobby:
 
         ttk.Label(
             self.frame,
-            text="Players: 5/16",
+            text="Players: 5",
             font=("Segoe UI", 12),
         ).grid(row=1, column=0, sticky="w", pady=(5, 0), padx=(40, 0))
 

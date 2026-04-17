@@ -16,8 +16,6 @@ class Disconnect:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
 
-        self.frame.columnconfigure(0, weight=1)
-
         style = ttk.Style()
         style.configure("Large.TButton", font=("Segoe UI", 14))
 
