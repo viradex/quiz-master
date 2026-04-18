@@ -63,8 +63,10 @@ class EntryResult:
 
         self.content.columnconfigure(0, weight=3)
         self.content.columnconfigure(1, weight=0)
-        self.content.columnconfigure(2, weight=2)
+        self.content.columnconfigure(2, weight=2, minsize=0)
         self.content.rowconfigure(0, weight=1)
+
+        self.content.grid_propagate(True)
 
         left = ttk.Frame(self.content)
         left.grid(row=0, column=0, sticky="nsew", padx=(20, 0))
@@ -125,7 +127,11 @@ class EntryResult:
         right.grid(row=0, column=2, sticky="nsew")
 
         right.columnconfigure(0, weight=1)
-        right.rowconfigure(4, weight=1)
+        right.rowconfigure(2, weight=1)
+        right.rowconfigure(3, weight=0)
+        right.rowconfigure(4, weight=0)
+
+        right.grid_propagate(True)
 
         ttk.Label(
             right,
@@ -137,11 +143,28 @@ class EntryResult:
             row=1, column=0, sticky="w", pady=(5, 20)
         )
 
-        # TODO frame may need attached scrollbar if possible
-        answers_frame = ttk.Frame(right)
-        answers_frame.grid(row=2, column=0, sticky="nsew")
+        # TODO move canvas code (for making frame scrollable) to a separate class
+        container = ttk.Frame(right)
+        container.grid(row=2, column=0, sticky="nsew")
 
-        answers_frame.columnconfigure(0, weight=1)
+        canvas = tk.Canvas(container, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(container, orient="vertical", command=canvas.yview)
+
+        answers_frame = ttk.Frame(canvas)
+
+        answers_frame.bind(
+            "<Configure>", lambda _: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        canvas.create_window((0, 0), window=answers_frame, anchor="nw")
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.configure(width=1)
+
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        container.columnconfigure(0, weight=1)
+        container.rowconfigure(0, weight=1)
 
         ttk.Label(
             answers_frame, text="Correct Answers", style="GraySubheading.TLabel"
@@ -150,22 +173,25 @@ class EntryResult:
         # TODO row num should be determined automatically, and
         # labels be dynamically shown with a for..in loop
         ttk.Label(
-            answers_frame, text=f'✓ "red" — 1 player', style="CorrectAnswer.TLabel"
+            answers_frame, text=f'✓ "blue" — 1 player', style="CorrectAnswer.TLabel"
         ).grid(row=1, column=0, sticky="w", pady=2)
         ttk.Label(
-            answers_frame, text=f'✓ "blue" — 1 player', style="CorrectAnswer.TLabel"
+            answers_frame, text=f'✓ "red" — 1 player', style="CorrectAnswer.TLabel"
         ).grid(row=2, column=0, sticky="w", pady=2)
+        ttk.Label(
+            answers_frame, text=f'✓ "yellow" — 0 players', style="CorrectAnswer.TLabel"
+        ).grid(row=3, column=0, sticky="w", pady=2)
 
         ttk.Label(
             answers_frame, text="Other Responses", style="LightGraySubheading.TLabel"
-        ).grid(row=3, column=0, sticky="w", pady=(20, 5))
+        ).grid(row=4, column=0, sticky="w", pady=(20, 5))
 
         ttk.Label(
             answers_frame, text=f'"green" — 2 players', style="WrongAnswer.TLabel"
-        ).grid(row=4, column=0, sticky="w", pady=2)
+        ).grid(row=5, column=0, sticky="w", pady=2)
         ttk.Label(
             answers_frame, text=f'"purple" — 1 player', style="WrongAnswer.TLabel"
-        ).grid(row=5, column=0, sticky="w", pady=2)
+        ).grid(row=6, column=0, sticky="w", pady=2)
 
         ttk.Button(
             right,
