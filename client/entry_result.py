@@ -77,7 +77,7 @@ class EntryResult:
             font=("Segoe UI", 14, "bold"),
         ).grid(row=0, column=0, sticky="w", pady=(30, 0))
 
-        ttk.Label(left, text="Name the primary colors", style="Question.TLabel").grid(
+        ttk.Label(left, text="Name a primary color", style="Question.TLabel").grid(
             row=1, column=0, sticky="w", pady=(10, 0)
         )
 
