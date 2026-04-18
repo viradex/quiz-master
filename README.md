@@ -8,3 +8,4 @@ To run all screens in canonical order, run `allscreens.cmd`, and close the curre
 ## Notes from Prototype Testing
 
 - In development, prefix `[SERVER]` or `[CLIENT]` to the window title bar for respective UIs. Remove for production.
+- In the prototype, treeviews have hardcoded default data. Remove during actual development.
