@@ -43,7 +43,7 @@ class EntryQuestion:
         ttk.Label(
             self.frame,
             text="Name a primary color",
-            font=("Segoe UI", 24, "bold"),
+            font=("Segoe UI", 28, "bold"),
             wraplength=750,  # TODO add responsiveness for wrap length when resizing window AND possibly font size change
         ).grid(row=1, column=0, sticky="nw", padx=(40, 0), pady=(2, 10))
 

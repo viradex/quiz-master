@@ -23,6 +23,7 @@ python ./server/multi_question.py
 python ./server/multi_result.py
 python ./server/entry_question.py
 python ./server/entry_result.py
+python ./server/final_result.py
 
 REM === COMMON SCREENS ===
 python ./common/about.py

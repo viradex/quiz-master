@@ -136,25 +136,25 @@ class MultiResult:
             right,
             text="Your Progress",
             font=("Segoe UI", 18, "bold"),
-        ).grid(row=0, column=0, sticky="n", pady=(30, 0))
+        ).grid(row=0, column=0, sticky="w", pady=(30, 0))
 
         ttk.Label(
             right,
             text="Score: 1000",
-            font=("Segoe UI", 16),
-        ).grid(row=1, column=0, sticky="n", pady=(20, 0))
+            font=("Segoe UI", 14),
+        ).grid(row=1, column=0, sticky="w", pady=(20, 0))
 
         ttk.Label(
             right,
             text="Place: #1",
-            font=("Segoe UI", 16),
-        ).grid(row=2, column=0, sticky="n", pady=(5, 0))
+            font=("Segoe UI", 14),
+        ).grid(row=2, column=0, sticky="w", pady=(5, 0))
 
         ttk.Label(
             right,
             text="Waiting for next question...",
             style="Gray.TLabel",
-        ).grid(row=3, column=0, sticky="n", pady=(50, 0))
+        ).grid(row=3, column=0, sticky="w", pady=(50, 0))
 
         ttk.Button(
             right,

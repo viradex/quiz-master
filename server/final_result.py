@@ -22,15 +22,6 @@ class FinalResult:
 
         style = ttk.Style()
         style.configure(
-            "GoldTitle.TLabel", foreground="#D4AF37", font=("Segoe UI", 24, "bold")
-        )
-        style.configure(
-            "SilverTitle.TLabel", foreground="#B0B0B0", font=("Segoe UI", 24, "bold")
-        )
-        style.configure(
-            "BronzeTitle.TLabel", foreground="#CD7F32", font=("Segoe UI", 24, "bold")
-        )
-        style.configure(
             "BlackTitle.TLabel", foreground="#2E2E2E", font=("Segoe UI", 24, "bold")
         )
 
@@ -50,7 +41,7 @@ class FinalResult:
 
         # Note: 1st -> GoldTitle, 2nd -> SilverTitle, 3rd -> BronzeTitle, rest -> BlackTitle
         # Also exclamation mark at end for 1st-3rd place
-        ttk.Label(self.frame, text="You came 3rd!", style="BronzeTitle.TLabel").grid(
+        ttk.Label(self.frame, text="Final Standings", style="BlackTitle.TLabel").grid(
             row=1, column=0, sticky="n", columnspan=2
         )
 
@@ -61,63 +52,35 @@ class FinalResult:
         self.content = ttk.Frame(self.frame)
         self.content.grid(row=3, column=0, columnspan=2, sticky="nsew")
 
-        self.content.columnconfigure(0, weight=1, uniform="equal")
+        self.content.columnconfigure(0, weight=5)
         self.content.columnconfigure(1, weight=0)
-        self.content.columnconfigure(2, weight=1, uniform="equal")
+        self.content.columnconfigure(2, weight=1)
         self.content.rowconfigure(0, weight=1)
 
         left = ttk.Frame(self.content)
-        left.grid(row=0, column=0, sticky="nsew", padx=(40, 0))
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 20))
+
+        left.columnconfigure(0, weight=1)
+        left.rowconfigure(2, weight=1)
 
         ttk.Label(
             left,
-            text="Summary",
+            text="Leaderboard",
             font=("Segoe UI", 18, "bold"),
         ).grid(row=0, column=0, sticky="w", pady=(10, 0))
 
-        ttk.Label(left, text="Nickname: Viradex", style="DescGray.TLabel").grid(
+        ttk.Label(left, text="All players ranked", style="DescGray.TLabel").grid(
             row=1, column=0, sticky="w", pady=(2, 20)
         )
 
-        ttk.Label(left, text="Place: #3", font=("Segoe UI", 14)).grid(
-            row=2, column=0, sticky="w", pady=(0, 5)
+        tree = ttk.Treeview(left, columns=("place", "name", "total"), show="headings")
+        tree.tag_configure("gold", foreground="#D4AF37", font=("Segoe UI", 12, "bold"))
+        tree.tag_configure(
+            "silver", foreground="#B0B0B0", font=("Segoe UI", 12, "bold")
         )
-        ttk.Label(left, text="Points: 1000", font=("Segoe UI", 14)).grid(
-            row=3, column=0, sticky="w", pady=(0, 5)
+        tree.tag_configure(
+            "bronze", foreground="#CD7F32", font=("Segoe UI", 12, "bold")
         )
-        ttk.Label(left, text="Correct: 1 / 2", font=("Segoe UI", 14)).grid(
-            row=4, column=0, sticky="w", pady=(0, 5)
-        )
-        ttk.Label(left, text="Accuracy: 50%", font=("Segoe UI", 14)).grid(
-            row=5, column=0, sticky="w", pady=(0, 5)
-        )
-
-        sep = ttk.Separator(self.content, orient="vertical")
-        sep.grid(row=0, column=1, sticky="ns")
-
-        right = ttk.Frame(self.content)
-        right.grid(row=0, column=2, sticky="nsew", padx=(40, 0))
-
-        right.columnconfigure(0, weight=1)
-        right.rowconfigure(5, weight=1)
-
-        ttk.Label(
-            right,
-            text="Leaderboard Snapshot",
-            font=("Segoe UI", 18, "bold"),
-        ).grid(row=0, column=0, sticky="w", pady=(10, 0))
-
-        ttk.Label(right, text="Nearby rankings", style="DescGray.TLabel").grid(
-            row=1, column=0, sticky="w", pady=(2, 20)
-        )
-
-        tree = ttk.Treeview(
-            right,
-            columns=("place", "name", "total"),
-            show="headings",
-            height=4,
-        )
-        tree.tag_configure("you", font=("Segoe UI", 12, "bold"))
 
         tree.heading("place", text="Place")
         tree.heading("name", text="Name")
@@ -127,24 +90,58 @@ class FinalResult:
         tree.column("name", anchor="center", width=200)
         tree.column("total", anchor="center", width=50)
 
-        tree.grid(row=2, column=0, sticky="ew")
+        scroll = ttk.Scrollbar(left, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scroll.set)
+
+        tree.grid(row=2, column=0, sticky="nsew")
+        scroll.grid(row=2, column=1, sticky="ns")
 
         # TODO for prototype only
         players = (
+            ("#1", "Peptalker101", "1837"),
             ("#2", "ItsJakePlayz21", "1835"),
-            ("#3", "Viradex (you)", "1000"),
+            ("#3", "Viradex", "1000"),
             ("#4", "TrexGamerGirl", "972"),
+            ("#5", "Scyrist", "968"),
         )
         for player in players:
-            if player[1].endswith("(you)"):
-                tree.insert("", "end", values=player, tags=("you",))
+            if player[0] == "#1":
+                tree.insert("", "end", values=player, tags=("gold",))
+            elif player[0] == "#2":
+                tree.insert("", "end", values=player, tags=("silver",))
+            elif player[0] == "#3":
+                tree.insert("", "end", values=player, tags=("bronze",))
             else:
                 tree.insert("", "end", values=player)
 
-        # TODO custom message depending on distance? (e.g. <200pts)
+        sep = ttk.Separator(self.content, orient="vertical")
+        sep.grid(row=0, column=1, sticky="ns")
+
+        right = ttk.Frame(self.content)
+        right.grid(row=0, column=2, sticky="nsew", padx=(20, 0))
+
+        right.columnconfigure(0, weight=1)
+        right.rowconfigure(5, weight=1)
+
         ttk.Label(
-            right, text="You were 835 points behind 2nd place!", font=("Segoe UI", 10)
-        ).grid(row=4, column=0, sticky="w", pady=(10, 0))
+            right,
+            text="Game Summary",
+            font=("Segoe UI", 18, "bold"),
+        ).grid(row=0, column=0, sticky="w", pady=(10, 0))
+
+        ttk.Label(right, text="Session stats", style="DescGray.TLabel").grid(
+            row=1, column=0, sticky="w", pady=(2, 20)
+        )
+
+        ttk.Label(right, text="Players: 5", font=("Segoe UI", 11)).grid(
+            row=2, column=0, sticky="w", pady=(0, 6)
+        )
+        ttk.Label(right, text="Questions: 2", font=("Segoe UI", 11)).grid(
+            row=3, column=0, sticky="w", pady=(0, 6)
+        )
+        ttk.Label(
+            right, text="Winner: Peptalker101 (1837 pts)", font=("Segoe UI", 11, "bold")
+        ).grid(row=4, column=0, sticky="w", pady=(0, 6))
 
         ttk.Button(
             right,
