@@ -24,7 +24,7 @@ class Setup:
         self.nickname_var = tk.StringVar()
 
         style = ttk.Style()
-        style.configure("Big.TButton", font=("Segoe UI", 14))
+        style.configure("Large.TButton", font=("Segoe UI", 14))
         style.configure("Medium.TButton", font=("Segoe UI", 12))
         style.configure("Gray.TLabel", foreground="#A7A7A7", font=("Segoe UI", 8))
 
@@ -71,7 +71,7 @@ class Setup:
         ttk.Button(
             self.frame,
             text="Join",
-            style="Big.TButton",
+            style="Large.TButton",
             padding=(30, 5),
             width=15,
         ).grid(row=4, column=1, sticky="e", pady=(40, 0))
