@@ -3,13 +3,15 @@ import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
 
+from constants import *
+
 
 class MultiQuestion:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Quiz Master — Question 1 / 2")
-        self.root.geometry("1000x600")
-        self.root.minsize(800, 600)
+        self.root.geometry(WINDOW_GEOMETRY)
+        self.root.minsize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
 
         self.frame = ttk.Frame(self.root, padding=40)
         self.frame.grid(row=0, column=0, sticky="nsew")
@@ -19,28 +21,27 @@ class MultiQuestion:
 
         self.frame.columnconfigure(0, weight=1)
         self.frame.columnconfigure(1, weight=1)
-        self.frame.rowconfigure(0, weight=0)
-        self.frame.rowconfigure(1, weight=0)
         self.frame.rowconfigure(2, weight=1)
-        self.frame.rowconfigure(3, weight=0)
 
         style = ttk.Style()
-        style.configure("Red.TLabel", foreground="#C0392B", font=("Segoe UI", 20))
-        style.configure("RedSmall.TLabel", foreground="#C0392B", font=("Segoe UI", 10))
-        style.configure("Small.TButton", font=("Segoe UI", 10))
+        style.configure("Small.TButton", font=FONT_SMALL)
 
-        ttk.Label(
+        self.question_num = ttk.Label(
             self.frame,
             text="Question 1 / 2",
-            font=("Segoe UI", 12),
-        ).grid(row=0, column=0, sticky="sw", padx=(40, 0), pady=(10, 2))
+            font=FONT_MEDIUM,
+        )
+        self.question_num.grid(row=0, column=0, sticky="sw", padx=(40, 0), pady=(10, 2))
 
-        ttk.Label(
+        self.question_text = ttk.Label(
             self.frame,
             text="What is 2 + 2?",
-            font=("Segoe UI", 28, "bold"),
-            wraplength=750,  # TODO add responsiveness for wrap length when resizing window AND possibly font size change
-        ).grid(row=1, column=0, sticky="nw", padx=(40, 0), pady=(2, 10))
+            font=FONT_QUESTION,
+            wraplength=WRAP_QUESTION,  # TODO add responsiveness for wrap length when resizing window AND possibly font size change
+        )
+        self.question_text.grid(
+            row=1, column=0, sticky="nw", padx=(40, 0), pady=(2, 10)
+        )
 
         timer_frame = ttk.Frame(self.frame)
         timer_frame.grid(row=0, column=1, rowspan=2, sticky="ne", padx=(0, 60))
@@ -50,21 +51,23 @@ class MultiQuestion:
         self.timer_img = tk.PhotoImage(file=img_path)
 
         ttk.Label(timer_frame, image=self.timer_img).grid(row=0, column=0, sticky="n")
-        ttk.Label(timer_frame, text="10", font=("Segoe UI", 20)).grid(
-            row=1, column=0, sticky="n", pady=0
+
+        self.timer_secs = ttk.Label(timer_frame, text="10", font=FONT_HUGE)
+        self.timer_secs.grid(row=1, column=0, sticky="n", pady=0)
+
+        self.timer_secs_text = ttk.Label(
+            timer_frame, text="seconds left", font=FONT_SMALL
         )
-        ttk.Label(timer_frame, text="seconds left", font=("Segoe UI", 10)).grid(
-            row=2, column=0, sticky="n", pady=0
-        )
+        self.timer_secs_text.grid(row=2, column=0, sticky="n", pady=0)
 
         colors = {
-            "red": ("#E74C3C", "#C0392B"),
-            "blue": ("#3498DB", "#2E86C1"),
+            "red": (COLOR_RED, "#C0392B"),
+            "blue": (COLOR_BLUE, "#2E86C1"),
             "yellow": (
-                "#F1C40F",
+                COLOR_YELLOW,
                 "#D4AC0D",
             ),  # TODO ("#c9a200", "#a68800") darker bg for better contrast?
-            "green": ("#2ECC71", "#27AE60"),
+            "green": (COLOR_GREEN, "#27AE60"),
         }
 
         answer_frame = ttk.Frame(self.frame)
@@ -88,11 +91,12 @@ class MultiQuestion:
         yellow_btn.grid(row=1, column=0, padx=5, pady=5, sticky="nsew")
         green_btn.grid(row=1, column=1, padx=5, pady=5, sticky="nsew")
 
-        ttk.Label(
+        self.status = ttk.Label(
             self.frame,
             text="Not submitted!",
-            font=("Segoe UI", 12),
-        ).grid(row=3, column=0, sticky="sw", pady=(30, 0), padx=(40, 0))
+            font=FONT_MEDIUM,
+        )
+        self.status.grid(row=3, column=0, sticky="sw", pady=(30, 0), padx=(40, 0))
 
         ttk.Button(
             self.frame,
@@ -111,7 +115,7 @@ class MultiQuestion:
             fg="white",
             activebackground=hover,
             activeforeground="white",
-            font=("Segoe UI", 24, "bold"),
+            font=(FONT_FAMILY, 20, "bold"),
             bd=0,
             relief="flat",
             highlightthickness=0,
