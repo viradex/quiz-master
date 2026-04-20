@@ -2,13 +2,15 @@
 import tkinter as tk
 from tkinter import ttk
 
+from constants import *
+
 
 class Setup:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Quiz Master — Client Setup")
-        self.root.geometry("1000x600")
-        self.root.minsize(800, 600)
+        self.root.geometry(WINDOW_GEOMETRY)
+        self.root.minsize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
 
         self.frame = ttk.Frame(self.root, padding=40)
         self.frame.grid(row=0, column=0, sticky="nsew")
@@ -16,7 +18,6 @@ class Setup:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
 
-        self.frame.columnconfigure(0, weight=0)
         self.frame.columnconfigure(1, weight=1)
 
         # TODO remove default value for prod
@@ -24,14 +25,14 @@ class Setup:
         self.nickname_var = tk.StringVar()
 
         style = ttk.Style()
-        style.configure("Large.TButton", font=("Segoe UI", 14))
-        style.configure("Medium.TButton", font=("Segoe UI", 12))
-        style.configure("Gray.TLabel", foreground="#A7A7A7", font=("Segoe UI", 8))
+        style.configure("Large.TButton", font=FONT_LARGE)
+        style.configure("Medium.TButton", font=FONT_MEDIUM)
+        style.configure("Subtle.TLabel", foreground=COLOR_GRAY)
 
         ttk.Label(
             self.frame,
             text="Enter connection details:",
-            font=("Segoe UI", 20),
+            font=FONT_HUGE,
         ).grid(row=0, column=0, columnspan=2, sticky="w")
 
         # TODO add IP hint if users get confused in testing
@@ -39,26 +40,29 @@ class Setup:
         ttk.Label(
             self.frame,
             text="Server IP:",
-            font=("Segoe UI", 14),
+            font=FONT_BODY,
         ).grid(row=1, column=0, sticky="e", pady=(50, 0))
 
-        ttk.Entry(
-            self.frame, textvariable=self.server_ip_var, font=("Segoe UI", 14)
-        ).grid(row=1, column=1, sticky="ew", pady=(50, 0), padx=(25, 0))
+        ttk.Entry(self.frame, textvariable=self.server_ip_var, font=FONT_BODY).grid(
+            row=1, column=1, sticky="ew", pady=(50, 0), padx=(25, 0)
+        )
 
         ttk.Label(
-            self.frame, text="Connecting to port: 7878", style="Gray.TLabel"
+            self.frame,
+            text="Connecting to port: 7878",
+            style="Subtle.TLabel",
+            font=FONT_TINY,
         ).grid(row=2, column=1, sticky="e", pady=(5, 0))
 
         ttk.Label(
             self.frame,
             text="Nickname:",
-            font=("Segoe UI", 14),
+            font=FONT_BODY,
         ).grid(row=3, column=0, sticky="e", pady=(20, 0))
 
-        ttk.Entry(
-            self.frame, textvariable=self.nickname_var, font=("Segoe UI", 14)
-        ).grid(row=3, column=1, sticky="ew", pady=(20, 0), padx=(25, 0))
+        ttk.Entry(self.frame, textvariable=self.nickname_var, font=FONT_BODY).grid(
+            row=3, column=1, sticky="ew", pady=(20, 0), padx=(25, 0)
+        )
 
         ttk.Button(
             self.frame,

@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 
+from constants import *
+
 license_contents = """MIT License
 
 Copyright (c) 2026 Arnav Thorat
@@ -27,41 +29,39 @@ SOFTWARE.
 
 class About:
     def __init__(self):
-        self.sequence = []
-
         self.root = tk.Tk()
         self.root.title("Quiz Master — About")
-        self.root.geometry("1000x600")
-        self.root.minsize(800, 600)
+        self.root.geometry(WINDOW_GEOMETRY)
+        self.root.minsize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
 
-        self.notebook = ttk.Notebook(self.root, padding=(2, 0))
-        self.notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
+        notebook = ttk.Notebook(self.root, padding=(2, 0))
+        notebook.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
 
-        self.about_frame = ttk.Frame(self.notebook)
-        self.help_frame = ttk.Frame(self.notebook)
+        about_frame = ttk.Frame(notebook)
+        help_frame = ttk.Frame(notebook)
 
-        self.notebook.add(self.about_frame, text="About")
-        self.notebook.add(self.help_frame, text="Help")
+        notebook.add(about_frame, text="About")
+        notebook.add(help_frame, text="Help")
 
         self.root.rowconfigure(0, weight=1)
         self.root.columnconfigure(0, weight=1)
 
         ttk.Label(
-            self.about_frame,
+            about_frame,
             text="About Quiz Master",
-            font=("Segoe UI", 16, "bold"),
+            font=FONT_HEADER,
         ).grid(row=0, column=0, sticky="W", pady=(10, 0), padx=10)
 
         ttk.Label(
-            self.about_frame,
+            about_frame,
             text="Developed and coded from start to finish by Arnav Thorat :)",
-            font=("Segoe UI", 12),
+            font=FONT_MEDIUM,
         ).grid(row=1, column=0, sticky="W", pady=(5, 0), padx=10)
 
         ttk.Label(
-            self.about_frame,
+            about_frame,
             text="This app requires local network access. No personal identifiable information is shared to any first-party or third-party services.",
-            font=("Segoe UI", 10),
+            font=FONT_SMALL,
         ).grid(row=2, column=0, sticky="W", pady=(15, 10), padx=10)
 
         # TODO add cute cat easter egg
@@ -69,7 +69,7 @@ class About:
         # see: https://github.com/viradex/quiz-master/blob/b99ddc9ea23d53a769842b71fdc2dd109f61e5d4/common/about.py
 
         self.license_text = tk.Text(
-            self.about_frame,
+            about_frame,
             wrap="word",
             height=25,
             width=80,
@@ -82,9 +82,9 @@ class About:
         self.license_text.grid(row=3, column=0, sticky="nsew", pady=(0, 15), padx=10)
 
         ttk.Label(
-            self.help_frame,
+            help_frame,
             text="Coming soon ;)",
-            font=("Segoe UI", 16),
+            font=FONT_LARGE,
         ).grid(row=0, column=0, sticky="W", pady=(5, 0), padx=10)
 
     def run(self):

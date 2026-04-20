@@ -4,13 +4,15 @@ import tkinter as tk
 from tkinter import ttk
 from pathlib import Path
 
+from constants import *
+
 
 class EntryQuestion:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Quiz Master — Question 2 / 2")
-        self.root.geometry("1000x600")
-        self.root.minsize(800, 600)
+        self.root.geometry(WINDOW_GEOMETRY)
+        self.root.minsize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
 
         self.frame = ttk.Frame(self.root, padding=40)
         self.frame.grid(row=0, column=0, sticky="nsew")
@@ -20,31 +22,30 @@ class EntryQuestion:
 
         self.frame.columnconfigure(0, weight=1)
         self.frame.columnconfigure(1, weight=1)
-        self.frame.rowconfigure(0, weight=0)
-        self.frame.rowconfigure(1, weight=0)
         self.frame.rowconfigure(2, weight=1)
-        self.frame.rowconfigure(3, weight=0)
 
         style = ttk.Style()
-        style.configure("Big.TButton", font=("Segoe UI", 16))
-        style.configure("Small.TButton", font=("Segoe UI", 10))
+        style.configure("Subtle.TLabel", foreground=COLOR_DARK_GRAY)
 
-        style.configure("Red.TLabel", foreground="#C0392B", font=("Segoe UI", 20))
-        style.configure("RedSmall.TLabel", foreground="#C0392B", font=("Segoe UI", 10))
-        style.configure("Gray.TLabel", foreground="#828790", font=("Segoe UI", 12))
+        style.configure("Large.TButton", font=FONT_LARGE)
+        style.configure("Small.TButton", font=FONT_SMALL)
 
-        ttk.Label(
+        self.question_num = ttk.Label(
             self.frame,
             text="Question 2 / 2",
-            font=("Segoe UI", 12),
-        ).grid(row=0, column=0, sticky="sw", padx=(40, 0), pady=(10, 2))
+            font=FONT_MEDIUM,
+        )
+        self.question_num.grid(row=0, column=0, sticky="sw", padx=(40, 0), pady=(10, 2))
 
-        ttk.Label(
+        self.question_text = ttk.Label(
             self.frame,
             text="Name a primary color",
-            font=("Segoe UI", 28, "bold"),
-            wraplength=750,  # TODO add responsiveness for wrap length when resizing window AND possibly font size change
-        ).grid(row=1, column=0, sticky="nw", padx=(40, 0), pady=(2, 10))
+            font=FONT_QUESTION,
+            wraplength=WRAP_QUESTION,  # TODO add responsiveness for wrap length when resizing window AND possibly font size change
+        )
+        self.question_text.grid(
+            row=1, column=0, sticky="nw", padx=(40, 0), pady=(2, 10)
+        )
 
         timer_frame = ttk.Frame(self.frame)
         timer_frame.grid(row=0, column=1, rowspan=2, sticky="ne", padx=(0, 60))
@@ -54,12 +55,22 @@ class EntryQuestion:
         self.timer_img = tk.PhotoImage(file=img_path)
 
         ttk.Label(timer_frame, image=self.timer_img).grid(row=0, column=0, sticky="n")
-        ttk.Label(timer_frame, text="5", style="Red.TLabel").grid(
-            row=1, column=0, sticky="n", pady=0
+
+        self.timer_secs = ttk.Label(
+            timer_frame,
+            text="5",
+            font=FONT_HUGE,
+            foreground=COLOR_ERROR,
         )
-        ttk.Label(timer_frame, text="seconds left", style="RedSmall.TLabel").grid(
-            row=2, column=0, sticky="n", pady=0
+        self.timer_secs.grid(row=1, column=0, sticky="n", pady=0)
+
+        self.timer_secs_text = ttk.Label(
+            timer_frame,
+            text="seconds left",
+            font=FONT_SMALL,
+            foreground=COLOR_ERROR,
         )
+        self.timer_secs_text.grid(row=2, column=0, sticky="n", pady=0)
 
         answer_frame = ttk.Frame(self.frame, padding=(40, 10))
         answer_frame.grid(row=2, column=0, columnspan=2, sticky="nsew")
@@ -69,21 +80,23 @@ class EntryQuestion:
         ttk.Label(
             answer_frame,
             text="Enter the answer in the input field on your screens",
-            style="Gray.TLabel",
+            style="Subtle.TLabel",
+            font=FONT_SMALL,
         ).grid(row=0, column=0, sticky="w", pady=(0, 10))
 
         ttk.Entry(
             answer_frame,
-            font=("Segoe UI", 24),
+            font=FONT_ANSWER_ENTRY,  # for making entry field taller
             width=40,
             state="readonly",
         ).grid(row=1, column=0, sticky="ew")
 
-        ttk.Label(
+        self.responses = ttk.Label(
             self.frame,
             text="Responses: 1",
-            font=("Segoe UI", 12),
-        ).grid(row=3, column=0, sticky="sw", pady=(30, 0), padx=(40, 0))
+            font=FONT_MEDIUM,
+        )
+        self.responses.grid(row=3, column=0, sticky="sw", pady=(30, 0), padx=(40, 0))
 
         ttk.Button(
             self.frame,

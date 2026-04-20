@@ -2,13 +2,15 @@
 import tkinter as tk
 from tkinter import ttk
 
+from constants import *
+
 
 class MultiResult:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("Quiz Master — Results")
-        self.root.geometry("1000x600")
-        self.root.minsize(800, 600)
+        self.root.geometry(WINDOW_GEOMETRY)
+        self.root.minsize(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT)
 
         self.frame = ttk.Frame(self.root, padding=40)
         self.frame.grid(row=0, column=0, sticky="nsew")
@@ -21,81 +23,75 @@ class MultiResult:
         self.frame.columnconfigure(1, weight=1)
 
         style = ttk.Style()
-        style.configure(
-            "AnswerRed.TLabel", foreground="#E74C3C", font=("Segoe UI", 18, "bold")
-        )
-        style.configure(
-            "AnswerBlue.TLabel", foreground="#3498DB", font=("Segoe UI", 18, "bold")
-        )
-        style.configure(
-            "AnswerYellow.TLabel", foreground="#F1C40F", font=("Segoe UI", 18, "bold")
-        )
-        style.configure(
-            "AnswerGreen.TLabel", foreground="#2ECC71", font=("Segoe UI", 18, "bold")
-        )
+        style.configure("Subtle.TLabel", foreground=COLOR_DARK_GRAY)
 
-        style.configure("Treeview", font=("Segoe UI", 12), rowheight=30)
-        style.configure("Treeview.Heading", font=("Segoe UI", 10, "bold"))
+        style.configure("AnswerA.TLabel", foreground=COLOR_RED, font=FONT_ANSWER)
+        style.configure("AnswerB.TLabel", foreground=COLOR_BLUE, font=FONT_ANSWER)
+        style.configure("AnswerC.TLabel", foreground=COLOR_YELLOW, font=FONT_ANSWER)
+        style.configure("AnswerD.TLabel", foreground=COLOR_GREEN, font=FONT_ANSWER)
 
-        style.configure("Gray.TLabel", foreground="#7F7F7F", font=("Segoe UI", 12))
+        style.configure("Treeview", font=FONT_TREEIVEW, rowheight=TREEVIEW_ROW_HEIGHT)
+        style.configure("Treeview.Heading", font=FONT_TREEVIEW_HEADING)
 
-        style.configure("Large.TButton", font=("Segoe UI", 14))
-        style.configure("Medium.TButton", font=("Segoe UI", 12))
-        style.configure("Small.TButton", font=("Segoe UI", 10))
+        style.configure("Large.TButton", font=FONT_BODY)
+        style.configure("Medium.TButton", font=FONT_MEDIUM)
+        style.configure("Small.TButton", font=FONT_SMALL)
 
-        ttk.Label(
+        self.question_num = ttk.Label(
             self.frame,
             text="Question 1 / 2",
-            font=("Segoe UI", 12),
-        ).grid(row=0, column=0, sticky="n", columnspan=2, pady=(0, 2))
+            font=FONT_MEDIUM,
+        )
+        self.question_num.grid(row=0, column=0, sticky="n", columnspan=2, pady=(0, 2))
 
-        ttk.Label(
-            self.frame, text="What is 2 + 2?", font=("Segoe UI", 24, "bold")
-        ).grid(row=1, column=0, sticky="n", columnspan=2)
+        self.question_text = ttk.Label(
+            self.frame, text="What is 2 + 2?", font=FONT_TITLE
+        )
+        self.question_text.grid(row=1, column=0, sticky="n", columnspan=2)
 
         ttk.Separator(self.frame, orient="horizontal").grid(
             row=2, column=0, columnspan=2, sticky="ew", pady=10
         )
 
-        self.content = ttk.Frame(self.frame)
-        self.content.grid(row=3, column=0, columnspan=2, sticky="nsew")
+        content = ttk.Frame(self.frame)
+        content.grid(row=3, column=0, columnspan=2, sticky="nsew")
 
-        self.content.columnconfigure(0, weight=3)
-        self.content.columnconfigure(1, weight=0)
-        self.content.columnconfigure(2, weight=2)
-        self.content.rowconfigure(0, weight=1)
+        content.columnconfigure(0, weight=3)
+        content.columnconfigure(2, weight=2)
+        content.rowconfigure(0, weight=1)
 
-        left = ttk.Frame(self.content)
+        left = ttk.Frame(content)
         left.grid(row=0, column=0, sticky="nsew", padx=(20, 0))
 
         left.columnconfigure(0, weight=1)
-        left.columnconfigure(1, weight=0)
         left.rowconfigure(1, weight=1)
 
         ttk.Label(
             left,
             text="Leaderboard",
-            font=("Segoe UI", 18, "bold"),
+            font=FONT_HEADER,
         ).grid(row=0, column=0, sticky="w", pady=(10, 20))
 
-        tree = ttk.Treeview(
+        self.leaderboard = ttk.Treeview(
             left, columns=("place", "name", "gained", "total"), show="headings"
         )
 
-        tree.heading("place", text="Place")
-        tree.heading("name", text="Name")
-        tree.heading("gained", text="Gained")
-        tree.heading("total", text="Total")
+        self.leaderboard.heading("place", text="Place")
+        self.leaderboard.heading("name", text="Name")
+        self.leaderboard.heading("gained", text="Gained")
+        self.leaderboard.heading("total", text="Total")
 
-        tree.column("place", anchor="center", width=50)
-        tree.column("name", anchor="center", width=200)
-        tree.column("gained", anchor="center", width=50)
-        tree.column("total", anchor="center", width=50)
+        self.leaderboard.column("place", anchor="center", width=50)
+        self.leaderboard.column("name", anchor="center", width=200)
+        self.leaderboard.column("gained", anchor="center", width=50)
+        self.leaderboard.column("total", anchor="center", width=50)
 
-        scrollbar = ttk.Scrollbar(left, orient="vertical", command=tree.yview)
-        tree.configure(yscrollcommand=scrollbar.set)
+        scrollbar = ttk.Scrollbar(
+            left, orient="vertical", command=self.leaderboard.yview
+        )
+        self.leaderboard.configure(yscrollcommand=scrollbar.set)
 
-        tree.grid(row=1, column=0, sticky="nsew")
+        self.leaderboard.grid(row=1, column=0, sticky="nsew")
         scrollbar.grid(row=1, column=1, sticky="ns")
 
         # TODO for prototype only
@@ -107,20 +103,21 @@ class MultiResult:
             ("#5", "ItsJakePlayz21", "+964", "964"),
         )
         for player in players:
-            tree.insert("", "end", values=player)
+            self.leaderboard.insert("", "end", values=player)
 
-        ttk.Button(
+        self.kick_player_btn = ttk.Button(
             left,
             text="Kick Player",
             style="Medium.TButton",
             padding=(20, 0),
             width=10,
-        ).grid(row=2, column=0, sticky="w", pady=(10, 0))
+        )
+        self.kick_player_btn.grid(row=2, column=0, sticky="w", pady=(10, 0))
 
-        sep = ttk.Separator(self.content, orient="vertical")
+        sep = ttk.Separator(content, orient="vertical")
         sep.grid(row=0, column=1, sticky="ns", padx=20)
 
-        right = ttk.Frame(self.content)
+        right = ttk.Frame(content)
         right.grid(row=0, column=2, sticky="nsew")
 
         right.columnconfigure(0, weight=1)
@@ -129,25 +126,28 @@ class MultiResult:
         ttk.Label(
             right,
             text="Responses",
-            font=("Segoe UI", 18, "bold"),
+            font=FONT_HEADER,
         ).grid(row=0, column=0, sticky="w", pady=(10, 0))
 
-        ttk.Label(right, text="Players answered: 5 / 5", style="Gray.TLabel").grid(
-            row=1, column=0, sticky="w", pady=(5, 20)
+        self.players_answered = ttk.Label(
+            right,
+            text="Players answered: 5 / 5",
+            style="Subtle.TLabel",
+            font=FONT_MEDIUM,
         )
+        self.players_answered.grid(row=1, column=0, sticky="w", pady=(5, 20))
 
-        ttk.Label(right, text="A: 0   ", style="AnswerRed.TLabel").grid(
-            row=2, column=0, sticky="w"
-        )
-        ttk.Label(right, text="B: 5  ✓", style="AnswerBlue.TLabel").grid(
-            row=3, column=0, sticky="w"
-        )
-        ttk.Label(right, text="C: 0  ", style="AnswerYellow.TLabel").grid(
-            row=4, column=0, sticky="w"
-        )
-        ttk.Label(right, text="D: 0  ", style="AnswerGreen.TLabel").grid(
-            row=5, column=0, sticky="w"
-        )
+        self.answer_a = ttk.Label(right, text="A: 0   ", style="AnswerA.TLabel")
+        self.answer_a.grid(row=2, column=0, sticky="w")
+
+        self.answer_b = ttk.Label(right, text="B: 5  ✓", style="AnswerB.TLabel")
+        self.answer_b.grid(row=3, column=0, sticky="w")
+
+        self.answer_c = ttk.Label(right, text="C: 0  ", style="AnswerC.TLabel")
+        self.answer_c.grid(row=4, column=0, sticky="w")
+
+        self.answer_d = ttk.Label(right, text="D: 0  ", style="AnswerD.TLabel")
+        self.answer_d.grid(row=5, column=0, sticky="w")
 
         ttk.Button(
             right,
