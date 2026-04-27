@@ -24,7 +24,3 @@ class Screens(Enum):
     COMMON_MENU = "COMMON_MENU"
     COMMON_LOADING = "COMMON_LOADING"
     COMMON_ABOUT = "COMMON_ABOUT"
-
-    @property
-    def id(self):
-        return self.value

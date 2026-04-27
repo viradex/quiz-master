@@ -1,10 +1,14 @@
-from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget
+from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget, QFrame
 from PyQt6.QtGui import QGuiApplication
 
 from core.screen_ids import Screens
 from core.screen_factory import create_screen
 
-WIDTH = 1000
+from ui.components.sidebar_dev import SidebarDev
+
+# TODO change width from 1220 to 1000 when removing dev navbar
+DEV_NAVBAR_WIDTH = 220
+WIDTH = 1000 + DEV_NAVBAR_WIDTH
 HEIGHT = 600
 
 
@@ -33,10 +37,23 @@ class MainWindow(QMainWindow):
         self.central = QWidget()
         self.setCentralWidget(self.central)
 
-        self.layout = QHBoxLayout(self.central)
+        # TODO temp dev navigation navbar
+        # remove when logic-based screen switching implemented
+        self.sidebar = SidebarDev(self)
+        self.sidebar.setFixedWidth(DEV_NAVBAR_WIDTH)
+
+        # TODO remove when dev navbar removed
+        line = QFrame()
+        line.setStyleSheet("background-color: #444;")
+        line.setFixedWidth(1)
 
         self.stack = QStackedWidget()
-        self.layout.addWidget(self.stack)
+
+        # TODO remove when dev navbar removed
+        hbox = QHBoxLayout(self.central)
+        hbox.addWidget(self.sidebar)
+        hbox.addWidget(line)
+        hbox.addWidget(self.stack)
 
     def build_screens(self):
         self.screen_widgets = {}
