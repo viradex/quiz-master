@@ -16,6 +16,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        self.current_screen = None
+
         self.setMinimumSize(WIDTH, HEIGHT)
         self.center_window()
 
@@ -70,8 +72,13 @@ class MainWindow(QMainWindow):
         self.sidebar.screen_requested.connect(self.go_to)
 
     def go_to(self, screen: Screens):
+        if self.current_screen is not None:
+            self.current_screen.on_leave()
+
         widget = self.screen_widgets[screen]
         self.stack.setCurrentWidget(widget)
 
         self.setWindowTitle(widget.title_text)
         widget.on_enter()
+
+        self.current_screen = widget
