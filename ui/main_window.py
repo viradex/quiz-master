@@ -67,6 +67,8 @@ class MainWindow(QMainWindow):
         for screen in self.screen_widgets.values():
             screen.navigate.connect(self.go_to)
 
+        self.sidebar.screen_requested.connect(self.go_to)
+
     def go_to(self, screen: Screens):
         widget = self.screen_widgets[screen]
         self.stack.setCurrentWidget(widget)
