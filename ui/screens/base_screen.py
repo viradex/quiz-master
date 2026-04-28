@@ -16,3 +16,6 @@ class BaseScreen(QWidget):
 
     def on_enter(self):
         pass
+
+    def on_leave(self):
+        pass
