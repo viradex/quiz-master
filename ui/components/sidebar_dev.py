@@ -1,13 +1,6 @@
 # TODO remove entire file when logic-based navigation implemented
-from PyQt6.QtWidgets import (
-    QWidget,
-    QGridLayout,
-    QVBoxLayout,
-    QPushButton,
-    QLabel,
-    QSizePolicy,
-)
-from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QPushButton, QLabel
+from PyQt6.QtCore import pyqtSignal
 
 from core.screen_ids import Screens
 
@@ -76,9 +69,6 @@ class SidebarDev(QWidget):
                 )
 
                 button = QPushButton(btn_name)
-                button.setSizePolicy(
-                    QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-                )
                 button.clicked.connect(lambda checked=False, s=screen: self.go_to(s))
 
                 col = i % 2
