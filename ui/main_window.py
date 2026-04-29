@@ -3,6 +3,7 @@ from PyQt6.QtGui import QGuiApplication
 
 from core.screen_ids import Screens
 from core.screen_factory import create_screen
+from core.screen_config import EAGER_SCREENS
 
 from ui.components.sidebar_dev import SidebarDev
 
@@ -57,13 +58,24 @@ class MainWindow(QMainWindow):
         hbox.addWidget(line)
         hbox.addWidget(self.stack)
 
+    def _build_screen(self, screen):
+        widget = create_screen(screen, self)
+        self.screen_widgets[screen] = widget
+        self.stack.addWidget(widget)
+
+        widget.navigate.connect(self.go_to)
+
     def build_screens(self):
         self.screen_widgets = {}
 
-        for screen in Screens:
-            widget = create_screen(screen, self)
-            self.screen_widgets[screen] = widget
-            self.stack.addWidget(widget)
+        for screen in EAGER_SCREENS:
+            self._build_screen(screen)
+
+    def get_screen(self, screen: Screens):
+        if screen not in self.screen_widgets:
+            self._build_screen(screen)
+
+        return self.screen_widgets[screen]
 
     def wire_navigation(self):
         for screen in self.screen_widgets.values():
@@ -75,7 +87,7 @@ class MainWindow(QMainWindow):
         if self.current_screen is not None:
             self.current_screen.on_leave()
 
-        widget = self.screen_widgets[screen]
+        widget = self.get_screen(screen)
         self.stack.setCurrentWidget(widget)
 
         self.setWindowTitle(widget.title_text)
