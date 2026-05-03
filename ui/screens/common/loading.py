@@ -18,6 +18,7 @@ class CommonLoadingScreen(BaseScreen):
         loading_font = QFont()
         loading_font.setPointSize(32)
 
+        # TODO spinner becomes invisible in light mode!
         self.spinner = Spinner(
             self, size=40, color=QColor(255, 255, 255), interval_ms=20
         )
