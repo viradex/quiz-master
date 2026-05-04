@@ -11,14 +11,14 @@ class SidebarDev(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.setup_ui()
+        self._setup_component()
 
-    def setup_ui(self):
+    def _setup_component(self):
         title = QLabel("Screen Switcher\n(Dev)")
         title.setStyleSheet("font-size: 24px;" "font-weight: bold;")
 
         self.btn_grid = QGridLayout()
-        self.setup_ui_nav()
+        self._setup_ui_nav()
 
         vbox = QVBoxLayout()
         vbox.addWidget(title)
@@ -28,7 +28,7 @@ class SidebarDev(QWidget):
 
         self.setLayout(vbox)
 
-    def setup_ui_nav(self):
+    def _setup_ui_nav(self):
         row = 0
         categories = {
             "CLIENT": [
