@@ -39,30 +39,10 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.question_lbl.setFont(question_font)
 
         colors = {
-            "red": {
-                "normal": "#C94F4F",
-                "hover": "#D45B5B",
-                "click": "#A94444",
-                "text": "white",
-            },
-            "blue": {
-                "normal": "#4A78C2",
-                "hover": "#5A86CC",
-                "click": "#3D66A8",
-                "text": "white",
-            },
-            "yellow": {
-                "normal": "#B89B2E",
-                "hover": "#C5A83A",
-                "click": "#9E8424",
-                "text": "white",
-            },
-            "green": {
-                "normal": "#3E9B68",
-                "hover": "#4AA977",
-                "click": "#347F56",
-                "text": "white",
-            },
+            "red": {"normal": "#C94F4F", "hover": "#D45B5B", "click": "#A94444"},
+            "blue": {"normal": "#4A78C2", "hover": "#5A86CC", "click": "#3D66A8"},
+            "yellow": {"normal": "#B89B2E", "hover": "#C5A83A", "click": "#9E8424"},
+            "green": {"normal": "#3E9B68", "hover": "#4AA977", "click": "#347F56"},
         }
 
         button_grid = QGridLayout()
@@ -85,7 +65,6 @@ class ClientMultiQuestionScreen(BaseScreen):
                         colors[color_name]["normal"],
                         colors[color_name]["hover"],
                         colors[color_name]["click"],
-                        colors[color_name]["text"],
                     ),
                     row,
                     column,
@@ -114,7 +93,7 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def _create_answer_button(self, text, bg, hover_bg, click_bg, text_color):
+    def _create_answer_button(self, text, bg, hover_bg, click_bg):
         button = QPushButton(text)
         button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
         button.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -122,14 +101,11 @@ class ClientMultiQuestionScreen(BaseScreen):
         button.setStyleSheet(f"""
             QPushButton {{
                 background-color: {bg};
-                color: {text_color};
-
+                color: white;
                 border: none;
                 border-radius: 14px;
-
                 padding: 18px;
                 margin: 6px;
-
                 font-size: 22px;
                 font-weight: 600;
             }}
