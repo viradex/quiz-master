@@ -1,16 +1,23 @@
+from pathlib import Path
+
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget, QFrame
 from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtCore import QUrl
 
 from core.screen_ids import Screens
 from core.screen_factory import create_screen
 from core.screen_config import EAGER_SCREENS
 
 from ui.components.sidebar_dev import SidebarDev
+from ui.components.music_player import BackgroundMusicPlayer
 
 # TODO change width from 1220 to 1000 when removing dev navbar
 DEV_NAVBAR_WIDTH = 220
 WIDTH = 1000 + DEV_NAVBAR_WIDTH
 HEIGHT = 600
+
+# TODO make it a ui setting
+PLAY_BACKGROUND_MUSIC = False
 
 
 class MainWindow(QMainWindow):
@@ -21,6 +28,9 @@ class MainWindow(QMainWindow):
 
         self.setMinimumSize(WIDTH, HEIGHT)
         self.center_window()
+
+        if PLAY_BACKGROUND_MUSIC:
+            self.setup_music()
 
         self.setup_ui()
         self.build_screens()
@@ -35,6 +45,13 @@ class MainWindow(QMainWindow):
         y = (screen.height() - HEIGHT) // 2
 
         self.move(x, y)
+
+    def setup_music(self):
+        base_dir = Path(__file__).resolve().parent
+        music_path = base_dir / "assets" / "audio" / "background.wav"
+        url = QUrl.fromLocalFile(music_path.as_posix())
+
+        self.background_music_player = BackgroundMusicPlayer(url)
 
     def setup_ui(self):
         self.central = QWidget()
