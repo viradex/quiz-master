@@ -52,6 +52,7 @@ class MainWindow(QMainWindow):
         url = QUrl.fromLocalFile(music_path.as_posix())
 
         self.background_music_player = BackgroundMusicPlayer(url)
+        self.background_music_player.start()
 
     def setup_ui(self):
         self.central = QWidget()
