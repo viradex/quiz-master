@@ -18,9 +18,16 @@ class BackgroundMusicPlayer(QWidget):
         self.audio_output.setVolume(0.5)
         self.player.mediaStatusChanged.connect(self._handle_loop)
 
-        self.player.play()
-
     def _handle_loop(self, status):
         if status == QMediaPlayer.MediaStatus.EndOfMedia:
             self.player.setPosition(0)
             self.player.play()
+
+    def start(self):
+        self.player.play()
+
+    def pause(self):
+        self.player.pause()
+
+    def stop_and_reset(self):
+        self.player.stop()
