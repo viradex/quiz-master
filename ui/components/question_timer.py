@@ -2,6 +2,8 @@ import math
 from PyQt6.QtWidgets import QLabel, QWidget, QProgressBar, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 
+from ui.utils.color import darken_color
+
 FPS = 60
 INTERVAL = 1000 // FPS
 
@@ -56,6 +58,21 @@ class QuestionTimer(QWidget):
         self.timer.setTimerType(Qt.TimerType.PreciseTimer)
         self.timer.timeout.connect(self._on_elapsed)
 
+    def _style_progress_bar(self, bg):
+        return f"""
+            QProgressBar {{
+                background-color: #1e1e1e;
+                border: 2px solid #333;
+                border-radius: 8px;
+                padding: 3px;
+            }}
+
+            QProgressBar::chunk {{
+                background-color: {bg};
+                border-radius: 4px;
+            }}
+        """
+
     def _update_ui(self):
         remaining = max(0, self.total_ms - self.elapsed_ms)
         percent = (remaining / self.total_ms) * 100
@@ -64,28 +81,17 @@ class QuestionTimer(QWidget):
         seconds = math.ceil((self.total_ms - self.elapsed_ms) / 1000)
         self.timer_count.setText(str(seconds))
 
-        if percent >= 60:
-            color = "#22c55e"
-        elif percent >= 30:
-            color = "#f59e0b"
-        else:
-            color = "#eb3434"
+        if not self.locked:
+            if percent >= 60:
+                color = "#22c55e"
+            elif percent >= 30:
+                color = "#f59e0b"
+            else:
+                color = "#eb3434"
 
-        if color != self.current_color:
-            self.current_color = color
-            self.timer_bar.setStyleSheet(f"""
-                QProgressBar {{
-                    background-color: #1e1e1e;
-                    border: 2px solid #333;
-                    border-radius: 8px;
-                    padding: 3px;
-                }}
-
-                QProgressBar::chunk {{
-                    background-color: {color};
-                    border-radius: 4px;
-                }}
-            """)
+            if color != self.current_color:
+                self.current_color = color
+                self.timer_bar.setStyleSheet(self._style_progress_bar(color))
 
     def _on_elapsed(self):
         self.elapsed_ms += INTERVAL
@@ -101,10 +107,20 @@ class QuestionTimer(QWidget):
     def reset(self, total_ms):
         self.total_ms = total_ms
         self.elapsed_ms = 0
+        self.locked = False
         self.current_color = None
+
+    def lock(self):
+        self.locked = True
+
+        dim = darken_color("#22c55e", 0.7)
+        self.timer_bar.setStyleSheet(self._style_progress_bar(dim))
 
     def on_enter(self):
         self.elapsed_ms = 0
+        self.locked = False
+        self.current_color = None
+
         self._update_ui()
         self.timer.start(INTERVAL)
 
