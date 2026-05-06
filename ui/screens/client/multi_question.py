@@ -5,14 +5,16 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QGridLayout,
     QSizePolicy,
+    QGraphicsDropShadowEffect,
 )
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtCore import Qt
 
 from core.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.question_timer import QuestionTimer
-from ui.components.dialogs import not_implemented
+from ui.components.dialogs import confirm_warning
+from ui.utils.color import darken_color
 
 
 class ClientMultiQuestionScreen(BaseScreen):
@@ -35,6 +37,7 @@ class ClientMultiQuestionScreen(BaseScreen):
         question_font.setBold(True)
 
         self.question_lbl = QLabel("What is the largest planet in the solar system?")
+        self.question_lbl.setWordWrap(True)
         self.question_lbl.setFont(question_font)
 
         colors = {
@@ -50,6 +53,8 @@ class ClientMultiQuestionScreen(BaseScreen):
         button_grid.setRowStretch(0, 1)
         button_grid.setRowStretch(1, 1)
 
+        self.answer_buttons = []
+
         # TODO only for prototype
         index = 0
         answers = ["Jupiter", "Saturn", "Uranus", "Neptune"]
@@ -58,16 +63,14 @@ class ClientMultiQuestionScreen(BaseScreen):
             for column in range(2):
                 color_name = list(colors.keys())[index]
 
-                button_grid.addWidget(
-                    self._create_answer_button(
-                        answers[index],
-                        colors[color_name]["normal"],
-                        colors[color_name]["hover"],
-                        colors[color_name]["click"],
-                    ),
-                    row,
-                    column,
+                btn = self._create_answer_button(
+                    answers[index],
+                    colors[color_name]["normal"],
+                    colors[color_name]["hover"],
+                    colors[color_name]["click"],
                 )
+                self.answer_buttons.append(btn)
+                button_grid.addWidget(btn, row, column)
 
                 index += 1
 
@@ -82,8 +85,7 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         leave_btn = QPushButton("Leave")
         leave_btn.setFixedWidth(60)
-        # TODO add confirmation dialog
-        leave_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        leave_btn.clicked.connect(self.return_to_menu)
         leave_btn.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
@@ -123,16 +125,11 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def _create_answer_button(self, text, bg, hover_bg, click_bg):
-        button = QPushButton(text)
-        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        button.setCursor(Qt.CursorShape.PointingHandCursor)
-        button.clicked.connect(lambda: not_implemented(self))
-
-        button.setStyleSheet(f"""
+    def _style_button(self, bg, hover, click, text):
+        return f"""
             QPushButton {{
                 background-color: {bg};
-                color: white;
+                color: {text};
                 border: none;
                 border-radius: 14px;
                 padding: 18px;
@@ -142,20 +139,69 @@ class ClientMultiQuestionScreen(BaseScreen):
             }}
 
             QPushButton:hover {{
-                background-color: {hover_bg};
+                background-color: {hover};
             }}
 
             QPushButton:pressed {{
-                background-color: {click_bg};
-                padding-top: 20px;
-                padding-bottom: 16px;
+                background-color: {click};
             }}
-        """)
+        """
+
+    def _create_answer_button(self, text, bg, hover_bg, click_bg):
+        button = QPushButton(text)
+        button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+
+        glow = QGraphicsDropShadowEffect()
+        glow.setBlurRadius(0)
+        glow.setOffset(0, 0)
+        glow.setColor(QColor(bg))
+        button.setGraphicsEffect(glow)
+
+        button._base = (bg, hover_bg, click_bg, "white")
+        button._glow = glow
+
+        button.setStyleSheet(self._style_button(*button._base))
+        button.clicked.connect(lambda _, b=button: self.on_answer_clicked(b))
 
         return button
+
+    def on_answer_clicked(self, selected):
+        self.question_timer.lock()
+
+        for btn in self.answer_buttons:
+            btn.setEnabled(False)
+            btn._glow.setBlurRadius(0)
+
+            bg, hover, click, text = btn._base
+
+            if btn is selected:
+                btn.setStyleSheet(self._style_button(bg, hover, click, text))
+                btn._glow.setBlurRadius(25)
+            else:
+                dim = darken_color(bg, 0.8)
+                btn.setStyleSheet(self._style_button(dim, dim, dim, "white"))
+
+    def reset_buttons(self):
+        for btn in self.answer_buttons:
+            bg, hover, click, text = btn._base
+
+            btn.setEnabled(True)
+            btn.setStyleSheet(self._style_button(bg, hover, click, text))
+            btn._glow.setBlurRadius(0)
+
+    def return_to_menu(self):
+        confirm = confirm_warning(
+            self,
+            "Confirm Returning",
+            "Are you sure you want to leave the game and return to menu?",
+        )
+        if confirm:
+            self.go_to(Screens.COMMON_MENU)
 
     def on_enter(self):
         self.question_timer.on_enter()
 
     def on_leave(self):
         self.question_timer.on_leave()
+        self.reset_buttons()
