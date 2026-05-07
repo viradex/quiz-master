@@ -177,7 +177,7 @@ class ClientMultiQuestionScreen(BaseScreen):
 
             if btn is selected:
                 btn.setStyleSheet(self._style_button(bg, hover, click, text))
-                btn._glow.setBlurRadius(25)
+                btn._glow.setBlurRadius(80)
             else:
                 dim = darken_color(bg, 0.8)
                 btn.setStyleSheet(self._style_button(dim, dim, dim, "white"))
