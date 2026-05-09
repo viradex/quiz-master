@@ -30,31 +30,15 @@ class SidebarDev(QWidget):
 
     def _setup_ui_nav(self):
         row = 0
-        categories = {
-            "CLIENT": [
-                Screens.CLIENT_SETUP,
-                Screens.CLIENT_LOBBY,
-                Screens.CLIENT_MULTI_QUESTION,
-                Screens.CLIENT_MULTI_RESULT,
-                Screens.CLIENT_ENTRY_QUESTION,
-                Screens.CLIENT_ENTRY_RESULT,
-                Screens.CLIENT_FINAL_RESULT,
-                Screens.CLIENT_DISCONNECT,
-            ],
-            "SERVER": [
-                Screens.SERVER_LOBBY,
-                Screens.SERVER_MULTI_QUESTION,
-                Screens.SERVER_MULTI_RESULT,
-                Screens.SERVER_ENTRY_QUESTION,
-                Screens.SERVER_ENTRY_RESULT,
-                Screens.SERVER_FINAL_RESULT,
-            ],
-            "COMMON": [
-                Screens.COMMON_MENU,
-                Screens.COMMON_LOADING,
-                Screens.COMMON_ABOUT,
-            ],
-        }
+        categories = {}
+
+        for screen in Screens:
+            category = screen.name.split("_")[0]
+
+            if category not in categories:
+                categories[category] = []
+
+            categories[category].append(screen)
 
         for category, screens in categories.items():
             heading = QLabel(category.title())

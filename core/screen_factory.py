@@ -18,6 +18,7 @@ from ui.screens.server.final_result import ServerFinalResultScreen
 
 from ui.screens.common.menu import CommonMenuScreen
 from ui.screens.common.loading import CommonLoadingScreen
+from ui.screens.common.countdown import CommonCountdownScreen
 from ui.screens.common.about import CommonAboutScreen
 
 SCREENS = {
@@ -40,6 +41,7 @@ SCREENS = {
     # Common
     Screens.COMMON_MENU: CommonMenuScreen,
     Screens.COMMON_LOADING: CommonLoadingScreen,
+    Screens.COMMON_COUNTDOWN: CommonCountdownScreen,
     Screens.COMMON_ABOUT: CommonAboutScreen,
 }
 
