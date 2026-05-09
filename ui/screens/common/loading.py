@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QWidget
 from PyQt6.QtGui import QFont, QColor
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt
 
 from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
