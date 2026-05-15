@@ -57,7 +57,7 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         # TODO only for prototype
         index = 0
-        answers = ["Jupiter", "Saturn", "Uranus", "Neptune"]
+        answers = ["Harshil", "Saturn", "Uranus", "Neptune"]
 
         for row in range(2):
             for column in range(2):
@@ -177,7 +177,7 @@ class ClientMultiQuestionScreen(BaseScreen):
 
             if btn is selected:
                 btn.setStyleSheet(self._style_button(bg, hover, click, text))
-                btn._glow.setBlurRadius(80)
+                btn._glow.setBlurRadius(50)
             else:
                 dim = darken_color(bg, 0.8)
                 btn.setStyleSheet(self._style_button(dim, dim, dim, "white"))

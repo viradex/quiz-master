@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget, QFrame
+from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtCore import QUrl
 
@@ -64,7 +64,7 @@ class MainWindow(QMainWindow):
         self.sidebar.setFixedWidth(DEV_NAVBAR_WIDTH)
 
         # TODO remove when dev navbar removed
-        line = QFrame()
+        line = QWidget()
         line.setStyleSheet("background-color: #444;")
         line.setFixedWidth(1)
 
