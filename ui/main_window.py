@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget
 from PyQt6.QtGui import QGuiApplication
 from PyQt6.QtCore import QUrl
