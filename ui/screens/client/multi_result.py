@@ -18,7 +18,7 @@ class ClientMultiResultScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self):
-        self.result_lbl = QLabel("Correct! +1000")
+        self.result_lbl = QLabel("Correct! +978")
         self.result_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
@@ -70,7 +70,7 @@ class ClientMultiResultScreen(BaseScreen):
         self.nickname.setStyleSheet("font-size: 14px;" "color: #6E6E6E;")
 
         time_stat = self._make_stat_card("Time", "12.4s")
-        score_stat = self._make_stat_card("Total Score", "1000")
+        score_stat = self._make_stat_card("Total Score", "978")
         rank_stat = self._make_stat_card("Leaderboard Position", "#3")
 
         leave_btn = LeaveButton("Leave")
