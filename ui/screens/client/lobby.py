@@ -1,6 +1,5 @@
 from PyQt6.QtWidgets import (
     QLabel,
-    QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -13,6 +12,7 @@ from PyQt6.QtCore import Qt
 from core.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
+from ui.components.button import LeaveButton
 
 
 class ClientLobbyScreen(BaseScreen):
@@ -109,16 +109,8 @@ class ClientLobbyScreen(BaseScreen):
         status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_lbl.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
-        self.leave_btn = QPushButton("Leave Lobby")
-        self.leave_btn.setFixedSize(120, 35)
-        self.leave_btn.setProperty("class", "small_btn")
-        self.leave_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
-
-        self.setStyleSheet("""
-            QPushButton[class="small_btn"] {
-                font-size: 12px;
-            }
-""")
+        leave_btn = LeaveButton("Leave Lobby", btn_width=100)
+        leave_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         vbox_right = QVBoxLayout()
 
@@ -132,7 +124,7 @@ class ClientLobbyScreen(BaseScreen):
         vbox_right.addWidget(status_lbl)
 
         vbox_right.addStretch(5)
-        vbox_right.addWidget(self.leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        vbox_right.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         hbox = QHBoxLayout()
         hbox.setContentsMargins(100, 50, 20, 20)
