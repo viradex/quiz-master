@@ -16,7 +16,7 @@ WIDTH = 1000 + DEV_NAVBAR_WIDTH
 HEIGHT = 600
 
 # TODO make it a ui setting
-PLAY_BACKGROUND_MUSIC = False
+PLAY_BACKGROUND_MUSIC = True
 
 
 class MainWindow(QMainWindow):

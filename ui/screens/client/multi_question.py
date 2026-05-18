@@ -1,6 +1,9 @@
-from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QHBoxLayout
+import random
+from pathlib import Path
+from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout
+from PyQt6.QtMultimedia import QSoundEffect
 from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QUrl
 
 from core.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
@@ -16,6 +19,7 @@ class ClientMultiQuestionScreen(BaseScreen):
         super().__init__(parent)
 
         self.setup_ui()
+        self.setup_sound()
 
     def setup_ui(self):
         question_num_font = QFont()
@@ -70,7 +74,28 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         self.setLayout(hbox)
 
+    def setup_sound(self):
+        base_dir = Path(__file__).resolve().parent.parent.parent
+        sound_path = base_dir / "assets" / "audio" / "answer_button.wav"
+        sound_rare_path = base_dir / "assets" / "audio" / "answer_button_rare.wav"
+
+        sound_url = QUrl.fromLocalFile(sound_path.as_posix())
+        sound_rare_url = QUrl.fromLocalFile(sound_rare_path.as_posix())
+
+        self.normal_sound = QSoundEffect()
+        self.normal_sound.setSource(sound_url)
+        self.normal_sound.setVolume(0.5)
+
+        self.rare_sound = QSoundEffect()
+        self.rare_sound.setSource(sound_rare_url)
+        self.rare_sound.setVolume(0.5)
+
     def on_answer_select(self, index):
+        if random.randint(1, 5) == 1:
+            self.rare_sound.play()
+        else:
+            self.normal_sound.play()
+
         self.question_timer.lock()
 
     def on_enter(self):
