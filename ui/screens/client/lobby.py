@@ -90,7 +90,6 @@ class ClientLobbyScreen(BaseScreen):
 
         vbox_left.addSpacing(10)
         vbox_left.addWidget(self.lobby_table, stretch=1)
-
         vbox_left.addStretch()
         vbox_left.addSpacing(20)
         vbox_left.addWidget(self.connection_details)
@@ -113,22 +112,17 @@ class ClientLobbyScreen(BaseScreen):
         leave_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         vbox_right = QVBoxLayout()
-
         vbox_right.addStretch(1)
         vbox_right.addWidget(waiting_lbl)
-
         vbox_right.addSpacing(30)
         vbox_right.addWidget(self.spinner, alignment=Qt.AlignmentFlag.AlignCenter)
-
         vbox_right.addSpacing(10)
         vbox_right.addWidget(status_lbl)
-
         vbox_right.addStretch(5)
         vbox_right.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         hbox = QHBoxLayout()
         hbox.setContentsMargins(100, 50, 20, 20)
-
         hbox.addLayout(vbox_left, stretch=1)
         hbox.addLayout(vbox_right, stretch=2)
 
