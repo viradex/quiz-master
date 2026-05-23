@@ -37,7 +37,7 @@ class ClientDisconnectScreen(BaseScreen):
 
         self.return_btn = QPushButton("Return to Menu")
         self.return_btn.setFixedSize(275, 60)
-        self.return_btn.clicked.connect(lambda: self.go_to(Screens.CLIENT_SETUP))
+        self.return_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
         self.return_btn.setStyleSheet("font-size: 22px;")
 
         vbox = QVBoxLayout()
