@@ -64,32 +64,25 @@ class CommonMenuScreen(BaseScreen):
             QPushButton[class="small_btn"] {
                 font-size: 12px;
             }
-""")
+        """)
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(40, 40, 40, 40)
 
         vbox.addStretch(1)
         vbox.addWidget(title)
-
         vbox.addSpacing(10)
         vbox.addWidget(desc)
-
         vbox.addSpacing(20)
         vbox.addWidget(self.client_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-
         vbox.addSpacing(5)
         vbox.addWidget(self.server_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-
         vbox.addSpacing(30)
         vbox.addWidget(self.manage_quizzes_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-
         vbox.addSpacing(5)
         vbox.addWidget(self.settings_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-
         vbox.addSpacing(30)
         vbox.addLayout(small_btn_hbox)
-
         vbox.addStretch(2)
 
         self.setLayout(vbox)

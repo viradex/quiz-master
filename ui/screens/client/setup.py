@@ -93,13 +93,10 @@ class ClientSetupScreen(BaseScreen):
 
         vbox.addStretch(1)
         vbox.addWidget(title)
-
         vbox.addSpacing(50)
         vbox.addLayout(form_layout)
-
         vbox.addSpacing(40)
         vbox.addLayout(btn_hbox)
-
         vbox.addStretch(2)
 
         self.setLayout(vbox)
