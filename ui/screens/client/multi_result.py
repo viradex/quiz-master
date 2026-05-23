@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import QLabel, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout
 from PyQt6.QtCore import Qt
 
 from core.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
-from ui.components.card import Card
+from ui.components.card import Card, make_stat_card
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.button import LeaveButton
 from ui.utils.color import darken_color
@@ -23,7 +23,7 @@ class ClientMultiResultScreen(BaseScreen):
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
         self.result_lbl.setStyleSheet(
-            "font-size: 38px;" "font-weight: 600;" "color: #3DDC84;"
+            "font-size: 42px;" "font-weight: 600;" "color: #3DDC84;"
         )
 
         self.your_answer = QLabel("Your answer: Jupiter")
@@ -69,9 +69,9 @@ class ClientMultiResultScreen(BaseScreen):
         self.nickname = QLabel("Nickname: Viradex")
         self.nickname.setStyleSheet("font-size: 14px;" "color: #6E6E6E;")
 
-        time_stat = self._make_stat_card("Time", "12.4s")
-        score_stat = self._make_stat_card("Total Score", "978")
-        rank_stat = self._make_stat_card("Leaderboard Position", "#3")
+        time_stat = make_stat_card("Time", "12.4s")
+        score_stat = make_stat_card("Total Score", "978")
+        rank_stat = make_stat_card("Leaderboard Position", "#3")
 
         leave_btn = LeaveButton("Leave")
         leave_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
@@ -104,23 +104,3 @@ class ClientMultiResultScreen(BaseScreen):
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
-
-    def _make_stat_card(self, title, value):
-        container = QWidget()
-        container.setStyleSheet("background-color: #272727;" "border-radius: 10px;")
-
-        layout = QVBoxLayout(container)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(2)
-
-        title_lbl = QLabel(title)
-        title_lbl.setStyleSheet("font-size: 14px;" "color: #8A8A8A;")
-
-        value_lbl = QLabel(value)
-        value_lbl.setStyleSheet("font-size: 24px;" "font-weight: 600;")
-
-        layout.addWidget(title_lbl)
-        layout.addSpacing(5)
-        layout.addWidget(value_lbl)
-
-        return container

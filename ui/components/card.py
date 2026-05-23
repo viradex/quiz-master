@@ -1,5 +1,14 @@
-from PyQt6.QtWidgets import QFrame, QGraphicsDropShadowEffect
-from PyQt6.QtGui import QColor
+from pathlib import Path
+from PyQt6.QtWidgets import (
+    QWidget,
+    QLabel,
+    QFrame,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGraphicsDropShadowEffect,
+)
+from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtCore import Qt
 
 
 class Card(QFrame):
@@ -62,3 +71,57 @@ class Card(QFrame):
         if isinstance(value, QColor):
             return value
         return QColor(value)
+
+
+# TODO change to class
+# class has broken styling
+def make_stat_card(title, value, icon_path: Path | None = None):
+    container = QWidget()
+    container.setStyleSheet("""
+        background-color: #2B2B2B;
+        border-radius: 10px;
+    """)
+
+    layout = QVBoxLayout(container)
+    layout.setContentsMargins(12, 10, 12, 10)
+    layout.setSpacing(2)
+
+    header_layout = QHBoxLayout()
+    header_layout.setSpacing(6)
+
+    if icon_path is not None:
+        icon_path = Path(icon_path)
+
+        icon_lbl = QLabel()
+
+        pixmap = QPixmap(str(icon_path))
+        pixmap = pixmap.scaled(
+            16,
+            16,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
+
+        icon_lbl.setPixmap(pixmap)
+        header_layout.addWidget(icon_lbl)
+
+    title_lbl = QLabel(title)
+    title_lbl.setStyleSheet("""
+        font-size: 14px;
+        color: #8A8A8A;
+    """)
+
+    header_layout.addWidget(title_lbl)
+    header_layout.addStretch(1)
+
+    value_lbl = QLabel(value)
+    value_lbl.setStyleSheet("""
+        font-size: 24px;
+        font-weight: 600;
+    """)
+
+    layout.addLayout(header_layout)
+    layout.addSpacing(5)
+    layout.addWidget(value_lbl)
+
+    return container
