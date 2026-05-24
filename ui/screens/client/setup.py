@@ -67,26 +67,17 @@ class ClientSetupScreen(BaseScreen):
 
         self.menu_btn = QPushButton("Return to Menu")
         self.menu_btn.setFixedSize(200, 45)
-        self.menu_btn.setProperty("class", "medium_btn")
+        self.menu_btn.setStyleSheet("font-size: 16px;")
         self.menu_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         self.join_btn = QPushButton("Join")
         self.join_btn.setFixedSize(240, 50)
-        self.join_btn.setProperty("class", "large_btn")
+        self.join_btn.setStyleSheet("font-size: 22px;")
         self.join_btn.clicked.connect(lambda: self.go_to(Screens.CLIENT_LOBBY))
 
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(self.menu_btn, alignment=Qt.AlignmentFlag.AlignLeft)
         btn_hbox.addWidget(self.join_btn, alignment=Qt.AlignmentFlag.AlignRight)
-
-        self.setStyleSheet("""
-            QPushButton[class="large_btn"] {
-                font-size: 22px;
-            }
-            QPushButton[class="medium_btn"] {
-                font-size: 16px;
-            }
-""")
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(150, 0, 150, 0)

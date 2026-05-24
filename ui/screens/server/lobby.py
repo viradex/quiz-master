@@ -14,6 +14,7 @@ from PyQt6.QtCore import Qt
 from core.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.button import LeaveButton
+from ui.components.combobox import SearchableCombobox
 
 
 class ServerLobbyScreen(BaseScreen):
@@ -100,11 +101,49 @@ class ServerLobbyScreen(BaseScreen):
 
         ### RIGHT SIDE ###
         ip_font = QFont()
-        ip_font.setPointSize(28)
+        ip_font.setPointSize(32)
 
-        self.ip_address = QLabel("IP: 192.168.0.2")
+        self.ip_address = QLabel("Server IP: 192.168.0.2")
         self.ip_address.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ip_address.setFont(ip_font)
+
+        combobox_font = QFont()
+        combobox_font.setPointSize(14)
+
+        select_lbl = QLabel("Select quiz:")
+        select_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        select_lbl.setFont(combobox_font)
+
+        # TODO for prototype only
+        quizzes = [
+            "Maths Quiz",
+            "Science Quiz",
+            "General Knowledge Quiz",
+            "History Quiz",
+            "Geography Quiz",
+            "Sports Quiz",
+            "Music Quiz",
+            "Movie Trivia Quiz",
+            "Technology Quiz",
+            "Literature Quiz",
+        ]
+        quizzes.sort()
+
+        self.quiz_combo = SearchableCombobox(quizzes)
+        self.quiz_combo.setFont(combobox_font)
+        self.quiz_combo.setCurrentIndex(-1)
+        self.quiz_combo.setFixedWidth(400)
+
+        self.start_btn = QPushButton("Start Game")
+        self.start_btn.setFixedSize(220, 60)
+        self.start_btn.setStyleSheet("font-size: 22px;")
+        self.start_btn.clicked.connect(
+            lambda: self.go_to(Screens.SERVER_MULTI_QUESTION)
+        )
+
+        self.status = QLabel("(select quiz to start)")
+        self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
         leave_btn = LeaveButton("Close Lobby", btn_width=100)
         leave_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
@@ -112,12 +151,19 @@ class ServerLobbyScreen(BaseScreen):
         vbox_right = QVBoxLayout()
 
         vbox_right.addWidget(self.ip_address)
+        vbox_right.addStretch(3)
+        vbox_right.addWidget(select_lbl)
+        vbox_right.addSpacing(10)
+        vbox_right.addWidget(self.quiz_combo, alignment=Qt.AlignmentFlag.AlignCenter)
         vbox_right.addStretch(1)
+        vbox_right.addWidget(self.start_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+        vbox_right.addSpacing(2)
+        vbox_right.addWidget(self.status)
         vbox_right.addStretch(5)
         vbox_right.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         hbox = QHBoxLayout()
-        hbox.setContentsMargins(100, 50, 20, 20)
+        hbox.setContentsMargins(50, 50, 20, 20)
         hbox.addLayout(vbox_left, stretch=1)
         hbox.addLayout(vbox_right, stretch=2)
 
