@@ -137,9 +137,7 @@ class ServerLobbyScreen(BaseScreen):
         self.start_btn = QPushButton("Start Game")
         self.start_btn.setFixedSize(220, 60)
         self.start_btn.setStyleSheet("font-size: 22px;")
-        self.start_btn.clicked.connect(
-            lambda: self.go_to(Screens.SERVER_MULTI_QUESTION)
-        )
+        self.start_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_COUNTDOWN))
 
         self.status = QLabel("(select quiz to start)")
         self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)

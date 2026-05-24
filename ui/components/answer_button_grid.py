@@ -25,7 +25,7 @@ class AnswerButtonGrid(QWidget):
 
     answer_select = pyqtSignal(int)
 
-    def __init__(self, answers, mode="live", parent=None):
+    def __init__(self, answers, mode, parent=None):
         super().__init__(parent)
         self.answers = answers
         self.mode = mode
@@ -61,12 +61,21 @@ class AnswerButtonGrid(QWidget):
         for i, answer in enumerate(self.answers):
             color_name = color_names[i]
 
-            btn = self._create_answer_button(
-                answer,
-                self.BUTTON_COLORS[color_name]["normal"],
-                self.BUTTON_COLORS[color_name]["hover"],
-                self.BUTTON_COLORS[color_name]["click"],
-            )
+            if self.mode == "server":
+                btn = self._create_answer_button(
+                    answer,
+                    self.BUTTON_COLORS[color_name]["normal"],
+                    self.BUTTON_COLORS[color_name]["normal"],
+                    self.BUTTON_COLORS[color_name]["normal"],
+                )
+            else:
+                btn = self._create_answer_button(
+                    answer,
+                    self.BUTTON_COLORS[color_name]["normal"],
+                    self.BUTTON_COLORS[color_name]["hover"],
+                    self.BUTTON_COLORS[color_name]["click"],
+                )
+
             self.answer_buttons.append(btn)
 
         return self.answer_buttons
@@ -122,8 +131,8 @@ class AnswerButtonGrid(QWidget):
             btn._glow.setBlurRadius(0)
 
     def _style_button(self, bg, hover, click, text):
-        font_size = 22 if self.mode == "live" else 20
-        margin = 6 if self.mode == "live" else 3
+        font_size = 20 if self.mode == "result" else 22
+        margin = 3 if self.mode == "result" else 6
 
         return f"""
             QPushButton {{

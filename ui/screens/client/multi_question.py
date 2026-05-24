@@ -61,7 +61,6 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         right_vbox = QVBoxLayout()
         right_vbox.addWidget(leave_btn, 0, alignment=Qt.AlignmentFlag.AlignRight)
-        right_vbox.addStretch()
         right_vbox.addWidget(
             self.question_timer, 1, alignment=Qt.AlignmentFlag.AlignRight
         )
