@@ -44,7 +44,7 @@ class QuestionTimer(QWidget):
                 font-weight: bold;
                 font-size: 14px;
             }
-""")
+        """)
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.timer_bar, 1, alignment=Qt.AlignmentFlag.AlignHCenter)
