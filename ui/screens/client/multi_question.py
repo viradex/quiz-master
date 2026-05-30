@@ -11,6 +11,9 @@ from ui.components.question_timer import QuestionTimer
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.button import LeaveButton
 
+# For playing answer btn sound effect
+PLAY_SOUND_EFFECT = False
+
 
 class ClientMultiQuestionScreen(BaseScreen):
     title_text = "Quiz Master – Question 1 / 2"
@@ -36,9 +39,8 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.question_lbl.setWordWrap(True)
         self.question_lbl.setFont(question_font)
 
-        self.answer_button_grid = AnswerButtonGrid(
-            ["Jupiter", "Saturn", "Uranus", "Neptune"], "live"
-        )
+        self.answer_button_grid = AnswerButtonGrid("live")
+        self.answer_button_grid.set_answers(["Jupiter", "Saturn", "Uranus", "Neptune"])
         self.answer_button_grid.answer_select.connect(
             lambda index: self.on_answer_select(index)
         )
@@ -74,6 +76,9 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.setLayout(hbox)
 
     def setup_sound(self):
+        if not PLAY_SOUND_EFFECT:
+            return
+
         base_dir = Path(__file__).resolve().parent.parent.parent
         sound_path = base_dir / "assets" / "audio" / "answer_button.wav"
         sound_rare_path = base_dir / "assets" / "audio" / "answer_button_rare.wav"
@@ -90,10 +95,11 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.rare_sound.setVolume(0.5)
 
     def on_answer_select(self, index):
-        if random.randint(1, 5) == 1:
-            self.rare_sound.play()
-        else:
-            self.normal_sound.play()
+        if PLAY_SOUND_EFFECT:
+            if random.randint(1, 5) == 1:
+                self.rare_sound.play()
+            else:
+                self.normal_sound.play()
 
         self.question_timer.lock()
 

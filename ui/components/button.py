@@ -7,13 +7,11 @@ from ui.components.dialogs import confirm_warning
 class LeaveButton(QPushButton):
     confirm_leave = pyqtSignal()
 
-    def __init__(self, btn_text, btn_width=60, do_confirm=True, margin_left=0):
+    def __init__(self, btn_text, btn_width=60, do_confirm=True):
         super().__init__()
         self.btn_text = btn_text
         self.btn_width = btn_width
         self.do_confirm = do_confirm
-        # TODO make tuple for all margins
-        self.margin_left = margin_left
 
         self.setup_component()
         self.clicked.connect(self.on_clicked)
@@ -31,7 +29,6 @@ class LeaveButton(QPushButton):
                 border-radius: 8px;
                 padding: 6px;
                 font-size: 12px;
-                margin-left: {self.margin_left}px
             }}
 
             QPushButton#leave:hover {{

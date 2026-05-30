@@ -25,20 +25,22 @@ class AnswerButtonGrid(QWidget):
 
     answer_select = pyqtSignal(int)
 
-    def __init__(self, answers, mode, parent=None):
+    def __init__(self, mode, parent=None):
         super().__init__(parent)
-        self.answers = answers
         self.mode = mode
 
+        self.answers = []
         self.correct_index = None
         self.selected_index = None
 
-        if not 2 <= len(self.answers) <= 4:
-            raise ValueError(
-                f"Expected between 2-4 answers, received {len(self.answers)}"
-            )
-
         self.setup_grid()
+        self.setup_buttons()
+
+    def set_answers(self, answers):
+        if not 2 <= len(answers) <= 4:
+            raise ValueError(f"Expected between 2-4 answers, received {len(answers)}")
+
+        self.answers = answers
         self.setup_buttons()
 
     def setup_grid(self):

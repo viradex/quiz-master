@@ -20,7 +20,7 @@ class SearchableCombobox(QComboBox):
 
         self.setCompleter(completer)
 
-    def set_all_items(self, items):
+    def set_items(self, items):
         self.items = items
 
         self.clear()
