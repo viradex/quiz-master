@@ -24,33 +24,6 @@ class ServerMultiQuestionScreen(BaseScreen):
         self.question_num = QLabel("Question 1 / 2")
         self.question_num.setFont(question_num_font)
 
-        question_font = QFont()
-        question_font.setPointSize(26)
-        question_font.setBold(True)
-
-        self.question_lbl = QLabel("What is the largest planet in the solar system?")
-        self.question_lbl.setWordWrap(True)
-        self.question_lbl.setFont(question_font)
-
-        self.answer_button_grid = AnswerButtonGrid(
-            ["Jupiter", "Saturn", "Uranus", "Neptune"], "server"
-        )
-
-        skip_btn = LeaveButton(
-            "Skip Question", btn_width=120, do_confirm=False, margin_left=10
-        )
-        skip_btn.confirm_leave.connect(lambda: self.go_to(Screens.SERVER_MULTI_RESULT))
-
-        vbox_left = QVBoxLayout()
-        vbox_left.addSpacing(20)
-        vbox_left.addWidget(self.question_num)
-        vbox_left.addSpacing(10)
-        vbox_left.addWidget(self.question_lbl)
-        vbox_left.addSpacing(20)
-        vbox_left.addWidget(self.answer_button_grid, 1)
-        vbox_left.addSpacing(5)
-        vbox_left.addWidget(skip_btn)
-
         self.submitted = QLabel("3")
         self.submitted.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.submitted.setFixedSize(40, 40)
@@ -59,10 +32,39 @@ class ServerMultiQuestionScreen(BaseScreen):
                 background-color: #2a2a2a;
                 border-radius: 20px;
                 color: white;
-                font-size: 18px;
-                font-weight: bold;
+                font-size: 20px;
+                font-weight: 600;
             }
         """)
+
+        question_info_hbox = QHBoxLayout()
+        question_info_hbox.addWidget(self.question_num)
+        question_info_hbox.addWidget(
+            self.submitted, alignment=Qt.AlignmentFlag.AlignRight
+        )
+
+        question_font = QFont()
+        question_font.setPointSize(26)
+        question_font.setBold(True)
+
+        self.question_lbl = QLabel("What is the largest planet in the solar system?")
+        self.question_lbl.setWordWrap(True)
+        self.question_lbl.setFont(question_font)
+
+        self.answer_button_grid = AnswerButtonGrid("server")
+        self.answer_button_grid.set_answers(["Jupiter", "Saturn", "Uranus", "Neptune"])
+
+        vbox_left = QVBoxLayout()
+        vbox_left.addSpacing(20)
+        vbox_left.addLayout(question_info_hbox)
+        vbox_left.addSpacing(10)
+        vbox_left.addWidget(self.question_lbl)
+        vbox_left.addSpacing(20)
+        vbox_left.addWidget(self.answer_button_grid, 1)
+        vbox_left.addSpacing(20)
+
+        skip_btn = LeaveButton("Skip", btn_width=50, do_confirm=False)
+        skip_btn.confirm_leave.connect(lambda: self.go_to(Screens.SERVER_MULTI_RESULT))
 
         self.question_timer = QuestionTimer(total_ms=20000, parent=self)
         # TODO use this for calling func when timer ends
@@ -70,7 +72,7 @@ class ServerMultiQuestionScreen(BaseScreen):
 
         right_vbox = QVBoxLayout()
         right_vbox.addSpacing(5)
-        right_vbox.addWidget(self.submitted, alignment=Qt.AlignmentFlag.AlignCenter)
+        right_vbox.addWidget(skip_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         right_vbox.addWidget(
             self.question_timer, 1, alignment=Qt.AlignmentFlag.AlignRight
         )

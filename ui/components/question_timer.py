@@ -15,7 +15,7 @@ class QuestionTimer(QWidget):
     def __init__(self, total_ms, parent=None):
         super().__init__(parent)
 
-        if total_ms <= 0:
+        if total_ms < 0:
             raise ValueError(
                 f"total_ms must be a number greater than zero (received {total_ms})"
             )

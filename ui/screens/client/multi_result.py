@@ -43,9 +43,8 @@ class ClientMultiResultScreen(BaseScreen):
         self.correct_answer = QLabel("Correct answer: Jupiter")
         self.correct_answer.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
-        self.answer_button_grid = AnswerButtonGrid(
-            ["Jupiter", "Saturn", "Uranus", "Neptune"], "result"
-        )
+        self.answer_button_grid = AnswerButtonGrid("result")
+        self.answer_button_grid.set_answers(["Jupiter", "Saturn", "Uranus", "Neptune"])
         self.answer_button_grid.set_result(0, 0)
         self.answer_button_grid.setMaximumHeight(500)
 
