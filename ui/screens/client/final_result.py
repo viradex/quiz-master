@@ -134,24 +134,11 @@ class ClientFinalResultScreen(BaseScreen):
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Fixed)
 
-        self.leaderboard_table.setColumnWidth(0, 70)
-        self.leaderboard_table.setColumnWidth(2, 70)
+        self.leaderboard_table.setColumnWidth(0, 80)
+        self.leaderboard_table.setColumnWidth(2, 80)
 
         # TODO round table corners
         self.leaderboard_table.setStyleSheet("""
-            QTableWidget {
-                background-color: #252525;
-                border: none;
-                border-radius: 12px;
-            }
-
-            QHeaderView::section {
-                background-color: #2F2F2F;
-                border: none;
-                padding: 6px;
-                font-weight: 600;
-            }
-
             QTableWidget::item {
                 padding: 6px;
             }
@@ -187,10 +174,10 @@ class ClientFinalResultScreen(BaseScreen):
 
         self._update_table_height()
 
-        self.return_btn = QPushButton("Return to Menu")
-        self.return_btn.setFixedSize(140, 40)
-        self.return_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
-        self.return_btn.setStyleSheet("font-size: 14px;")
+        return_btn = QPushButton("Return to Menu")
+        return_btn.setFixedSize(140, 40)
+        return_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        return_btn.setStyleSheet("font-size: 14px;")
 
         right_card = Card()
         right_layout = QVBoxLayout(right_card)
@@ -202,7 +189,7 @@ class ClientFinalResultScreen(BaseScreen):
         right_layout.addSpacing(15)
         right_layout.addWidget(self.leaderboard_table)
         right_layout.addSpacing(20)
-        right_layout.addWidget(self.return_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        right_layout.addWidget(return_btn, alignment=Qt.AlignmentFlag.AlignRight)
         right_layout.addStretch(1)
 
         hbox = QHBoxLayout()
