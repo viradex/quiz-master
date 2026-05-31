@@ -52,7 +52,6 @@ class ClientFinalResultScreen(BaseScreen):
         self.nickname = QLabel("Viradex • Podium finish")
         self.nickname.setStyleSheet("font-size: 16px;" "color: #6E6E6E;")
 
-        # TODO use actual icons
         base_dir = Path(__file__).resolve().parent.parent.parent
         icons_path = base_dir / "assets" / "icons"
 
@@ -104,7 +103,7 @@ class ClientFinalResultScreen(BaseScreen):
         leaderboard_heading.setStyleSheet("font-size: 24px;" "font-weight: 600;")
 
         leaderboard_desc = QLabel("Nearby rankings")
-        leaderboard_desc.setStyleSheet("font-size: 12px;" "color: #6E6E6E;")
+        leaderboard_desc.setStyleSheet("font-size: 14px;" "color: #6E6E6E;")
 
         table_font = QFont()
         table_font.setPointSize(12)
@@ -147,7 +146,7 @@ class ClientFinalResultScreen(BaseScreen):
         # TODO only for prototype
         data = [
             ("#2", "ItsJakePlayz21", "1835"),
-            ("#3", "Viradex (you)", "1000"),
+            ("#3", "Viradex (you)", "978"),
             ("#4", "TrexGamerGirl", "972"),
         ]
 

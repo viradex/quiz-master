@@ -5,7 +5,6 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QHBoxLayout,
-    QGridLayout,
     QAbstractItemView,
     QHeaderView,
 )
@@ -30,18 +29,18 @@ class ServerMultiResultScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self):
-        header = QLabel("Question Results")
-        header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        heading = QLabel("Question Results")
+        heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
-        header.setStyleSheet("font-size: 42px;" "font-weight: 600;" "color: #3DDC84;")
+        heading.setStyleSheet("font-size: 36px;" "font-weight: 600;" "color: #3DDC84;")
 
         self.accuracy = QLabel("Question 1 / 2 • 60% answered correctly")
         self.accuracy.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.accuracy.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
         header_layout = QVBoxLayout()
-        header_layout.addWidget(header)
+        header_layout.addWidget(heading)
         header_layout.addSpacing(2)
         header_layout.addWidget(self.accuracy)
         header_layout.addSpacing(20)
@@ -113,7 +112,6 @@ class ServerMultiResultScreen(BaseScreen):
         self.leaderboard_table.setColumnWidth(2, 80)
         self.leaderboard_table.setColumnWidth(3, 80)
 
-        # TODO round table corners
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {
                 padding: 6px;
