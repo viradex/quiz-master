@@ -61,7 +61,7 @@ class ServerMultiQuestionScreen(BaseScreen):
         vbox_left.addWidget(self.question_lbl)
         vbox_left.addSpacing(20)
         vbox_left.addWidget(self.answer_button_grid, 1)
-        vbox_left.addSpacing(20)
+        vbox_left.addSpacing(10)
 
         skip_btn = LeaveButton("Skip", btn_width=50, do_confirm=False)
         skip_btn.confirm_leave.connect(lambda: self.go_to(Screens.SERVER_MULTI_RESULT))

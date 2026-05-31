@@ -8,13 +8,13 @@ class AnswerBarChart(QWidget):
         super().__init__()
 
         self.colors = [
-            "#ff4d4d",
-            "#4da6ff",
-            "#ffd24d",
-            "#4dff88",
+            "#C94F4F",
+            "#4A78C2",
+            "#B89B2E",
+            "#3E9B68",
         ]
 
-        self.setMinimumSize(500, 300)
+        # self.setMinimumSize(500, 300)
 
     def set_values(self, values):
         if len(values) > 4:
@@ -43,18 +43,17 @@ class AnswerBarChart(QWidget):
 
         max_value = max(self.values)
 
-        # Increased spacing
         gap = 24
         num_bars = len(self.values)
 
         bar_width = (chart_width - gap * (num_bars - 1)) / num_bars
 
-        # Fonts
-        label_font = QFont("Segoe UI", 14)
-        label_font.setBold(True)
+        label_font = QFont()
+        label_font.setPointSize(12)
 
-        value_font = QFont("Segoe UI", 12)
-        value_font.setBold(False)
+        value_font = QFont()
+        value_font.setPointSize(14)
+        value_font.setBold(True)
 
         for i, (value, label, color) in enumerate(
             zip(self.values, self.labels, self.colors)
