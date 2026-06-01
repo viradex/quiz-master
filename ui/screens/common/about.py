@@ -97,7 +97,6 @@ class AboutTab(QWidget):
 
     def keyPressEvent(self, event):
         key = event.text().lower()
-        print(key)
         if not key:
             return
 
@@ -114,28 +113,19 @@ class AboutTab(QWidget):
 
     def on_sequence_completion(self):
         if self.showing_license:
-            self.license_area.setPlainText(r"""The Council has heard your question.
+            self.license_area.setPlainText(
+                r"""Why are you being so one-sided? All animals are equal!
 
-After extensive review of available data, anecdotal evidence, and testimony, the Council of Cats (CoC) has reached a conclusion.
+...
 
-Findings:
-
-- Cats demonstrate superior efficiency in doing absolutely nothing.
-- Gravity experiments involving cats consistently result in dramatic landings, which the Council classifies as "aesthetic advantage".
-- Barking has been statistically correlated with unnecessary noise.
-
-Therefore, by unanimous and unquestionable decision:
-
-Cats are, in fact, better than dogs.
-
-This finding has been accepted by the CoC.
-No appeals will be accepted.
+But some animals are more equal than others.
 
 |\---/|
 | o_o |
  \_^_/
- 
-Meow.""")
+
+Meow."""
+            )
             self.showing_license = False
         else:
             self.license_area.setPlainText(self.license_text)
