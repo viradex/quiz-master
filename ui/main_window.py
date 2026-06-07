@@ -1,6 +1,13 @@
+import ctypes
+import sys
 from pathlib import Path
-from PyQt6.QtWidgets import QMainWindow, QWidget, QHBoxLayout, QStackedWidget
-from PyQt6.QtGui import QGuiApplication
+from PyQt6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QHBoxLayout,
+    QStackedWidget,
+)
+from PyQt6.QtGui import QGuiApplication, QIcon
 from PyQt6.QtCore import QUrl
 
 from core.screen_ids import Screens
@@ -32,6 +39,7 @@ class MainWindow(QMainWindow):
             self.setup_music()
 
         self.setup_ui()
+        self.setup_icon()
         self.build_screens()
         self.wire_navigation()
 
@@ -52,6 +60,18 @@ class MainWindow(QMainWindow):
 
         self.background_music_player = BackgroundMusicPlayer(url)
         self.background_music_player.start()
+
+    def setup_icon(self):
+        base_dir = Path(__file__).resolve().parent
+        icon_path = base_dir / "assets" / "icons" / "icon.ico"
+
+        self.setWindowIcon(QIcon(icon_path.as_posix()))
+
+        # Set taskbar icon on Windows
+        # if sys.platform == "win32":
+        #     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+        #         "com.viradex.quizmaster"
+        #     )
 
     def setup_ui(self):
         self.central = QWidget()

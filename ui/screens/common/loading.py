@@ -34,7 +34,7 @@ class CommonLoadingScreen(BaseScreen):
         hbox_container = QWidget()
         hbox_container.setLayout(hbox_loading)
 
-        self.status_lbl = QLabel("Preparing game...")
+        self.status_lbl = QLabel("Starting server...")
         self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_lbl.setStyleSheet("color: #888888;" "font-size: 22px;")
 
