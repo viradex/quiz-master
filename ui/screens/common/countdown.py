@@ -61,7 +61,7 @@ class CommonCountdownScreen(BaseScreen):
         if remaining <= 0:
             self.timer.stop()
 
-    def on_enter(self):
+    def on_enter(self, payload=None):
         self.elapsed_ms = 0
         self.countdown_lbl.setText(str(self.total_ms // 1000))
         self.progress_bar.setValue(10000)

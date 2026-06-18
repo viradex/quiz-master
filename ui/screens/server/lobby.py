@@ -11,7 +11,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.button import LeaveButton
 from ui.components.combobox import SearchableCombobox

@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QColor
 from PyQt6.QtCore import Qt, pyqtSignal
 
-from ui.utils.color import darken_color
+from utils.color import darken_color
 
 
 # TODO code is all-over-the-place, and it's obvious that it

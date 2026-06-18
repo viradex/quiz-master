@@ -5,6 +5,8 @@ from PyQt6.QtCore import Qt
 from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
 
+DEFAULT_LOADING_TEXT = "Loading..."
+
 
 class CommonLoadingScreen(BaseScreen):
     title_text = "Quiz Master – Loading..."
@@ -23,7 +25,7 @@ class CommonLoadingScreen(BaseScreen):
             self, size=40, color=QColor(255, 255, 255), interval_ms=20
         )
 
-        self.loading_lbl = QLabel("Loading...")
+        self.loading_lbl = QLabel(DEFAULT_LOADING_TEXT)
         self.loading_lbl.setFont(loading_font)
 
         hbox_loading = QHBoxLayout()
@@ -34,7 +36,7 @@ class CommonLoadingScreen(BaseScreen):
         hbox_container = QWidget()
         hbox_container.setLayout(hbox_loading)
 
-        self.status_lbl = QLabel("Starting server...")
+        self.status_lbl = QLabel()
         self.status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status_lbl.setStyleSheet("color: #888888;" "font-size: 22px;")
 
@@ -46,8 +48,19 @@ class CommonLoadingScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def on_enter(self):
+    def set_loading_status(self, loading, status):
+        self.loading_lbl.setText(loading)
+        self.status_lbl.setText(status)
+
+    def on_enter(self, payload=None):
         self.spinner.start()
+
+        if payload:
+            self.set_loading_status(
+                payload.get("loading_msg", DEFAULT_LOADING_TEXT),
+                payload.get("status_msg", ""),
+            )
 
     def on_leave(self):
         self.spinner.stop()
+        self.set_loading_status(DEFAULT_LOADING_TEXT, "")

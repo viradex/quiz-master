@@ -1,4 +1,4 @@
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 
 EAGER_SCREENS = {
     Screens.CLIENT_SETUP,

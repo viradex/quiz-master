@@ -2,7 +2,7 @@ import math
 from PyQt6.QtWidgets import QLabel, QWidget, QProgressBar, QVBoxLayout
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 
-from ui.utils.color import darken_color
+from utils.color import darken_color
 
 FPS = 60
 INTERVAL = 1000 // FPS
@@ -116,7 +116,7 @@ class QuestionTimer(QWidget):
         dim = darken_color("#22c55e", 0.8)
         self.timer_bar.setStyleSheet(self._style_progress_bar(dim))
 
-    def on_enter(self):
+    def on_enter(self, payload=None):
         self.elapsed_ms = 0
         self.locked = False
         self.current_color = None

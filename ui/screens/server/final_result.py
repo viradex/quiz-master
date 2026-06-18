@@ -13,10 +13,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QBrush, QColor
 
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, make_stat_card
-from ui.utils.color import darken_color
+from utils.color import darken_color
 
 
 class ServerFinalResultScreen(BaseScreen):
