@@ -5,7 +5,7 @@ from PyQt6.QtMultimedia import QSoundEffect
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, QUrl
 
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.question_timer import QuestionTimer
 from ui.components.answer_button_grid import AnswerButtonGrid
@@ -103,7 +103,7 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         self.question_timer.lock()
 
-    def on_enter(self):
+    def on_enter(self, payload=None):
         self.question_timer.on_enter()
 
     def on_leave(self):

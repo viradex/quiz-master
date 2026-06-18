@@ -2,7 +2,7 @@
 from PyQt6.QtWidgets import QWidget, QGridLayout, QVBoxLayout, QPushButton, QLabel
 from PyQt6.QtCore import pyqtSignal
 
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 
 
 class SidebarDev(QWidget):
@@ -10,6 +10,10 @@ class SidebarDev(QWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        print(
+            "WARNING!\nThe sidebar dev feature should not be used anymore - use logic-based switching instead! Using the sidebar to switch directly to screens can lead to bugs!"
+        )
 
         self._setup_component()
 

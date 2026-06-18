@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
 from ui.components.button import LeaveButton
@@ -128,7 +128,7 @@ class ClientLobbyScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def on_enter(self):
+    def on_enter(self, payload=None):
         self.spinner.start()
 
     def on_leave(self):

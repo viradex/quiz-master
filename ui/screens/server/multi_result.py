@@ -11,13 +11,13 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QBrush, QColor
 
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.answer_bar_chart import AnswerBarChart
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.card import Card
 from ui.components.button import LeaveButton
-from ui.utils.color import darken_color
+from utils.color import darken_color
 
 
 class ServerMultiResultScreen(BaseScreen):

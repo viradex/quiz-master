@@ -3,7 +3,7 @@ from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
 
 from ui.screens.base_screen import BaseScreen
-from core.screen_ids import Screens
+from core.app.screen_ids import Screens
 
 
 class ClientDisconnectScreen(BaseScreen):
