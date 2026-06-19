@@ -13,11 +13,9 @@ from PyQt6.QtCore import QUrl
 from core.app.screen_ids import Screens
 from core.app.screen_factory import create_screen_bundle
 from core.app.screen_config import EAGER_SCREENS
+from core.config.constants import WINDOW_WIDTH, WINDOW_HEIGHT
 
 from ui.components.music_player import BackgroundMusicPlayer
-
-WIDTH = 1000
-HEIGHT = 600
 
 # TODO make it a ui setting
 PLAY_BACKGROUND_MUSIC = False
@@ -31,7 +29,7 @@ class MainWindow(QMainWindow):
         self.current_screen = None
         self.current_logic = None
 
-        self.setMinimumSize(WIDTH, HEIGHT)
+        self.setMinimumSize(WINDOW_WIDTH, WINDOW_HEIGHT)
         self.center_window()
 
         if PLAY_BACKGROUND_MUSIC:
@@ -46,8 +44,8 @@ class MainWindow(QMainWindow):
     def center_window(self):
         screen = QGuiApplication.primaryScreen().availableGeometry()
 
-        x = (screen.width() - WIDTH) // 2
-        y = (screen.height() - HEIGHT) // 2
+        x = (screen.width() - WINDOW_WIDTH) // 2
+        y = (screen.height() - WINDOW_HEIGHT) // 2
 
         self.move(x, y)
 

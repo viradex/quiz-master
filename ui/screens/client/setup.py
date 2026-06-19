@@ -46,6 +46,7 @@ class ClientSetupScreen(BaseScreen):
 
         self.ip_input = QLineEdit(DEFAULT_IP_ADDRESS)
         self.ip_input.setFont(form_font)
+        self.ip_input.returnPressed.connect(self.on_submit)
 
         self.port_lbl = QLabel(f"Connecting to port: {PORT}")
         self.port_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
@@ -59,6 +60,7 @@ class ClientSetupScreen(BaseScreen):
 
         self.nickname_input = QLineEdit()
         self.nickname_input.setFont(form_font)
+        self.nickname_input.returnPressed.connect(self.on_submit)
 
         form_layout = QFormLayout()
         form_layout.setHorizontalSpacing(25)
@@ -134,7 +136,7 @@ class ClientSetupScreen(BaseScreen):
             QMessageBox.critical(
                 self,
                 "Nickname Too Long",
-                f"The nickname exceeds the maximum length of {MAX_NICKNAME_LENGTH} characters. Please try again.",
+                f"The nickname exceeds the maximum length of {MAX_NICKNAME_LENGTH} characters. Please shorten it and try again.",
             )
             return False
 
