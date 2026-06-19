@@ -4,6 +4,7 @@ import secrets
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.services.network.transport import JSONSocket
+from core.services.network.types import ClientMessageType, ServerMessageType
 from utils.networking import is_valid_ipv4
 from core.config.constants import PORT, MAX_NICKNAME_LENGTH
 
@@ -12,6 +13,9 @@ class GameClient(QObject):
     connecting = pyqtSignal()
     connection_fail = pyqtSignal()
     connection_success = pyqtSignal()
+
+    disconnecting = pyqtSignal(str)
+    kick = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -46,14 +50,20 @@ class GameClient(QObject):
         self.player_id = player_token
 
     def connect(self):
-        if self.server_ip is None or self.nickname is None:
+        if not self.server_ip or not self.nickname:
             raise ValueError("Server IP and nickname must have values")
 
         self.connecting.emit()
         print(f"Connecting to {self.server_ip}:{self.port}...")
 
-        thread = threading.Thread(target=self._connect_and_listen, daemon=True)
-        thread.start()
+        threading.Thread(target=self._connect_and_listen, daemon=True).start()
+
+    def disconnect_client(self, msg=""):
+        self.jsock.send(
+            {"type": ClientMessageType.LEAVE_LOBBY, "data": {"reason": msg}}
+        )
+        self.disconnecting.emit(msg)
+        self.client_socket.close()
 
     def listen(self):
         while True:
@@ -62,8 +72,7 @@ class GameClient(QObject):
             if msg is None:
                 break
 
-            # TODO temp
-            print(msg)
+            self.handle_message(msg)
 
     def _connect_and_listen(self):
         try:
@@ -79,5 +88,46 @@ class GameClient(QObject):
         print("Connected successfully!")
         self.is_connected = True
 
-        self.connection_success.emit()
+        self.send_join()
         self.listen()
+
+    def handle_message(self, msg):
+        if "type" not in msg:
+            print(f"'type' key was not present in message, received: {msg}")
+            self.disconnect_client(
+                "Message type was not present in client-server network communication message"
+            )
+            return
+
+        msg_type = msg["type"]
+
+        if msg_type == ServerMessageType.CONNECTION_SUCCESSFUL:
+            self.handle_connection_successful(msg)
+        elif msg_type == ServerMessageType.KICK:
+            self.handle_kick(msg)
+        else:
+            print(f"The msg_type {msg_type} did not match any types (client)")
+            self.disconnect_client("Unknown message type")
+            return
+
+    def handle_connection_successful(self, msg):
+        self.connection_success.emit()
+
+    def handle_kick(self, msg):
+        try:
+            reason = msg["data"]["reason"]
+        except KeyError:
+            print(f"Invalid data in message, received: {msg}")
+            self.disconnect_client("Invalid data in message")
+            return
+
+        self.kick.emit(reason)
+        self.client_socket.close()
+
+    def send_join(self):
+        self.jsock.send(
+            {
+                "type": ClientMessageType.JOIN_LOBBY,
+                "data": {"player_id": self.player_id, "nickname": self.nickname},
+            }
+        )

@@ -2,7 +2,7 @@ import sys
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from ui.main_window import MainWindow
-from core.services.services import Services
+from core.services.app_context import Services
 
 
 def run():
