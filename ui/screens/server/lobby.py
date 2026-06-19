@@ -8,20 +8,29 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QAbstractItemView,
 )
-from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.button import LeaveButton
 from ui.components.combobox import SearchableCombobox
+from ui.components.spinner import Spinner
+
+from utils.networking import get_ip_address
+from ui.components.dialogs import confirm_warning
+from core.config.constants import MAX_PLAYERS
 
 
 class ServerLobbyScreen(BaseScreen):
     title_text = "Quiz Master – Lobby"
 
+    close_server = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.players = 0
 
         self.setup_ui()
 
@@ -34,8 +43,23 @@ class ServerLobbyScreen(BaseScreen):
         title = QLabel("Lobby")
         title.setFont(title_font)
 
-        self.total_players = QLabel("Players: 5 / 16")
+        self.total_players = QLabel(f"Players: {self.players} / {MAX_PLAYERS}")
         self.total_players.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
+
+        self.spinner = Spinner(
+            self, size=20, color=QColor(255, 255, 255), interval_ms=20
+        )
+
+        loading_font = QFont()
+        loading_font.setPointSize(12)
+
+        loading_lbl = QLabel("Waiting for players...")
+        loading_lbl.setFont(loading_font)
+
+        hbox_loading = QHBoxLayout()
+        hbox_loading.addWidget(self.spinner)
+        hbox_loading.addSpacing(2)
+        hbox_loading.addWidget(loading_lbl)
 
         table_font = QFont()
         table_font.setPointSize(12)
@@ -70,29 +94,11 @@ class ServerLobbyScreen(BaseScreen):
         player_btn_hbox.addWidget(self.get_info_btn)
         player_btn_hbox.addWidget(self.kick_btn)
 
-        # TODO only for prototype
-        data = [
-            "Viradex",
-            "Peptalker101",
-            "TrexGamerGirl",
-            "Scyrist",
-            "ItsJakePlayz21",
-        ]
-
-        for value in data:
-            row = self.lobby_table.rowCount()
-            self.lobby_table.insertRow(row)
-
-            item = QTableWidgetItem(value)
-            item.setTextAlignment(
-                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
-            )
-
-            self.lobby_table.setItem(row, 0, item)
-
         vbox_left = QVBoxLayout()
         vbox_left.addWidget(title)
         vbox_left.addWidget(self.total_players)
+        vbox_left.addSpacing(10)
+        vbox_left.addLayout(hbox_loading)
         vbox_left.addSpacing(10)
         vbox_left.addWidget(self.lobby_table, stretch=1)
         vbox_left.addSpacing(2)
@@ -103,7 +109,7 @@ class ServerLobbyScreen(BaseScreen):
         ip_font = QFont()
         ip_font.setPointSize(32)
 
-        self.ip_address = QLabel("Server IP: 192.168.0.2")
+        self.ip_address = QLabel(f"Server IP: {get_ip_address()}")
         self.ip_address.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ip_address.setFont(ip_font)
 
@@ -137,14 +143,15 @@ class ServerLobbyScreen(BaseScreen):
         self.start_btn = QPushButton("Start Game")
         self.start_btn.setFixedSize(220, 60)
         self.start_btn.setStyleSheet("font-size: 22px;")
+        self.start_btn.setDisabled(True)
         self.start_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_COUNTDOWN))
 
         self.status = QLabel("(select quiz to start)")
         self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
-        leave_btn = LeaveButton("Close Lobby", btn_width=100)
-        leave_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        leave_btn = LeaveButton("Close Lobby", btn_width=100, do_confirm=False)
+        leave_btn.clicked.connect(self.close_lobby)
 
         vbox_right = QVBoxLayout()
 
@@ -161,13 +168,13 @@ class ServerLobbyScreen(BaseScreen):
         vbox_right.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         hbox = QHBoxLayout()
-        hbox.setContentsMargins(50, 50, 20, 20)
+        hbox.setContentsMargins(50, 40, 20, 20)
         hbox.addLayout(vbox_left, stretch=1)
         hbox.addLayout(vbox_right, stretch=2)
 
         self.setLayout(hbox)
 
-    def get_selected_player(self):
+    def _get_selected_player(self):
         selected_items = self.lobby_table.selectedItems()
         if selected_items:
             item = selected_items[0]
@@ -175,11 +182,31 @@ class ServerLobbyScreen(BaseScreen):
         else:
             return None
 
+    def _add_player(self, player):
+        row = self.lobby_table.rowCount()
+        self.lobby_table.insertRow(row)
+
+        item = QTableWidgetItem(player)
+        item.setTextAlignment(
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
+        )
+
+        self.lobby_table.setItem(row, 0, item)
+
+    def _remove_player(self, player):
+        for row in range(self.lobby_table.rowCount()):
+            item = self.lobby_table.item(row, 0)
+            if item and item.text() == player:
+                self.lobby_table.removeRow(row)
+                return True
+
+        return False
+
     def on_get_info(self):
         # TODO dummy function, should call logic
-        selected_player = self.get_selected_player()
+        selected_player = self._get_selected_player()
         if selected_player is None:
-            QMessageBox.warning(self, "No Player Selected", "Please select a player")
+            QMessageBox.warning(self, "No Player Selected", "Please select a player.")
             return
 
         QMessageBox.information(
@@ -190,9 +217,9 @@ class ServerLobbyScreen(BaseScreen):
 
     def on_kick_player(self):
         # TODO dummy function, should call logic
-        selected_player = self.get_selected_player()
+        selected_player = self._get_selected_player()
         if selected_player is None:
-            QMessageBox.warning(self, "No Player Selected", "Please select a player")
+            QMessageBox.warning(self, "No Player Selected", "Please select a player.")
             return
 
         confirm = QMessageBox.question(
@@ -205,8 +232,39 @@ class ServerLobbyScreen(BaseScreen):
         if confirm == QMessageBox.StandardButton.No:
             return
 
-        for row in range(self.lobby_table.rowCount()):
-            item = self.lobby_table.item(row, 0)
-            if item and item.text() == selected_player:
-                self.lobby_table.removeRow(row)
-                break
+        self.remove_player_lobby(selected_player)
+
+    def update_player_count(self, amount):
+        self.players += amount
+        self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
+
+    def add_player_lobby(self, player):
+        self.update_player_count(1)
+        self._add_player(player)
+
+    def remove_player_lobby(self, player):
+        self.update_player_count(-1)
+        self._remove_player(player)
+
+    def reset_lobby(self):
+        self.players = 0
+
+        self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
+        self.lobby_table.clearContents()
+
+    def close_lobby(self):
+        confirm = confirm_warning(
+            self,
+            "Confirm Closing",
+            "Are you sure you want to close the server and return to menu? All players in the server will be disconnected.",
+        )
+
+        if confirm:
+            self.close_server.emit()
+
+    def on_enter(self, payload=None):
+        self.spinner.start()
+
+    def on_leave(self):
+        self.spinner.stop()
+        self.reset_lobby()

@@ -32,7 +32,7 @@ class JSONSocket:
         try:
             return json.loads(line.decode())
         except json.JSONDecodeError:
-            return None
+            return ValueError("Invalid JSON received")
 
     def set_socket(self, sock):
         self.sock = sock

@@ -97,6 +97,10 @@ class ClientSetupScreen(BaseScreen):
 
         self.setLayout(vbox)
 
+    def clear_fields(self):
+        self.ip_input.setText(DEFAULT_IP_ADDRESS)
+        self.nickname_input.setText("")
+
     def on_submit(self):
         data = {
             "ip": self.ip_input.text().strip(),
@@ -109,9 +113,6 @@ class ClientSetupScreen(BaseScreen):
         self.submitted.emit(data)
 
     def on_return(self):
-        self.ip_input.setText(DEFAULT_IP_ADDRESS)
-        self.nickname_input.setText("")
-
         self.go_to(Screens.COMMON_MENU)
 
     def validate_data(self):
@@ -148,3 +149,6 @@ class ClientSetupScreen(BaseScreen):
             "Failed to Connect",
             f"Failed to connect to the server. Please verify the IP is correct and try again.",
         )
+
+    def on_leave(self):
+        self.clear_fields()

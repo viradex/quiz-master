@@ -1,6 +1,6 @@
 from ui.screens.common.menu import CommonMenuScreen
 from logic.base_logic import BaseLogic
-from core.services.services import GameServer
+from core.services.app_context import GameServer
 from core.app.screen_ids import Screens
 
 

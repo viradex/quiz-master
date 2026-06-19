@@ -30,7 +30,7 @@ class ClientDisconnectScreen(BaseScreen):
         reason_font = QFont()
         reason_font.setPointSize(16)
 
-        self.reason = QLabel("Reason: Kicked by host")
+        self.reason = QLabel("Reason: Unknown")
         self.reason.setWordWrap(True)
         self.reason.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.reason.setFont(reason_font)
@@ -52,3 +52,11 @@ class ClientDisconnectScreen(BaseScreen):
         vbox.addStretch(1)
 
         self.setLayout(vbox)
+
+    def on_enter(self, payload=None):
+        if payload:
+            reason = payload.get("reason", "Unknown")
+            self.reason.setText(f"Reason: {reason}")
+
+    def on_leave(self):
+        self.reason.setText("Reason: Unknown")
