@@ -57,7 +57,7 @@ class GameClient(QObject):
 
     def listen(self):
         while True:
-            msg = self.jsock.recv(self.client_socket)
+            msg = self.jsock.recv()
 
             if msg is None:
                 break
@@ -77,4 +77,7 @@ class GameClient(QObject):
             return
 
         print("Connected successfully!")
+        self.is_connected = True
+
+        self.connection_success.emit()
         self.listen()

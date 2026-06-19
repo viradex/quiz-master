@@ -1,6 +1,13 @@
-from PyQt6.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
+from PyQt6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QHBoxLayout,
+    QMessageBox,
+)
 from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
@@ -8,6 +15,8 @@ from ui.components.dialogs import not_implemented
 
 
 class CommonMenuScreen(BaseScreen):
+    start_server = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -32,7 +41,7 @@ class CommonMenuScreen(BaseScreen):
         self.client_btn = self._create_button("Join as Client", (275, 60), "large_btn")
         self.client_btn.clicked.connect(lambda: self.go_to(Screens.CLIENT_SETUP))
         self.server_btn = self._create_button("Start as Server", (275, 60), "large_btn")
-        self.server_btn.clicked.connect(lambda: self.go_to(Screens.SERVER_LOBBY))
+        self.server_btn.clicked.connect(self.on_start_server_clicked)
 
         self.manage_quizzes_btn = self._create_button(
             "Manage Quizzes", (275, 45), "medium_btn"
@@ -92,3 +101,14 @@ class CommonMenuScreen(BaseScreen):
         btn.setFixedSize(*size)
         btn.setProperty("class", qss_class)
         return btn
+
+    def on_start_server_clicked(self):
+        self.start_server.emit()
+
+    def show_starting_error(self, reason):
+        if reason == "in_use":
+            QMessageBox.critical(
+                self,
+                "Server Already Running",
+                "Another instance of the server is already running on the device. Only one server instance can be run per device.",
+            )
