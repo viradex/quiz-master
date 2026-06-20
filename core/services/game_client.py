@@ -15,7 +15,9 @@ class GameClient(QObject):
     connection_success = pyqtSignal()
 
     disconnecting = pyqtSignal(str)
+
     kick = pyqtSignal(str)
+    invalid_action = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -30,6 +32,13 @@ class GameClient(QObject):
         self.nickname = None
         self.connection_status = None
         self.last_ping_time = None
+
+        self.handlers = {
+            ServerMessageType.CONNECTION_SUCCESSFUL: self.handle_connection_successful,
+            ServerMessageType.PLAYER_JOINED: self.handle_player_joined,
+            ServerMessageType.KICK: self.handle_kick,
+            ServerMessageType.INVALID_ACTION: self.handle_invalid_action,
+        }
 
     def set_ip(self, ip):
         if not is_valid_ipv4(ip):
@@ -63,11 +72,16 @@ class GameClient(QObject):
             {"type": ClientMessageType.LEAVE_LOBBY, "data": {"reason": msg}}
         )
         self.disconnecting.emit(msg)
+
+        self.is_connected = False
         self.client_socket.close()
 
     def listen(self):
-        while True:
-            msg = self.jsock.recv()
+        while self.is_connected:
+            try:
+                msg = self.jsock.recv()
+            except OSError:
+                break
 
             if msg is None:
                 break
@@ -92,37 +106,36 @@ class GameClient(QObject):
         self.listen()
 
     def handle_message(self, msg):
-        if "type" not in msg:
+        msg_type = msg.get("type")
+
+        if msg_type is None:
             print(f"'type' key was not present in message, received: {msg}")
-            self.disconnect_client(
-                "Message type was not present in client-server network communication message"
-            )
             return
 
-        msg_type = msg["type"]
+        handler = self.handlers.get(msg_type)
 
-        if msg_type == ServerMessageType.CONNECTION_SUCCESSFUL:
-            self.handle_connection_successful(msg)
-        elif msg_type == ServerMessageType.KICK:
-            self.handle_kick(msg)
-        else:
-            print(f"The msg_type {msg_type} did not match any types (client)")
-            self.disconnect_client("Unknown message type")
+        if handler is None:
+            print(f"The msg_type {msg_type} did not match any types")
             return
+
+        handler(msg)
 
     def handle_connection_successful(self, msg):
         self.connection_success.emit()
 
-    def handle_kick(self, msg):
-        try:
-            reason = msg["data"]["reason"]
-        except KeyError:
-            print(f"Invalid data in message, received: {msg}")
-            self.disconnect_client("Invalid data in message")
-            return
+    def handle_player_joined(self, msg):
+        pass
 
+    def handle_kick(self, msg):
+        reason = msg["data"]["reason"]
         self.kick.emit(reason)
+
+        self.is_connected = False
         self.client_socket.close()
+
+    def handle_invalid_action(self, msg):
+        reason = msg["data"]["reason"]
+        self.invalid_action.emit(reason)
 
     def send_join(self):
         self.jsock.send(

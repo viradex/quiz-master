@@ -31,7 +31,6 @@ class ClientSetupLogic(BaseLogic):
 
     def on_connection_success(self):
         self.screen.go_to(Screens.CLIENT_LOBBY)
-        self.screen.clear_fields()
 
     def on_connection_fail(self):
         self.screen.go_to(Screens.CLIENT_SETUP)

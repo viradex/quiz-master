@@ -6,16 +6,22 @@ from PyQt6.QtWidgets import (
     QWidget,
     QHBoxLayout,
     QStackedWidget,
+    QMessageBox,
 )
 from PyQt6.QtGui import QGuiApplication, QIcon
 from PyQt6.QtCore import QUrl
 
 from core.app.screen_ids import Screens
-from core.app.screen_factory import create_screen_bundle
-from core.app.screen_config import EAGER_SCREENS
-from core.config.constants import WINDOW_WIDTH, WINDOW_HEIGHT
-
+from logic.app_controller import AppController
 from ui.components.music_player import BackgroundMusicPlayer
+
+from core.app.screen_factory import create_screen_bundle
+from core.config.constants import (
+    EAGER_SCREENS,
+    STARTUP_SCREEN,
+    WINDOW_WIDTH,
+    WINDOW_HEIGHT,
+)
 
 # TODO make it a ui setting
 PLAY_BACKGROUND_MUSIC = False
@@ -37,9 +43,10 @@ class MainWindow(QMainWindow):
 
         self.setup_ui()
         self.setup_icon()
+        self.setup_app_controller()
         self.build_screens()
 
-        self.go_to(Screens.COMMON_MENU)
+        self.go_to(STARTUP_SCREEN)
 
     def center_window(self):
         screen = QGuiApplication.primaryScreen().availableGeometry()
@@ -77,6 +84,9 @@ class MainWindow(QMainWindow):
 
         hbox = QHBoxLayout(self.central)
         hbox.addWidget(self.stack)
+
+    def setup_app_controller(self):
+        self.app_controller = AppController(self, self.services)
 
     def _build_screen(self, screen):
         widget, logic = create_screen_bundle(screen, self.services, self)
@@ -117,3 +127,6 @@ class MainWindow(QMainWindow):
 
         self.current_screen = widget
         self.current_logic = logic
+
+    def show_warning(self, title, text):
+        QMessageBox.warning(self, title, text)

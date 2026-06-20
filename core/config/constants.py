@@ -1,3 +1,14 @@
+from core.app.screen_ids import Screens
+
+STARTUP_SCREEN = Screens.COMMON_MENU
+EAGER_SCREENS = {
+    Screens.CLIENT_SETUP,
+    Screens.CLIENT_LOBBY,
+    Screens.SERVER_LOBBY,
+    Screens.COMMON_MENU,
+    Screens.COMMON_LOADING,
+}
+
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 600
 

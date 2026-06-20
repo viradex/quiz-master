@@ -3,6 +3,7 @@ import threading
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.services.network.transport import JSONSocket
+from core.services.network.connection import ClientConnection
 from core.services.network.types import ClientMessageType, ServerMessageType
 from core.game.quiz_manager import QuizManager
 from models.player import Player
@@ -24,9 +25,24 @@ class GameServer(QObject):
         self.is_running = False
 
         self.server_socket = None
-        self.connected_clients = {}
+        self.connected_players = {}
         self.quiz_manager = QuizManager()
         self.max_players = MAX_PLAYERS
+
+        self.handlers = {ClientMessageType.JOIN_LOBBY: self.handle_join_lobby}
+
+    def get_id_from_nickname(self, nickname):
+        for player_id, player in self.connected_players.items():
+            if player.nickname == nickname:
+                return player_id
+
+        return None
+
+    def get_player_address(self, player_id):
+        if player_id is not None:
+            return self.connected_players[player_id].connection.addr
+
+        return None
 
     def start(self):
         self.starting.emit()
@@ -38,8 +54,15 @@ class GameServer(QObject):
         if self.server_socket is None:
             raise ValueError("Server cannot be stopped without active socket")
 
-        for player in list(self.connected_clients.values()):
-            player.client_socket.close()
+        self.broadcast(
+            {"type": ServerMessageType.KICK, "data": {"reason": "Server closed"}}
+        )
+
+        for player in list(self.connected_players.values()):
+            try:
+                player.connection.socket.close()
+            except OSError:
+                continue
 
         self.is_running = False
         self.server_socket.close()
@@ -48,7 +71,6 @@ class GameServer(QObject):
         try:
             # TCP protocol
             self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
             self.server_socket.bind((self.host_ip, self.port))
         except OSError as e:
             print("Failed to start!")
@@ -81,35 +103,18 @@ class GameServer(QObject):
             ).start()
 
     def broadcast(self, msg):
-        for client in self.connected_clients.values():
+        for player in self.connected_players.values():
             try:
-                client.jsock.send(msg)
+                player.connection.send(msg)
             except OSError:
                 pass
 
-    def _send_and_disconnect(self, client, jsock, msg):
-        try:
-            jsock.send(msg)
-        finally:
-            client.close()
-
-    def _error(self, client, jsock, reason):
-        self._send_and_disconnect(
-            client, jsock, {"type": ServerMessageType.ERROR, "data": {"reason": reason}}
-        )
-
-    def _kick(self, client, jsock, reason):
-        self._send_and_disconnect(
-            client,
-            jsock,
-            {
-                "type": (ServerMessageType.KICK),
-                "data": {"reason": reason},
-            },
-        )
+    def kick_player(self, player_id, reason):
+        self._kick(self.connected_players[player_id].connection, reason)
 
     def handle_client(self, client, addr):
         jsock = JSONSocket(client)
+        connection = ClientConnection(client, jsock, addr)
 
         try:
             while self.is_running:
@@ -119,62 +124,64 @@ class GameServer(QObject):
                     print(f"Client {addr} disconnected")
                     break
 
-                self.handle_message(client, jsock, msg)
+                self.handle_message(connection, msg)
         except OSError:
             pass
         finally:
-            for player_id, player in list(self.connected_clients.items()):
-                if player.client_socket == client:
-                    del self.connected_clients[player_id]
+            for player_id, player in list(self.connected_players.items()):
+                if player.connection.socket == client:
+                    del self.connected_players[player_id]
                     break
 
             client.close()
 
-    def handle_message(self, client, jsock, msg):
-        if "type" not in msg:
+    def handle_message(self, connection, msg):
+        msg_type = msg.get("type")
+
+        if msg_type is None:
             print(f"'type' key was not present in message, received: {msg}")
-            self._error(
-                client,
-                jsock,
-                "Message type was not present in client-server network communication message",
-            )
+            self._error(connection, "Message type missing")
             return
 
-        msg_type = msg["type"]
+        handler = self.handlers.get(msg_type)
 
-        if msg_type == ClientMessageType.JOIN_LOBBY:
-            self.handle_join_lobby(client, jsock, msg)
-        else:
+        if handler is None:
             print(f"The msg_type {msg_type} did not match any types (server)")
-            self._error(client, jsock, "Unknown message type")
+            self._error(connection, "Unknown message type")
             return
 
-    def handle_join_lobby(self, client, jsock, msg):
+        handler(connection, msg)
+
+    def handle_join_lobby(self, connection, msg):
         try:
             player_id = msg["data"]["player_id"]
             nickname = msg["data"]["nickname"]
         except KeyError:
             print(f"Invalid data in message, received: {msg}")
-            self._error(client, jsock, "Invalid data in message")
+            self._error(connection, "Invalid data in message")
             return
 
-        if len(self.connected_clients) + 1 > self.max_players:
+        if len(self.connected_players) + 1 > self.max_players:
             print(f"Player {nickname} with ID {player_id} cannot connect (server full)")
-            self._kick(client, jsock, "Server is full")
+            self._kick(connection, "Server is full")
             return
 
-        for connected_client in self.connected_clients.values():
+        for connected_client in self.connected_players.values():
             if connected_client.nickname == nickname:
                 print(f"Player with nickname {nickname} already exists")
-                self._kick(
-                    client,
-                    jsock,
-                    f'The nickname "{nickname}" is already in use.',
-                )
+                self._kick(connection, f'The nickname "{nickname}" is already in use.')
                 return
+
             elif connected_client.player_id == player_id:
                 print(f"Player with ID {player_id} already exists")
-                self._kick(client, jsock, "The player ID matches an existing ID")
+                connection.send(
+                    {
+                        "type": ServerMessageType.INVALID_ACTION,
+                        "data": {"reason": "Duplicate ID entered"},
+                    }
+                )
+
+                self._kick(connection, "The player ID matches an existing ID")
                 return
 
         print(f"Player {nickname} with ID {player_id} joined!")
@@ -182,6 +189,28 @@ class GameServer(QObject):
             {"type": ServerMessageType.PLAYER_JOINED, "data": {"nickname": nickname}}
         )
 
-        self.connected_clients[player_id] = Player(player_id, nickname, client, jsock)
-        jsock.send({"type": ServerMessageType.CONNECTION_SUCCESSFUL})
+        self.connected_players[player_id] = Player(player_id, nickname, connection)
+
+        connection.send({"type": ServerMessageType.CONNECTION_SUCCESSFUL})
         self.player_joined.emit(nickname)
+
+    def _send_and_disconnect(self, connection, msg):
+        try:
+            connection.send(msg)
+        finally:
+            connection.socket.close()
+
+    def _error(self, connection, reason):
+        self._send_and_disconnect(
+            connection,
+            {"type": ServerMessageType.ERROR, "data": {"reason": reason}},
+        )
+
+    def _kick(self, connection, reason):
+        self._send_and_disconnect(
+            connection,
+            {
+                "type": (ServerMessageType.KICK),
+                "data": {"reason": reason},
+            },
+        )

@@ -1,9 +1,8 @@
 class Player:
-    def __init__(self, player_id, nickname, socket, jsock):
+    def __init__(self, player_id, nickname, connection):
         self.player_id = player_id
         self.nickname = nickname
-        self.client_socket = socket
-        self.jsock = jsock
+        self.connection = connection
 
         self.score = 0
         self.connected = True
