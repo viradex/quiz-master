@@ -20,7 +20,10 @@ class JSONSocket:
         self._validate_socket()
 
         while b"\n" not in self.buffer:
-            chunk = self.sock.recv(4096)
+            try:
+                chunk = self.sock.recv(4096)
+            except OSError:
+                return None
 
             if not chunk:
                 return None
@@ -32,7 +35,8 @@ class JSONSocket:
         try:
             return json.loads(line.decode())
         except json.JSONDecodeError:
-            return ValueError("Invalid JSON received")
+            self.buffer = b""
+            return None
 
     def set_socket(self, sock):
         self.sock = sock

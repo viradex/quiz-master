@@ -25,6 +25,9 @@ from core.config.constants import MAX_PLAYERS
 class ServerLobbyScreen(BaseScreen):
     title_text = "Quiz Master – Lobby"
 
+    get_player_info = pyqtSignal(str)
+    kick_player = pyqtSignal(str)
+
     close_server = pyqtSignal()
 
     def __init__(self, parent=None):
@@ -209,11 +212,7 @@ class ServerLobbyScreen(BaseScreen):
             QMessageBox.warning(self, "No Player Selected", "Please select a player.")
             return
 
-        QMessageBox.information(
-            self,
-            "Player Info",
-            f"Player name: {selected_player}\n\nIP address: 192.168.1.50\nPort: 54321\nHostname: ARNAV-PC",
-        )
+        self.get_player_info.emit(selected_player)
 
     def on_kick_player(self):
         # TODO dummy function, should call logic
@@ -232,7 +231,7 @@ class ServerLobbyScreen(BaseScreen):
         if confirm == QMessageBox.StandardButton.No:
             return
 
-        self.remove_player_lobby(selected_player)
+        self.kick_player.emit(selected_player)
 
     def update_player_count(self, amount):
         self.players += amount
@@ -250,7 +249,14 @@ class ServerLobbyScreen(BaseScreen):
         self.players = 0
 
         self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
-        self.lobby_table.clearContents()
+        self.lobby_table.setRowCount(0)
+
+    def show_player_info(self, nickname, ip, port, hostname):
+        QMessageBox.information(
+            self,
+            "Player Info",
+            f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
+        )
 
     def close_lobby(self):
         confirm = confirm_warning(

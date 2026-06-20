@@ -1,0 +1,21 @@
+from core.services.app_context import Services
+from core.app.screen_ids import Screens
+
+
+class AppController:
+    def __init__(self, window, services):
+        super().__init__()
+        self.window = window
+        self.services: Services = services
+
+        self.services.client.kick.connect(self.on_kick)
+        self.services.client.invalid_action.connect(self.on_invalid_action)
+
+    def on_kick(self, reason):
+        self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
+
+    def on_invalid_action(self, reason):
+        self.window.show_warning(
+            "Invalid Action",
+            f"The server rejected the request because it is not valid in the current state.\n\nReason: {reason}",
+        )

@@ -28,4 +28,3 @@ class ServerMessageType(StrEnum):
     ERROR = "error"  # generic only, if no other criteria fits
     KICK = "kick"
     INVALID_ACTION = "invalid_action"
-    SHUT_DOWN = "shut_down"
