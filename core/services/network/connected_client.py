@@ -11,12 +11,7 @@ class ConnectedClient:
         self.jsock = JSONSocket(sock)
 
         self.player: Player = player
-
         self.last_seen = time.monotonic()
-
-    @property
-    def player_id(self):
-        return self.player.player_id if self.player else None
 
     @property
     def nickname(self):

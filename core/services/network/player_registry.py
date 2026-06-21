@@ -15,7 +15,7 @@ class PlayerRegistry:
         self.lock = threading.Lock()
 
     def add_player(
-        self, player_id: str, nickname: str, client: ConnectedClient
+        self, nickname: str, client: ConnectedClient
     ) -> tuple[str, Player | None]:
         """
         Add a player to the registry.
@@ -48,13 +48,13 @@ class PlayerRegistry:
                     return ("dupe_nickname", None)
 
                 # ID already exists
-                elif existing.player_id == player_id:
+                elif existing.player_id == client.player_id:
                     return ("dupe_id", None)
 
             # Save player
-            self.players[player_id] = client
+            self.players[client.player_id] = client
 
-        player = Player(player_id, nickname)
+        player = Player(client.player_id, nickname)
         return ("ok", player)
 
     def remove_player(self, player_id: str) -> bool:

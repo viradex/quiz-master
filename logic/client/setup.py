@@ -19,7 +19,6 @@ class ClientSetupLogic(BaseLogic):
     def handle_submit(self, data):
         self.game_client.set_ip(data["ip"])
         self.game_client.set_nickname(data["nickname"])
-        self.game_client.set_random_player_id()
 
         self.game_client.connect()
 

@@ -1,5 +1,6 @@
 import socket
 import threading
+import secrets
 import time
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -47,6 +48,9 @@ class GameServer(QObject):
             return client.socket.getpeername()
 
         return None
+
+    def create_random_player_id(self):
+        return secrets.token_hex(4)
 
     def start(self):
         self.starting.emit()
@@ -158,7 +162,7 @@ class GameServer(QObject):
         client.close()
 
     def handle_client(self, sock, addr):
-        client = ConnectedClient(sock)
+        client = ConnectedClient(sock, self.create_random_player_id())
 
         try:
             while self.is_running:
@@ -172,10 +176,7 @@ class GameServer(QObject):
         except OSError:
             pass
         finally:
-            if client.player:
-                self.remove_client(client.player_id)
-            else:
-                client.close()
+            self.remove_client(client.player_id)
 
     def handle_message(self, client, msg):
         msg_type = msg.get("type")
@@ -201,14 +202,13 @@ class GameServer(QObject):
 
     def handle_join_lobby(self, client, msg):
         try:
-            player_id = msg["data"]["player_id"]
             nickname = msg["data"]["nickname"]
         except KeyError:
             print(f"Invalid data in message, received: {msg}")
-            self._error(client, "Missing player ID/nickname")
+            self._error(client, "Missing player nickname")
             return
 
-        status, player = self.player_registry.add_player(player_id, nickname, client)
+        status, player = self.player_registry.add_player(nickname, client)
 
         if status == "lobby_full":
             self._kick(client, "Server is full")
@@ -217,17 +217,10 @@ class GameServer(QObject):
             self._kick(client, f'The nickname "{nickname}" is already in use')
             return
         elif status == "dupe_id":
-            client.send(
-                {
-                    "type": ServerMessageType.INVALID_ACTION,
-                    "data": {"reason": "Duplicate ID entered"},
-                }
-            )
-
-            self._kick(client, "The player ID matches an existing ID")
+            self._kick(client, "The player ID generated matches an existing ID")
             return
 
-        print(f"Player {nickname} with ID {player_id} joined!")
+        print(f"Player {nickname} with ID {client.player_id} joined!")
 
         client.player = player
         self.player_joined.emit(nickname)
@@ -239,13 +232,15 @@ class GameServer(QObject):
             }
         )
 
-        client.send({"type": ServerMessageType.CONNECTION_SUCCESSFUL})
+        client.send(
+            {
+                "type": ServerMessageType.CONNECTION_SUCCESSFUL,
+                "data": {"player_id": client.player_id},
+            }
+        )
 
     def handle_leave_lobby(self, client, msg):
-        if client.player:
-            self.remove_client(client.player_id)
-        else:
-            client.close()
+        self.remove_client(client.player_id)
 
     def handle_player_list(self, client, msg):
         connected_players = self.player_registry.get_players().values()
