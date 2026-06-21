@@ -5,8 +5,9 @@ from core.services.network.transport import JSONSocket
 
 
 class ConnectedClient:
-    def __init__(self, sock, player=None):
+    def __init__(self, sock, player_id, player=None):
         self.socket = sock
+        self.player_id = player_id
         self.jsock = JSONSocket(sock)
 
         self.player: Player = player
