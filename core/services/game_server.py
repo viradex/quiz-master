@@ -4,6 +4,7 @@ import time
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.services.network.connected_client import ConnectedClient
+from core.services.network.player_registry import PlayerRegistry
 from core.services.network.types import ClientMessageType, ServerMessageType
 from core.game.quiz_manager import QuizManager
 from models.player import Player
@@ -26,12 +27,8 @@ class GameServer(QObject):
         self.is_running = False
 
         self.server_socket = None
-        self.connected_players: dict[str, ConnectedClient] = {}
         self.quiz_manager = QuizManager()
-        self.max_players = MAX_PLAYERS
-
-        # ALWAYS USE "with self.lock" to avoid deadlocks
-        self.lock = threading.Lock()
+        self.player_registry = PlayerRegistry()
 
         self.handlers = {
             ClientMessageType.PING: self.handle_ping,
@@ -41,18 +38,10 @@ class GameServer(QObject):
         }
 
     def get_id_from_nickname(self, nickname):
-        with self.lock:
-            connected_players = list(self.connected_players.items())
-
-        for player_id, client in connected_players:
-            if client.nickname == nickname:
-                return player_id
-
-        return None
+        return self.player_registry.get_id_by_nickname(nickname)
 
     def get_player_address(self, player_id):
-        with self.lock:
-            client = self.connected_players.get(player_id)
+        client = self.player_registry.get_player(player_id)
 
         if client:
             return client.socket.getpeername()
@@ -73,9 +62,8 @@ class GameServer(QObject):
             {"type": ServerMessageType.KICK, "data": {"reason": "Server closed"}}
         )
 
-        with self.lock:
-            connected_players = list(self.connected_players.values())
-            self.connected_players.clear()
+        connected_players = self.player_registry.get_players().values()
+        self.player_registry.clear_players()
 
         for client in connected_players:
             try:
@@ -130,16 +118,14 @@ class GameServer(QObject):
         while self.is_running:
             time.sleep(1)
 
-            with self.lock:
-                connected_players = list(self.connected_players.values())
+            connected_players = self.player_registry.get_players().values()
 
             for client in connected_players:
                 if time.monotonic() - client.last_seen > RESPONSE_TIMEOUT:
                     self._kick(client, "Client timeout")
 
     def broadcast(self, msg):
-        with self.lock:
-            connected_players = list(self.connected_players.values())
+        connected_players = self.player_registry.get_players().values()
 
         for client in connected_players:
             try:
@@ -148,19 +134,18 @@ class GameServer(QObject):
                 self._kick(client, "Failed to broadcast")
 
     def kick_player(self, player_id, reason):
-        with self.lock:
-            client = self.connected_players.get(player_id)
+        client = self.player_registry.get_player(player_id)
 
         if client:
             self._kick(client, reason)
 
     def remove_client(self, player_id):
-        with self.lock:
-            client = self.connected_players.pop(player_id, None)
+        client = self.player_registry.get_player(player_id)
 
         if client is None:
             return
 
+        self.player_registry.remove_player(player_id)
         self.player_left.emit(client.nickname)
 
         self.broadcast(
@@ -223,47 +208,30 @@ class GameServer(QObject):
             self._error(client, "Missing player ID/nickname")
             return
 
-        kick_reason = None
-        invalid_action = None
+        status, player = self.player_registry.add_player(player_id, nickname, client)
 
-        with self.lock:
-            if len(self.connected_players) + 1 > self.max_players:
-                print(
-                    f"Player {nickname} with ID {player_id} cannot connect (server full)"
-                )
-                self._kick(client, "Server is full")
-                return
-
-            for existing in self.connected_players.values():
-                if existing.nickname == nickname:
-                    print(f"Player with nickname {nickname} already exists")
-                    kick_reason = f'The nickname "{nickname}" is already in use'
-                    return
-
-                elif existing.player_id == player_id:
-                    print(f"Player with ID {player_id} already exists")
-                    invalid_action = "Duplicate ID entered"
-                    kick_reason = "The player ID matches an existing ID"
-                    return
-
-            if kick_reason is None:
-                player = Player(player_id, nickname)
-                client.player = player
-                self.connected_players[player_id] = client
-
-        if invalid_action:
+        if status == "lobby_full":
+            self._kick(client, "Server is full")
+            return
+        elif status == "dupe_nickname":
+            self._kick(client, f'The nickname "{nickname}" is already in use')
+            return
+        elif status == "dupe_id":
             client.send(
                 {
                     "type": ServerMessageType.INVALID_ACTION,
-                    "data": {"reason": invalid_action},
+                    "data": {"reason": "Duplicate ID entered"},
                 }
             )
 
-        if kick_reason:
-            self._kick(client, kick_reason)
+            self._kick(client, "The player ID matches an existing ID")
             return
 
         print(f"Player {nickname} with ID {player_id} joined!")
+
+        client.player = player
+        self.player_joined.emit(nickname)
+
         self.broadcast(
             {
                 "type": ServerMessageType.PLAYER_JOINED,
@@ -272,7 +240,6 @@ class GameServer(QObject):
         )
 
         client.send({"type": ServerMessageType.CONNECTION_SUCCESSFUL})
-        self.player_joined.emit(nickname)
 
     def handle_leave_lobby(self, client, msg):
         if client.player:
@@ -281,8 +248,7 @@ class GameServer(QObject):
             client.close()
 
     def handle_player_list(self, client, msg):
-        with self.lock:
-            connected_players = list(self.connected_players.values())
+        connected_players = self.player_registry.get_players().values()
 
         player_list = [c.nickname for c in connected_players]
 
