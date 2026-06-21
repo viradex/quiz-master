@@ -20,7 +20,11 @@ class GameClient(QObject):
     connection_fail = pyqtSignal(str)
     connection_success = pyqtSignal()
 
-    disconnecting = pyqtSignal(str)
+    player_joined = pyqtSignal(str)
+    player_left = pyqtSignal(str)
+    player_list = pyqtSignal(list)
+
+    disconnecting = pyqtSignal()
 
     kick = pyqtSignal(str)
     error = pyqtSignal(str)
@@ -41,9 +45,11 @@ class GameClient(QObject):
         self.last_ping_time = None
 
         self.handlers = {
+            ServerMessageType.PONG: lambda *args: None,
             ServerMessageType.CONNECTION_SUCCESSFUL: self.handle_connection_successful,
             ServerMessageType.PLAYER_JOINED: self.handle_player_joined,
-            ServerMessageType.PONG: lambda *args: None,
+            ServerMessageType.PLAYER_LEFT: self.handle_player_left,
+            ServerMessageType.PLAYER_LIST: self.handle_player_list,
             ServerMessageType.KICK: self.handle_kick,
             ServerMessageType.ERROR: self.handle_error,
             ServerMessageType.INVALID_ACTION: self.handle_invalid_action,
@@ -67,6 +73,9 @@ class GameClient(QObject):
         player_token = secrets.token_hex(4)
         self.player_id = player_token
 
+    def get_server_address(self):
+        return self.client_socket.getpeername()
+
     def connect(self):
         if not self.server_ip or not self.nickname:
             raise ValueError("Server IP and nickname must have values")
@@ -76,11 +85,9 @@ class GameClient(QObject):
 
         threading.Thread(target=self._connect_and_listen, daemon=True).start()
 
-    def disconnect_client(self, msg=""):
-        self.jsock.send(
-            {"type": ClientMessageType.LEAVE_LOBBY, "data": {"reason": msg}}
-        )
-        self.disconnecting.emit(msg)
+    def disconnect_client(self):
+        self.jsock.send({"type": ClientMessageType.LEAVE_LOBBY})
+        self.disconnecting.emit()
 
         self.is_connected = False
         self.client_socket.close()
@@ -191,7 +198,16 @@ class GameClient(QObject):
         self.connection_success.emit()
 
     def handle_player_joined(self, msg):
-        pass
+        nickname = msg["data"]["nickname"]
+        self.player_joined.emit(nickname)
+
+    def handle_player_left(self, msg):
+        nickname = msg["data"]["nickname"]
+        self.player_left.emit(nickname)
+
+    def handle_player_list(self, msg):
+        server_player_list = msg["data"]["player_list"]
+        self.player_list.emit(server_player_list)
 
     def handle_kick(self, msg):
         reason = msg["data"]["reason"]
@@ -215,3 +231,6 @@ class GameClient(QObject):
                 "data": {"player_id": self.player_id, "nickname": self.nickname},
             }
         )
+
+    def ask_player_list(self):
+        self.jsock.send({"type": ClientMessageType.PLAYER_LIST})

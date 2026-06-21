@@ -3,9 +3,11 @@ from enum import StrEnum
 
 
 class ClientMessageType(StrEnum):
+    PING = "ping"
+
+    PLAYER_LIST = "player_list"
     JOIN_LOBBY = "join_lobby"
     LEAVE_LOBBY = "leave_lobby"
-    PING = "ping"
 
     ANSWER_SUBMIT = "answer_submit"
 

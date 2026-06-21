@@ -3,8 +3,7 @@ import threading
 import time
 from PyQt6.QtCore import QObject, pyqtSignal
 
-from core.services.network.transport import JSONSocket
-from core.services.network.connection import ClientConnection
+from core.services.network.connected_client import ConnectedClient
 from core.services.network.types import ClientMessageType, ServerMessageType
 from core.game.quiz_manager import QuizManager
 from models.player import Player
@@ -27,25 +26,36 @@ class GameServer(QObject):
         self.is_running = False
 
         self.server_socket = None
-        self.connected_players = {}
+        self.connected_players: dict[str, ConnectedClient] = {}
         self.quiz_manager = QuizManager()
         self.max_players = MAX_PLAYERS
+
+        # ALWAYS USE "with self.lock" to avoid deadlocks
+        self.lock = threading.Lock()
 
         self.handlers = {
             ClientMessageType.PING: self.handle_ping,
             ClientMessageType.JOIN_LOBBY: self.handle_join_lobby,
+            ClientMessageType.LEAVE_LOBBY: self.handle_leave_lobby,
+            ClientMessageType.PLAYER_LIST: self.handle_player_list,
         }
 
     def get_id_from_nickname(self, nickname):
-        for player_id, player in self.connected_players.items():
-            if player.nickname == nickname:
+        with self.lock:
+            connected_players = list(self.connected_players.items())
+
+        for player_id, client in connected_players:
+            if client.nickname == nickname:
                 return player_id
 
         return None
 
     def get_player_address(self, player_id):
-        if player_id is not None:
-            return self.connected_players[player_id].connection.addr
+        with self.lock:
+            client = self.connected_players.get(player_id)
+
+        if client:
+            return client.socket.getpeername()
 
         return None
 
@@ -63,15 +73,18 @@ class GameServer(QObject):
             {"type": ServerMessageType.KICK, "data": {"reason": "Server closed"}}
         )
 
-        for player in list(self.connected_players.values()):
+        with self.lock:
+            connected_players = list(self.connected_players.values())
+            self.connected_players.clear()
+
+        for client in connected_players:
             try:
-                player.connection.socket.close()
+                client.close()
             except OSError:
                 continue
 
         self.is_running = False
         self.server_socket.close()
-        self.connected_players.clear()
 
     def _start_and_listen(self):
         try:
@@ -95,6 +108,7 @@ class GameServer(QObject):
 
         self.start_success.emit()
         self.server_socket.listen()
+
         self.start_client_watchdog()
         self.accept_clients()
 
@@ -116,135 +130,189 @@ class GameServer(QObject):
         while self.is_running:
             time.sleep(1)
 
-            for client in list(self.connected_players.values()):
+            with self.lock:
+                connected_players = list(self.connected_players.values())
+
+            for client in connected_players:
                 if time.monotonic() - client.last_seen > RESPONSE_TIMEOUT:
-                    self._kick(client.connection, "Client timeout")
+                    self._kick(client, "Client timeout")
 
     def broadcast(self, msg):
-        for player in self.connected_players.values():
+        with self.lock:
+            connected_players = list(self.connected_players.values())
+
+        for client in connected_players:
             try:
-                player.connection.send(msg)
+                client.send(msg)
             except OSError:
-                pass
+                self._kick(client, "Failed to broadcast")
 
     def kick_player(self, player_id, reason):
-        self._kick(self.connected_players[player_id].connection, reason)
+        with self.lock:
+            client = self.connected_players.get(player_id)
 
-    def remove_client(self, client):
-        for player_id, player in list(self.connected_players.items()):
-            if player.connection.socket == client:
-                nickname = player.nickname
-                self.player_left.emit(nickname)
+        if client:
+            self._kick(client, reason)
 
-                del self.connected_players[player_id]
-                break
+    def remove_client(self, player_id):
+        with self.lock:
+            client = self.connected_players.pop(player_id, None)
 
-    def handle_client(self, client, addr):
-        jsock = JSONSocket(client)
-        connection = ClientConnection(client, jsock, addr)
+        if client is None:
+            return
+
+        self.player_left.emit(client.nickname)
+
+        self.broadcast(
+            {
+                "type": ServerMessageType.PLAYER_LEFT,
+                "data": {"nickname": client.nickname},
+            }
+        )
+
+        client.close()
+
+    def handle_client(self, sock, addr):
+        client = ConnectedClient(sock)
 
         try:
             while self.is_running:
-                msg = jsock.recv()
+                msg = client.recv()
 
                 if msg is None:
                     print(f"Client {addr[0]}:{addr[1]} disconnected")
                     break
 
-                self.handle_message(connection, msg)
+                self.handle_message(client, msg)
         except OSError:
             pass
         finally:
-            self.remove_client(client)
-            client.close()
+            if client.player:
+                self.remove_client(client.player_id)
+            else:
+                client.close()
 
-    def handle_message(self, connection, msg):
+    def handle_message(self, client, msg):
         msg_type = msg.get("type")
 
         if msg_type is None:
             print(f"'type' key was not present in message, received: {msg}")
-            self._error(connection, "Message type missing")
+            self._error(client, "Message type missing")
             return
 
         handler = self.handlers.get(msg_type)
 
         if handler is None:
             print(f"The msg_type {msg_type} did not match any types (server)")
-            self._error(connection, "Unknown message type")
+            self._error(client, "Unknown message type")
             return
 
-        player = self.connected_players.get(connection.player_id)
-        if player:
-            player.last_seen = time.monotonic()
+        client.update_last_seen()
+        handler(client, msg)
 
-        handler(connection, msg)
-
-    def handle_ping(self, connection, msg):
+    def handle_ping(self, client, msg):
         # print(f"Received ping from {connection.addr[0]}:{connection.addr[1]}")
-        connection.send({"type": ServerMessageType.PONG})
+        client.send({"type": ServerMessageType.PONG})
 
-    def handle_join_lobby(self, connection, msg):
+    def handle_join_lobby(self, client, msg):
         try:
             player_id = msg["data"]["player_id"]
             nickname = msg["data"]["nickname"]
         except KeyError:
             print(f"Invalid data in message, received: {msg}")
-            self._error(connection, "Missing player ID/nickname")
+            self._error(client, "Missing player ID/nickname")
             return
 
-        if len(self.connected_players) + 1 > self.max_players:
-            print(f"Player {nickname} with ID {player_id} cannot connect (server full)")
-            self._kick(connection, "Server is full")
-            return
+        kick_reason = None
+        invalid_action = None
 
-        for connected_client in self.connected_players.values():
-            if connected_client.nickname == nickname:
-                print(f"Player with nickname {nickname} already exists")
-                self._kick(connection, f'The nickname "{nickname}" is already in use.')
-                return
-
-            elif connected_client.player_id == player_id:
-                print(f"Player with ID {player_id} already exists")
-                connection.send(
-                    {
-                        "type": ServerMessageType.INVALID_ACTION,
-                        "data": {"reason": "Duplicate ID entered"},
-                    }
+        with self.lock:
+            if len(self.connected_players) + 1 > self.max_players:
+                print(
+                    f"Player {nickname} with ID {player_id} cannot connect (server full)"
                 )
-
-                self._kick(connection, "The player ID matches an existing ID")
+                self._kick(client, "Server is full")
                 return
+
+            for existing in self.connected_players.values():
+                if existing.nickname == nickname:
+                    print(f"Player with nickname {nickname} already exists")
+                    kick_reason = f'The nickname "{nickname}" is already in use'
+                    return
+
+                elif existing.player_id == player_id:
+                    print(f"Player with ID {player_id} already exists")
+                    invalid_action = "Duplicate ID entered"
+                    kick_reason = "The player ID matches an existing ID"
+                    return
+
+            if kick_reason is None:
+                player = Player(player_id, nickname)
+                client.player = player
+                self.connected_players[player_id] = client
+
+        if invalid_action:
+            client.send(
+                {
+                    "type": ServerMessageType.INVALID_ACTION,
+                    "data": {"reason": invalid_action},
+                }
+            )
+
+        if kick_reason:
+            self._kick(client, kick_reason)
+            return
 
         print(f"Player {nickname} with ID {player_id} joined!")
         self.broadcast(
-            {"type": ServerMessageType.PLAYER_JOINED, "data": {"nickname": nickname}}
+            {
+                "type": ServerMessageType.PLAYER_JOINED,
+                "data": {"nickname": nickname},
+            }
         )
 
-        self.connected_players[player_id] = Player(player_id, nickname, connection)
-        self.connected_players[player_id].last_seen = time.monotonic()
-
-        connection.player_id = player_id
-
-        connection.send({"type": ServerMessageType.CONNECTION_SUCCESSFUL})
+        client.send({"type": ServerMessageType.CONNECTION_SUCCESSFUL})
         self.player_joined.emit(nickname)
 
-    def _send_and_disconnect(self, connection, msg):
-        try:
-            connection.send(msg)
-        finally:
-            connection.socket.close()
+    def handle_leave_lobby(self, client, msg):
+        if client.player:
+            self.remove_client(client.player_id)
+        else:
+            client.close()
 
-    def _error(self, connection, reason):
+    def handle_player_list(self, client, msg):
+        with self.lock:
+            connected_players = list(self.connected_players.values())
+
+        player_list = [c.nickname for c in connected_players]
+
+        client.send(
+            {
+                "type": ServerMessageType.PLAYER_LIST,
+                "data": {"player_list": player_list},
+            }
+        )
+
+    def _send_and_disconnect(self, client, msg):
+        try:
+            client.send(msg)
+        finally:
+            if client.player is not None:
+                self.remove_client(client.player_id)
+
+            client.close()
+
+    def _error(self, client, reason):
         self._send_and_disconnect(
-            connection,
+            client,
             {"type": ServerMessageType.ERROR, "data": {"reason": reason}},
         )
 
-    def _kick(self, connection, reason):
+    def _kick(self, client, reason):
         self._send_and_disconnect(
-            connection,
+            client,
             {
-                "type": (ServerMessageType.KICK),
+                "type": ServerMessageType.KICK,
                 "data": {"reason": reason},
             },
         )

@@ -1,12 +1,10 @@
 class Player:
-    def __init__(self, player_id, nickname, connection):
+    def __init__(self, player_id, nickname):
         self.player_id = player_id
         self.nickname = nickname
-        self.connection = connection
 
         self.score = 0
         self.connected = True
-        self.last_seen = 0.0
 
         self.current_answer = None
         self.has_answered = False
@@ -21,6 +19,3 @@ class Player:
     def reset_for_question(self):
         self.current_answer = None
         self.has_answered = False
-
-    def disconnect(self):
-        self.connected = False
