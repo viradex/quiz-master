@@ -7,16 +7,19 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
 )
 from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
 from ui.components.button import LeaveButton
+from ui.components.dialogs import confirm_warning
 
 
 class ClientLobbyScreen(BaseScreen):
     title_text = "Quiz Master – Lobby"
+
+    leave_server = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -54,35 +57,10 @@ class ClientLobbyScreen(BaseScreen):
             }
         """)
 
-        # TODO only for prototype
-        data = [
-            "Viradex (you)",
-            "Peptalker101",
-            "TrexGamerGirl",
-            "Scyrist",
-            "ItsJakePlayz21",
-        ]
-
-        for value in data:
-            row = self.lobby_table.rowCount()
-            self.lobby_table.insertRow(row)
-
-            item = QTableWidgetItem(value)
-            item.setTextAlignment(
-                Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
-            )
-
-            if value.endswith("(you)"):
-                font = item.font()
-                font.setBold(True)
-                item.setFont(font)
-
-            self.lobby_table.setItem(row, 0, item)
-
         connected_font = QFont()
         connected_font.setPointSize(8)
 
-        self.connection_details = QLabel("Connected to 127.0.0.1:7878")
+        self.connection_details = QLabel("Connected to server")
         self.connection_details.setFont(connected_font)
 
         vbox_left = QVBoxLayout()
@@ -108,8 +86,8 @@ class ClientLobbyScreen(BaseScreen):
         status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_lbl.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
-        leave_btn = LeaveButton("Leave Lobby", btn_width=100)
-        leave_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        leave_btn = LeaveButton("Leave Lobby", btn_width=100, do_confirm=False)
+        leave_btn.confirm_leave.connect(self.leave_lobby)
 
         vbox_right = QVBoxLayout()
         vbox_right.addStretch(1)
@@ -128,8 +106,59 @@ class ClientLobbyScreen(BaseScreen):
 
         self.setLayout(hbox)
 
+    def add_player_lobby(self, player, is_you=False):
+        row = self.lobby_table.rowCount()
+        self.lobby_table.insertRow(row)
+
+        player = f"{player} (you)" if is_you else player
+
+        item = QTableWidgetItem(player)
+        item.setTextAlignment(
+            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
+        )
+
+        if is_you:
+            font = item.font()
+            font.setBold(True)
+            item.setFont(font)
+
+        self.lobby_table.setItem(row, 0, item)
+
+    def remove_player_lobby(self, player):
+        for row in range(self.lobby_table.rowCount()):
+            item = self.lobby_table.item(row, 0)
+            if item and item.text() == player:
+                self.lobby_table.removeRow(row)
+                return True
+
+        return False
+
+    def reset_lobby(self):
+        self.lobby_table.setRowCount(0)
+
+    def set_connection_details(self, ip=None, port=None):
+        if ip is None:
+            self.connection_details.setText("Connected to server")
+        elif port is None:
+            self.connection_details.setText(f"Connected to {ip}")
+        else:
+            self.connection_details.setText(f"Connected to {ip}:{port}")
+
+    def leave_lobby(self):
+        confirm = confirm_warning(
+            self,
+            "Confirm Leaving",
+            "Are you sure you want to disconnect and return to menu?",
+        )
+
+        if confirm:
+            self.leave_server.emit()
+
     def on_enter(self, payload=None):
         self.spinner.start()
 
     def on_leave(self):
         self.spinner.stop()
+
+        self.reset_lobby()
+        self.set_connection_details()
