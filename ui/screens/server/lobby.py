@@ -149,7 +149,7 @@ class ServerLobbyScreen(BaseScreen):
         self.start_btn.setDisabled(True)
         self.start_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_COUNTDOWN))
 
-        self.status = QLabel("(select quiz to start)")
+        self.status = QLabel("(not implemented)")
         self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 

@@ -110,5 +110,5 @@ class CommonMenuScreen(BaseScreen):
             QMessageBox.critical(
                 self,
                 "Server Already Running",
-                "Another instance of the server is already running on the device. Only one server instance can be run per device.",
+                "Another instance of the server is already running on this device. Only one server instance can be run per device.",
             )

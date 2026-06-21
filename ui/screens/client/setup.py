@@ -143,12 +143,8 @@ class ClientSetupScreen(BaseScreen):
 
         return True
 
-    def show_connection_error(self):
-        QMessageBox.critical(
-            self,
-            "Failed to Connect",
-            f"Failed to connect to the server. Please verify the IP is correct and try again.",
-        )
+    def show_connection_error(self, title, desc):
+        QMessageBox.critical(self, title, desc)
 
     def on_leave(self):
         self.clear_fields()
