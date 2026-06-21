@@ -1,6 +1,5 @@
 import socket
 import threading
-import secrets
 import time
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -68,10 +67,6 @@ class GameClient(QObject):
             )
 
         self.nickname = nickname
-
-    def set_random_player_id(self):
-        player_token = secrets.token_hex(4)
-        self.player_id = player_token
 
     def get_server_address(self):
         return self.client_socket.getpeername()
@@ -195,6 +190,9 @@ class GameClient(QObject):
         handler(msg)
 
     def handle_connection_successful(self, msg):
+        player_id = msg["data"]["player_id"]
+        self.player_id = player_id
+
         self.connection_success.emit()
 
     def handle_player_joined(self, msg):
@@ -226,10 +224,7 @@ class GameClient(QObject):
 
     def send_join(self):
         self.jsock.send(
-            {
-                "type": ClientMessageType.JOIN_LOBBY,
-                "data": {"player_id": self.player_id, "nickname": self.nickname},
-            }
+            {"type": ClientMessageType.JOIN_LOBBY, "data": {"nickname": self.nickname}}
         )
 
     def ask_player_list(self):
