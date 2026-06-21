@@ -6,7 +6,7 @@ class Player:
 
         self.score = 0
         self.connected = True
-        self.last_active_time = 0.0
+        self.last_seen = 0.0
 
         self.current_answer = None
         self.has_answered = False
@@ -24,6 +24,3 @@ class Player:
 
     def disconnect(self):
         self.connected = False
-
-    def update_activity(self, timestamp):
-        self.last_active_time = timestamp

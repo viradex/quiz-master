@@ -1,5 +1,6 @@
 import socket
 import threading
+import time
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.services.network.transport import JSONSocket
@@ -7,7 +8,7 @@ from core.services.network.connection import ClientConnection
 from core.services.network.types import ClientMessageType, ServerMessageType
 from core.game.quiz_manager import QuizManager
 from models.player import Player
-from core.config.constants import PORT, MAX_PLAYERS
+from core.config.constants import PORT, MAX_PLAYERS, RESPONSE_TIMEOUT
 
 
 class GameServer(QObject):
@@ -16,6 +17,7 @@ class GameServer(QObject):
     start_success = pyqtSignal()
 
     player_joined = pyqtSignal(str)
+    player_left = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -29,7 +31,10 @@ class GameServer(QObject):
         self.quiz_manager = QuizManager()
         self.max_players = MAX_PLAYERS
 
-        self.handlers = {ClientMessageType.JOIN_LOBBY: self.handle_join_lobby}
+        self.handlers = {
+            ClientMessageType.PING: self.handle_ping,
+            ClientMessageType.JOIN_LOBBY: self.handle_join_lobby,
+        }
 
     def get_id_from_nickname(self, nickname):
         for player_id, player in self.connected_players.items():
@@ -66,6 +71,7 @@ class GameServer(QObject):
 
         self.is_running = False
         self.server_socket.close()
+        self.connected_players.clear()
 
     def _start_and_listen(self):
         try:
@@ -89,6 +95,7 @@ class GameServer(QObject):
 
         self.start_success.emit()
         self.server_socket.listen()
+        self.start_client_watchdog()
         self.accept_clients()
 
     def accept_clients(self):
@@ -102,6 +109,17 @@ class GameServer(QObject):
                 target=self.handle_client, args=(client, addr), daemon=True
             ).start()
 
+    def start_client_watchdog(self):
+        threading.Thread(target=self._client_watchdog_loop, daemon=True).start()
+
+    def _client_watchdog_loop(self):
+        while self.is_running:
+            time.sleep(1)
+
+            for client in list(self.connected_players.values()):
+                if time.monotonic() - client.last_seen > RESPONSE_TIMEOUT:
+                    self._kick(client.connection, "Client timeout")
+
     def broadcast(self, msg):
         for player in self.connected_players.values():
             try:
@@ -112,6 +130,15 @@ class GameServer(QObject):
     def kick_player(self, player_id, reason):
         self._kick(self.connected_players[player_id].connection, reason)
 
+    def remove_client(self, client):
+        for player_id, player in list(self.connected_players.items()):
+            if player.connection.socket == client:
+                nickname = player.nickname
+                self.player_left.emit(nickname)
+
+                del self.connected_players[player_id]
+                break
+
     def handle_client(self, client, addr):
         jsock = JSONSocket(client)
         connection = ClientConnection(client, jsock, addr)
@@ -121,18 +148,14 @@ class GameServer(QObject):
                 msg = jsock.recv()
 
                 if msg is None:
-                    print(f"Client {addr} disconnected")
+                    print(f"Client {addr[0]}:{addr[1]} disconnected")
                     break
 
                 self.handle_message(connection, msg)
         except OSError:
             pass
         finally:
-            for player_id, player in list(self.connected_players.items()):
-                if player.connection.socket == client:
-                    del self.connected_players[player_id]
-                    break
-
+            self.remove_client(client)
             client.close()
 
     def handle_message(self, connection, msg):
@@ -150,7 +173,15 @@ class GameServer(QObject):
             self._error(connection, "Unknown message type")
             return
 
+        player = self.connected_players.get(connection.player_id)
+        if player:
+            player.last_seen = time.monotonic()
+
         handler(connection, msg)
+
+    def handle_ping(self, connection, msg):
+        # print(f"Received ping from {connection.addr[0]}:{connection.addr[1]}")
+        connection.send({"type": ServerMessageType.PONG})
 
     def handle_join_lobby(self, connection, msg):
         try:
@@ -158,7 +189,7 @@ class GameServer(QObject):
             nickname = msg["data"]["nickname"]
         except KeyError:
             print(f"Invalid data in message, received: {msg}")
-            self._error(connection, "Invalid data in message")
+            self._error(connection, "Missing player ID/nickname")
             return
 
         if len(self.connected_players) + 1 > self.max_players:
@@ -190,6 +221,9 @@ class GameServer(QObject):
         )
 
         self.connected_players[player_id] = Player(player_id, nickname, connection)
+        self.connected_players[player_id].last_seen = time.monotonic()
+
+        connection.player_id = player_id
 
         connection.send({"type": ServerMessageType.CONNECTION_SUCCESSFUL})
         self.player_joined.emit(nickname)

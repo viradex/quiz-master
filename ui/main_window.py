@@ -130,3 +130,6 @@ class MainWindow(QMainWindow):
 
     def show_warning(self, title, text):
         QMessageBox.warning(self, title, text)
+
+    def show_error(self, title, text):
+        QMessageBox.critical(self, title, text)

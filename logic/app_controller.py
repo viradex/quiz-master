@@ -9,10 +9,18 @@ class AppController:
         self.services: Services = services
 
         self.services.client.kick.connect(self.on_kick)
+        self.services.client.error.connect(self.on_error)
         self.services.client.invalid_action.connect(self.on_invalid_action)
 
     def on_kick(self, reason):
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
+
+    def on_error(self, reason):
+        self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
+        self.window.show_error(
+            "Unexpected Network Error",
+            f"The connection was terminated by the server due to a communication error.\n\nReason: {reason}",
+        )
 
     def on_invalid_action(self, reason):
         self.window.show_warning(

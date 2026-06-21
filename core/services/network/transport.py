@@ -1,4 +1,5 @@
 import json
+import socket
 
 
 class JSONSocket:
@@ -22,6 +23,8 @@ class JSONSocket:
         while b"\n" not in self.buffer:
             try:
                 chunk = self.sock.recv(4096)
+            except socket.timeout:
+                return False
             except OSError:
                 return None
 
@@ -35,8 +38,7 @@ class JSONSocket:
         try:
             return json.loads(line.decode())
         except json.JSONDecodeError:
-            self.buffer = b""
-            return None
+            raise ValueError("Invalid JSON data")
 
     def set_socket(self, sock):
         self.sock = sock
