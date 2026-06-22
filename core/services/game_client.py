@@ -91,7 +91,11 @@ class GameClient(QObject):
         if self.client_socket is None:
             raise ValueError("Client cannot be closed without active socket")
 
-        self.jsock.send({"type": ClientMessageType.LEAVE_LOBBY})
+        try:
+            self.jsock.send({"type": ClientMessageType.LEAVE_LOBBY})
+        except OSError:
+            pass
+
         self.disconnecting.emit()
 
         self.is_connected = False
@@ -238,13 +242,14 @@ class GameClient(QObject):
         reason = msg["data"]["reason"]
         self.kick.emit(reason)
 
-        self.is_connected = False
-        self.client_socket.close()
+        self.disconnect_client()
 
     def handle_error(self, msg: dict) -> None:
-        """Handles the `ERROR` message type."""
+        """Handles the `ERROR` message type. Disconnects the client."""
         reason = msg["data"]["reason"]
         self.error.emit(reason)
+
+        self.disconnect_client()
 
     def handle_invalid_action(self, msg: dict) -> None:
         """Handles the `INVALID_ACTION` message type."""
@@ -254,5 +259,8 @@ class GameClient(QObject):
     def send_join(self) -> None:
         """Sends a `JOIN_LOBBY` message type. Sends nickname to server."""
         self.jsock.send(
-            {"type": ClientMessageType.JOIN_LOBBY, "data": {"nickname": self.nickname}}
+            {
+                "type": ClientMessageType.JOIN_LOBBY,
+                "data": {"nickname": self.nickname},
+            }
         )

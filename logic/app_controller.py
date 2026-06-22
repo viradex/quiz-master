@@ -13,26 +13,25 @@ class AppController:
         self.services.client.invalid_action.connect(self.on_invalid_action)
 
     def on_kick(self, reason):
-        self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
-
         self.window.handle_status_clear()
         self.window.handle_status("Disconnected from server", 5000)
 
+        self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
+
     def on_error(self, reason):
+        self.window.handle_status_clear()
+        self.window.handle_status("Disconnected from server (unexpected error)", 5000)
+
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
         self.window.show_error(
             "Unexpected Network Error",
             f"The connection was terminated by the server due to a communication error.\n\nReason: {reason}",
         )
 
-        self.window.handle_status_clear()
-        self.window.handle_status("Disconnected from server (unexpected error)", 5000)
-
     def on_invalid_action(self, reason):
+        self.window.handle_status("Invalid action rejected by sever", 5000)
+
         self.window.show_warning(
             "Invalid Action",
             f"The server rejected the request because it is not valid in the current state.\n\nReason: {reason}",
         )
-
-        self.window.handle_status_clear()
-        self.window.handle_status("Invalid action rejected by sever", 5000)
