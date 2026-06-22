@@ -6,6 +6,7 @@ from core.services.app_context import Services
 
 
 def run():
+    """Create and run the application's main GUI window."""
     app = QApplication(sys.argv)
 
     # UI elements can appear broken on macOS

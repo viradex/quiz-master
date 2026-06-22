@@ -3,6 +3,8 @@ from core.services.game_server import GameServer
 
 
 class Services:
-    def __init__(self):
+    """Contains app services."""
+
+    def __init__(self) -> None:
         self.client = GameClient()
         self.server = GameServer()

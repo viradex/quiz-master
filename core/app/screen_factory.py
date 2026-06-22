@@ -1,4 +1,9 @@
+from PyQt6.QtWidgets import QWidget
+
 from core.app.screen_ids import Screens
+from core.services.app_context import Services
+from ui.screens.base_screen import BaseScreen
+from logic.base_logic import BaseLogic
 
 # Screens
 from ui.screens.client.setup import ClientSetupScreen
@@ -36,7 +41,8 @@ from logic.common.loading import CommonLoadingLogic
 from logic.common.countdown import CommonCountdownLogic
 from logic.common.about import CommonAboutLogic
 
-SCREEN_INFO = {
+# Registry for all screens and respective logic
+SCREEN_INFO: dict[Screens, tuple[BaseScreen, BaseLogic]] = {
     # Client
     Screens.CLIENT_SETUP: (ClientSetupScreen, ClientSetupLogic),
     Screens.CLIENT_LOBBY: (ClientLobbyScreen, ClientLobbyLogic),
@@ -63,10 +69,14 @@ SCREEN_INFO = {
 }
 
 
-def create_screen_bundle(screen: Screens, services, parent=None):
+def create_screen_bundle(
+    screen: Screens, services: Services, parent: QWidget | None = None
+) -> tuple[BaseScreen, BaseLogic]:
+    """Creates a screen bundle, containing a screen and respective logic."""
     try:
         screen_cls, logic_cls = SCREEN_INFO[screen]
 
+        # Initialize screen and logic classes
         widget = screen_cls(parent)
         logic = logic_cls(widget, services)
 

@@ -13,21 +13,10 @@ class ClientLobbyLogic(BaseLogic):
         self.game_client.connection_success.connect(self.on_connection_success)
         self.game_client.player_joined.connect(self.on_player_joined)
         self.game_client.player_left.connect(self.on_player_left)
-        self.game_client.player_list.connect(self.on_player_list)
 
         self.screen.leave_server.connect(self.on_leave_server)
 
-    def on_connection_success(self):
-        self.game_client.ask_player_list()
-
-    def on_player_joined(self, player):
-        if player != self.game_client.nickname:
-            self.screen.add_player_lobby(player, is_you=False)
-
-    def on_player_left(self, player):
-        self.screen.remove_player_lobby(player)
-
-    def on_player_list(self, player_list):
+    def on_connection_success(self, player_list):
         own_nickname = self.game_client.nickname
 
         if own_nickname in player_list:
@@ -39,6 +28,13 @@ class ClientLobbyLogic(BaseLogic):
         for player in player_list:
             is_you = player == own_nickname
             self.screen.add_player_lobby(player, is_you=is_you)
+
+    def on_player_joined(self, player):
+        if player != self.game_client.nickname:
+            self.screen.add_player_lobby(player, is_you=False)
+
+    def on_player_left(self, player):
+        self.screen.remove_player_lobby(player)
 
     def on_leave_server(self):
         self.game_client.disconnect_client()
