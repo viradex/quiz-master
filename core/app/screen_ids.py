@@ -5,21 +5,21 @@ class Screens(Enum):
     """Screen IDs within the app."""
 
     # Client
-    CLIENT_SETUP = "CLIENT_SETUP"
-    CLIENT_LOBBY = "CLIENT_LOBBY"
-    CLIENT_MULTI_QUESTION = "CLIENT_MULTI_QUESTION"
-    CLIENT_MULTI_RESULT = "CLIENT_MULTI_RESULT"
-    CLIENT_FINAL_RESULT = "CLIENT_FINAL_RESULT"
-    CLIENT_DISCONNECT = "CLIENT_DISCONNECT"
+    CLIENT_SETUP = "client_setup"
+    CLIENT_LOBBY = "client_lobby"
+    CLIENT_MULTI_QUESTION = "client_multi_question"
+    CLIENT_MULTI_RESULT = "client_multi_result"
+    CLIENT_FINAL_RESULT = "client_final_result"
+    CLIENT_DISCONNECT = "client_disconnect"
 
     # Server
-    SERVER_LOBBY = "SERVER_LOBBY"
-    SERVER_MULTI_QUESTION = "SERVER_MULTI_QUESTION"
-    SERVER_MULTI_RESULT = "SERVER_MULTI_RESULT"
-    SERVER_FINAL_RESULT = "SERVER_FINAL_RESULT"
+    SERVER_LOBBY = "server_lobby"
+    SERVER_MULTI_QUESTION = "server_multi_question"
+    SERVER_MULTI_RESULT = "server_multi_result"
+    SERVER_FINAL_RESULT = "server_final_result"
 
     # Common
-    COMMON_MENU = "COMMON_MENU"
-    COMMON_LOADING = "COMMON_LOADING"
-    COMMON_COUNTDOWN = "COMMON_COUNTDOWN"
-    COMMON_ABOUT = "COMMON_ABOUT"
+    COMMON_MENU = "common_menu"
+    COMMON_LOADING = "common_loading"
+    COMMON_COUNTDOWN = "common_countdown"
+    COMMON_ABOUT = "common_about"
