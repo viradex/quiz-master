@@ -82,7 +82,6 @@ class GameClient(QObject):
             raise ValueError("Server IP and nickname must have values")
 
         self.connecting.emit()
-        print(f"Connecting to {self.server_ip}:{self.port}...")
 
         # Run in separate thread to avoid freezing UI
         threading.Thread(target=self._connect_and_listen, daemon=True).start()
@@ -156,7 +155,6 @@ class GameClient(QObject):
                 # but it would be pointless due to the 'raise'
                 raise
 
-        print("Connected successfully!")
         self.is_connected = True
 
         # Inform server of join and reset server ping time
@@ -197,7 +195,6 @@ class GameClient(QObject):
         except OSError:
             pass
 
-        print("Watchdog detected no response from the server, disconnecting")
         self.kick.emit("Connection timed out")
 
     def handle_message(self, msg: dict) -> None:

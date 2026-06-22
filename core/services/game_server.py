@@ -61,8 +61,6 @@ class GameServer(QObject):
     def start(self) -> None:
         """Starts the server and accepts clients."""
         self.starting.emit()
-        print(f"Starting server on {self.host_ip}:{self.port}...")
-
         threading.Thread(target=self._start_and_listen, daemon=True).start()
 
     def stop(self) -> None:
@@ -93,8 +91,6 @@ class GameServer(QObject):
             # TCP protocol
             self.server_socket = socket.create_server((self.host_ip, self.port))
         except OSError as e:
-            print("Failed to start!")
-
             # Address in use
             if e.errno == 10048:
                 self.start_fail.emit("in_use")
@@ -104,7 +100,6 @@ class GameServer(QObject):
                 # but it would be pointless due to the 'raise'
                 raise
 
-        print("Started successfully!")
         self.is_running = True
 
         self.start_success.emit()
@@ -191,7 +186,6 @@ class GameServer(QObject):
 
                 # Blank message means TCP cleanly disconnected
                 if msg is None:
-                    print(f"Client {addr[0]}:{addr[1]} disconnected")
                     break
 
                 client.update_last_seen()
@@ -251,8 +245,6 @@ class GameServer(QObject):
         elif status == "dupe_id":
             self._kick(client, "The player ID generated matches an existing ID")
             return
-
-        print(f"Player {nickname} with ID {client.player_id} joined!")
 
         client.player = player
         self.player_joined.emit(nickname)

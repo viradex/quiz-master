@@ -40,6 +40,9 @@ class ClientLobbyLogic(BaseLogic):
         self.game_client.disconnect_client()
         self.screen.go_to(Screens.COMMON_MENU)
 
+        self.screen.clear_status()
+        self.screen.set_status("Disconnected from server", 2000)
+
     def on_enter(self):
         ip, port = self.game_client.get_server_address()
         self.screen.set_connection_details(ip, port)
