@@ -2,7 +2,8 @@ import ipaddress
 import socket
 
 
-def is_valid_ipv4(address):
+def is_valid_ipv4(address: str) -> bool:
+    """Checks if the IP format is valid IPv4. Does not check if the IP can be connected to."""
     try:
         ipaddress.IPv4Address(address)
         return True
@@ -10,13 +11,15 @@ def is_valid_ipv4(address):
         return False
 
 
-def get_ip_address():
+def get_ip_address() -> str:
+    """Gets own device IP address."""
     hostname = socket.gethostname()
     ip = socket.gethostbyname(hostname)
     return ip
 
 
-def get_hostname(ip=None):
+def get_hostname(ip: str | None = None) -> str:
+    """Gets hostname from external IP. If IP is None, retrieves own device hostname."""
     if ip is None:
         return socket.gethostname()
 

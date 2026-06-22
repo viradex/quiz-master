@@ -2,7 +2,7 @@ import threading
 
 from core.services.network.connected_client import ConnectedClient
 from models.player import Player
-from core.config.constants import MAX_PLAYERS
+from core.config.constants import MAX_PLAYERS, MAX_NICKNAME_LENGTH
 
 
 class PlayerRegistry:
@@ -30,6 +30,9 @@ class PlayerRegistry:
             `("dupe_nickname", None)`
                 Nickname is already in use.
 
+            `("long_nickname", None)`
+                Nickname exceeds maximum character length.
+
             `("dupe_id", None)`
                 Player ID already exists.
 
@@ -42,14 +45,14 @@ class PlayerRegistry:
             if len(self.players) + 1 > self.max_players:
                 return ("lobby_full", None)
 
-            for existing in self.players.values():
-                # Nickname already exists
-                if existing.nickname == nickname:
-                    return ("dupe_nickname", None)
+            if self.has_nickname(nickname):
+                return ("dupe_nickname", None)
 
-                # ID already exists
-                elif existing.player_id == client.player_id:
-                    return ("dupe_id", None)
+            if len(nickname) > MAX_NICKNAME_LENGTH:
+                return ("long_nickname", None)
+
+            if self.has_id(client.player_id):
+                return ("dupe_id", None)
 
             # Save player
             self.players[client.player_id] = client
@@ -71,8 +74,7 @@ class PlayerRegistry:
 
     def get_player(self, player_id: str) -> ConnectedClient | None:
         """Retrieve a player from the registry as a ConnectedClient."""
-        with self.lock:
-            return self.players.get(player_id)
+        return self.players.get(player_id)
 
     def get_id_by_nickname(self, nickname: str) -> str | None:
         """Get player ID from the registry based on nickname."""
@@ -89,12 +91,11 @@ class PlayerRegistry:
 
     def has_id(self, player_id: str) -> bool:
         """Whether the registry contains a matching player ID."""
-        client = self.get_player(player_id)
-        return client is not None
+        return player_id in self.players
 
     def has_nickname(self, nickname: str) -> bool:
         """Whether the registry contains a matching player nickname."""
-        for client in self.get_players().values():
+        for client in self.players.values():
             if client.nickname == nickname:
                 return True
 

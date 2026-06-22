@@ -34,13 +34,18 @@ class ClientSetupLogic(BaseLogic):
     def on_connection_fail(self, reason):
         self.screen.go_to(Screens.CLIENT_SETUP)
 
-        if reason == "unreachable":
+        if reason == "refused":
             self.screen.show_connection_error(
                 "Failed to Connect",
-                "Unable to connect to the server. Please check your internet connection and try again.",
+                "Unable to connect to the server. The connection was refused. Please try again.",
             )
-        elif reason == "refused":
+        elif reason == "timeout":
             self.screen.show_connection_error(
                 "Failed to Connect",
-                "Unable to connect to the server. The connection was refused. Please verify the IP is correct and try again.",
+                "Unable to connect to the server. The server did not respond within a certain period of time. Please try again.",
+            )
+        elif reason == "unreachable":
+            self.screen.show_connection_error(
+                "Failed to Connect",
+                "Unable to connect to the server. The server is unreachable. Please try again.",
             )

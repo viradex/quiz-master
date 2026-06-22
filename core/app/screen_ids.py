@@ -2,6 +2,8 @@ from enum import Enum
 
 
 class Screens(Enum):
+    """Screen IDs within the app."""
+
     # Client
     CLIENT_SETUP = "CLIENT_SETUP"
     CLIENT_LOBBY = "CLIENT_LOBBY"
