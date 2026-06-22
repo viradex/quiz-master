@@ -12,7 +12,6 @@ class ClientSetupLogic(BaseLogic):
 
         self.screen.submitted.connect(self.handle_submit)
 
-        self.game_client.connecting.connect(self.on_connecting)
         self.game_client.connection_success.connect(self.on_connection_success)
         self.game_client.connection_fail.connect(self.on_connection_fail)
 
@@ -21,8 +20,8 @@ class ClientSetupLogic(BaseLogic):
         self.game_client.set_nickname(data["nickname"])
 
         self.game_client.connect()
+        self.screen.set_status("Connecting to server...")
 
-    def on_connecting(self):
         self.screen.go_to(
             Screens.COMMON_LOADING,
             {"loading_msg": "Connecting...", "status_msg": "Connecting to server..."},
@@ -30,9 +29,11 @@ class ClientSetupLogic(BaseLogic):
 
     def on_connection_success(self):
         self.screen.go_to(Screens.CLIENT_LOBBY)
+        self.screen.set_status("In lobby")
 
     def on_connection_fail(self, reason):
         self.screen.go_to(Screens.CLIENT_SETUP)
+        self.screen.set_status("Failed to connect", 5000)
 
         if reason == "refused":
             self.screen.show_connection_error(

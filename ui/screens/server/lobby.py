@@ -149,9 +149,9 @@ class ServerLobbyScreen(BaseScreen):
         self.start_btn.setDisabled(True)
         self.start_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_COUNTDOWN))
 
-        self.status = QLabel("(not implemented)")
-        self.status.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
+        self.start_status = QLabel("(not implemented)")
+        self.start_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.start_status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
         leave_btn = LeaveButton("Close Lobby", btn_width=100, do_confirm=False)
         leave_btn.clicked.connect(self.close_lobby)
@@ -166,7 +166,7 @@ class ServerLobbyScreen(BaseScreen):
         vbox_right.addStretch(1)
         vbox_right.addWidget(self.start_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         vbox_right.addSpacing(2)
-        vbox_right.addWidget(self.status)
+        vbox_right.addWidget(self.start_status)
         vbox_right.addStretch(5)
         vbox_right.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
 

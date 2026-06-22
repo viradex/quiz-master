@@ -7,9 +7,10 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QStackedWidget,
     QMessageBox,
+    QStatusBar,
 )
 from PyQt6.QtGui import QGuiApplication, QIcon
-from PyQt6.QtCore import QUrl
+from PyQt6.QtCore import QTimer
 
 from core.app.screen_ids import Screens
 from core.services.app_context import Services
@@ -23,6 +24,7 @@ from core.config.constants import (
     STARTUP_SCREEN,
     WINDOW_WIDTH,
     WINDOW_HEIGHT,
+    DEFAULT_STATUS_BAR_MESSAGE,
 )
 
 
@@ -70,7 +72,7 @@ class MainWindow(QMainWindow):
             )
 
     def setup_ui(self) -> None:
-        """Create MainWindow UI with the stacked widget for showing individual screens."""
+        """Create MainWindow UI with the stacked widget for showing individual screens, as well as status bar."""
         self.central = QWidget()
         self.setCentralWidget(self.central)
 
@@ -78,6 +80,15 @@ class MainWindow(QMainWindow):
 
         hbox = QHBoxLayout(self.central)
         hbox.addWidget(self.stack)
+
+        self.status_bar = QStatusBar()
+        self.setStatusBar(self.status_bar)
+        self.status_text = DEFAULT_STATUS_BAR_MESSAGE
+
+        self.status_bar.setStyleSheet("border-top: 1px solid #444;" "font-size: 11px;")
+        self.status_bar.setSizeGripEnabled(False)
+
+        self.handle_status(self.status_text, 0)
 
     def setup_app_controller(self) -> None:
         """Set up app controller (global logic)."""
@@ -94,6 +105,8 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(widget)
 
         widget.navigate.connect(self.go_to)
+        widget.status.connect(self.handle_status)
+        widget.status_clear.connect(self.handle_status_clear)
 
     def build_screens(self) -> None:
         """Build all eager screens."""
@@ -127,6 +140,26 @@ class MainWindow(QMainWindow):
 
         self.current_screen = widget
         self.current_logic = logic
+
+    def handle_status(self, message: str, timeout: int = 0) -> None:
+        """Set status bar message. If no message is shown, display default message.
+        A timeout of 0 is treated as a permanent message and will not change unless reset with `clear_status()`.
+        """
+        self.status_bar.showMessage(message, timeout)
+
+        if timeout == 0:
+            self.status_text = message
+
+        if timeout > 0:
+            # Calls function once after the delay
+            QTimer.singleShot(timeout, self._set_status_after_timeout)
+
+    def handle_status_clear(self):
+        self.status_text = DEFAULT_STATUS_BAR_MESSAGE
+        self.status_bar.showMessage(self.status_text)
+
+    def _set_status_after_timeout(self) -> None:
+        self.status_bar.showMessage(self.status_text)
 
     def show_warning(self, title: str, text: str) -> None:
         """Show warning modal box. Only intended to be used by AppController."""

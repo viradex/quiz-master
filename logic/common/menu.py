@@ -12,25 +12,17 @@ class CommonMenuLogic(BaseLogic):
 
         self.screen.start_server.connect(self.handle_start)
 
-        self.game_server.starting.connect(self.on_starting)
         self.game_server.start_success.connect(self.on_start_success)
         self.game_server.start_fail.connect(self.on_start_fail)
 
     def handle_start(self):
         self.game_server.start()
-
-    def on_starting(self):
-        # TODO should the loading screen be shown?
-        # self.screen.go_to(
-        #     Screens.COMMON_LOADING,
-        #     {"loading_msg": "Starting...", "status_msg": "Starting the server..."},
-        # )
-
-        pass
+        self.screen.set_status("Starting...")
 
     def on_start_success(self):
         self.screen.go_to(Screens.SERVER_LOBBY)
+        self.screen.set_status("In lobby")
 
     def on_start_fail(self, reason):
-        # self.screen.go_to(Screens.COMMON_MENU)
+        self.screen.set_status("Failed to start server", 5000)
         self.screen.show_starting_error(reason)

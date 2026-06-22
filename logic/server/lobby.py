@@ -22,9 +22,11 @@ class ServerLobbyLogic(BaseLogic):
 
     def on_player_joined(self, nickname):
         self.screen.add_player_lobby(nickname)
+        self.screen.set_status("Player joined", 2000)
 
     def on_player_left(self, nickname):
         self.screen.remove_player_lobby(nickname)
+        self.screen.set_status("Player left", 2000)
 
     def on_get_player_info(self, nickname):
         player_id = self.server.get_id_from_nickname(nickname)
@@ -38,6 +40,11 @@ class ServerLobbyLogic(BaseLogic):
         player_id = self.server.get_id_from_nickname(nickname)
         self.server.kick_player(player_id, "Kicked by host")
 
+        self.screen.set_status("Kicked player", 2000)
+
     def on_close_server(self):
         self.server.stop()
         self.screen.go_to(Screens.COMMON_MENU)
+
+        self.screen.clear_status()
+        self.screen.set_status("Stopped server", 2000)
