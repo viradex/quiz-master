@@ -24,5 +24,7 @@ class CommonMenuLogic(BaseLogic):
         self.screen.set_status("In lobby")
 
     def on_start_fail(self, reason):
+        self.screen.reset_status()
         self.screen.set_status("Failed to start server", 5000)
+
         self.screen.show_starting_error(reason)

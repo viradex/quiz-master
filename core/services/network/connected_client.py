@@ -16,7 +16,7 @@ class ConnectedClient:
         self.player_id = player_id
         self.jsock = JSONSocket(sock)
 
-        self.player: Player = player
+        self.player: Player | None = player
         self.nickname: str | None = None
 
         self.last_seen = time.monotonic()

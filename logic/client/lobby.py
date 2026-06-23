@@ -40,7 +40,7 @@ class ClientLobbyLogic(BaseLogic):
         self.game_client.disconnect_client()
         self.screen.go_to(Screens.COMMON_MENU)
 
-        self.screen.clear_status()
+        self.screen.reset_status()
         self.screen.set_status("Disconnected from server", 2000)
 
     def on_enter(self):
