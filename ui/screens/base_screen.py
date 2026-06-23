@@ -9,7 +9,7 @@ class BaseScreen(QWidget):
 
     navigate = pyqtSignal(Screens, dict)
     status = pyqtSignal(str, int)
-    status_clear = pyqtSignal()
+    status_reset = pyqtSignal()
 
     title_text = "Quiz Master"
 
@@ -29,9 +29,9 @@ class BaseScreen(QWidget):
         """
         self.status.emit(message, timeout)
 
-    def clear_status(self) -> None:
+    def reset_status(self) -> None:
         """Clear status bar message, resetting it to the default."""
-        self.status_clear.emit()
+        self.status_reset.emit()
 
     def on_enter(self, payload: dict | None = None) -> None:
         pass

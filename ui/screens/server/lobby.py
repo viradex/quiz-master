@@ -235,6 +235,8 @@ class ServerLobbyScreen(BaseScreen):
 
     def update_player_count(self, amount):
         self.players += amount
+        self.players = 0 if self.players < 0 else self.players
+
         self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
 
     def add_player_lobby(self, player):

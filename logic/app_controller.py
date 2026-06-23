@@ -13,13 +13,13 @@ class AppController:
         self.services.client.invalid_action.connect(self.on_invalid_action)
 
     def on_kick(self, reason):
-        self.window.handle_status_clear()
+        self.window.handle_status_reset()
         self.window.handle_status("Disconnected from server", 5000)
 
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
 
     def on_error(self, reason):
-        self.window.handle_status_clear()
+        self.window.handle_status_reset()
         self.window.handle_status("Disconnected from server (unexpected error)", 5000)
 
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})

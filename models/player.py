@@ -1,16 +1,15 @@
+from dataclasses import dataclass
+
+
+@dataclass
 class Player:
     """Represents a player in the system (for the game manager)."""
 
-    def __init__(self, player_id: str, nickname: str) -> None:
-        """Initialize a new player instance."""
-        self.player_id = player_id
-        self.nickname = nickname
-
-        self.score = 0
-        self.connected = True
-
-        self.current_answer: int | None = None
-        self.has_answered = False
+    player_id: str
+    nickname: str
+    score: int = 0
+    current_answer: int | None = None
+    has_answered: bool = False
 
     def update_score(self, points: int) -> int:
         """Increment player points by a certain amount. Returns new score."""

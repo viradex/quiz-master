@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
 
         widget.navigate.connect(self.go_to)
         widget.status.connect(self.handle_status)
-        widget.status_clear.connect(self.handle_status_clear)
+        widget.status_reset.connect(self.handle_status_reset)
 
     def build_screens(self) -> None:
         """Build all eager screens."""
@@ -154,7 +154,7 @@ class MainWindow(QMainWindow):
             # Calls function once after the delay
             QTimer.singleShot(timeout, self._set_status_after_timeout)
 
-    def handle_status_clear(self):
+    def handle_status_reset(self):
         self.status_text = DEFAULT_STATUS_BAR_MESSAGE
         self.status_bar.showMessage(self.status_text)
 

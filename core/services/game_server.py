@@ -22,7 +22,7 @@ class GameServer(QObject):
     player_joined = pyqtSignal(str)
     player_left = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize client attributes and handlers for client messages."""
         super().__init__()
 
@@ -244,6 +244,12 @@ class GameServer(QObject):
             return
         elif status == "dupe_id":
             self._kick(client, "The player ID generated matches an existing ID")
+            return
+
+        # The Big Harsh is like Jupiter ;)
+        # and Jupiter can't fit in the server, obviously
+        if nickname.lower() == "the big harsh":
+            self._kick(client, "The player does not fit in the server")
             return
 
         client.player = player

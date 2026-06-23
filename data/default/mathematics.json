@@ -1,0 +1,76 @@
+{
+  "quiz_id": "9c4f18d2",
+  "quiz_title": "Mathematics Quiz",
+  "questions": [
+    {
+      "question_id": "a1f3c9d7",
+      "question_text": "What is 12 * 8?",
+      "answer_options": ["96", "88", "108", "84"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "b7e2a91c",
+      "question_text": "What is the square root of 144?",
+      "answer_options": ["10", "11", "12", "14"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "c4d8f2a1",
+      "question_text": "What is 15 + 27?",
+      "answer_options": ["42", "41", "43", "44"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "d9a1c6f8",
+      "question_text": "What is 100 / 4?",
+      "answer_options": ["20", "25", "30", "24"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "e3b7d91a",
+      "question_text": "What is 7^2?",
+      "answer_options": ["14", "49", "56", "42"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "f2c8a4d9",
+      "question_text": "What is 0.5 as a fraction?",
+      "answer_options": ["1/4", "1/3", "1/2", "2/3"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "1d9f3c8a",
+      "question_text": "What is the value of pi approximately?",
+      "answer_options": ["2.14", "3.14", "3.41", "3.04"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "2a7c9e4f",
+      "question_text": "What is 18 - 9?",
+      "answer_options": ["7", "8", "9", "10"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "3f8b1d6c",
+      "question_text": "What is 9 * 9?",
+      "answer_options": ["81", "72", "99", "90"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "4c6e9a1b",
+      "question_text": "What is 50% of 200?",
+      "answer_options": ["100", "150", "75", "120"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    }
+  ]
+}

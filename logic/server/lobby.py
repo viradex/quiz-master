@@ -46,5 +46,5 @@ class ServerLobbyLogic(BaseLogic):
         self.server.stop()
         self.screen.go_to(Screens.COMMON_MENU)
 
-        self.screen.clear_status()
+        self.screen.reset_status()
         self.screen.set_status("Stopped server", 2000)

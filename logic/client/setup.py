@@ -33,6 +33,8 @@ class ClientSetupLogic(BaseLogic):
 
     def on_connection_fail(self, reason):
         self.screen.go_to(Screens.CLIENT_SETUP)
+
+        self.screen.reset_status()
         self.screen.set_status("Failed to connect", 5000)
 
         if reason == "refused":
