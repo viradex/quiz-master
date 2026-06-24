@@ -68,19 +68,23 @@ class GameServer(QObject):
         if self.server_socket is None:
             raise ValueError("Server cannot be stopped without active socket")
 
-        self.broadcast(
-            {"type": ServerMessageType.KICK, "data": {"reason": "Server closed"}}
-        )
-
         connected_players = self.player_registry.get_players().values()
         self.player_registry.clear_players()
 
-        # Close all client sockets, unless they are invalid
         for client in connected_players:
             try:
-                client.close()
+                client.send(
+                    {
+                        "type": ServerMessageType.KICK,
+                        "data": {"reason": "Server closed"},
+                    }
+                )
+
+                # Informs client that server has no more data to send,
+                # but they can still receive data
+                client.socket.shutdown(socket.SHUT_WR)
             except OSError:
-                continue
+                pass
 
         self.is_running = False
         self.server_socket.close()
@@ -228,6 +232,14 @@ class GameServer(QObject):
             self._error(client, "Missing player nickname")
             return
 
+        if self.player_registry.has_id(client.player_id):
+            client.send(
+                {
+                    "type": ServerMessageType.INVALID_ACTION,
+                    "data": {"reason": "Cannot join twice"},
+                }
+            )
+
         client.nickname = nickname
         status, player = self.player_registry.add_player(nickname, client)
 
@@ -242,9 +254,6 @@ class GameServer(QObject):
         elif status == "long_nickname":
             self._kick(client, "The nickname is too long")
             return
-        elif status == "dupe_id":
-            self._kick(client, "The player ID generated matches an existing ID")
-            return
 
         # The Big Harsh is like Jupiter ;)
         # and Jupiter can't fit in the server, obviously
@@ -255,7 +264,7 @@ class GameServer(QObject):
         client.player = player
         self.player_joined.emit(nickname)
 
-        # Inform clients of player join, and inform own client of their ID
+        # Inform clients of player join
         self.broadcast(
             {
                 "type": ServerMessageType.PLAYER_JOINED,
@@ -267,6 +276,7 @@ class GameServer(QObject):
         connected_players = self.player_registry.get_players().values()
         player_list = [c.nickname for c in connected_players]
 
+        # Inform client of player ID and current lobby state
         client.send(
             {
                 "type": ServerMessageType.CONNECTION_SUCCESSFUL,

@@ -33,9 +33,6 @@ class PlayerRegistry:
             `("long_nickname", None)`
                 Nickname exceeds maximum character length.
 
-            `("dupe_id", None)`
-                Player ID already exists.
-
         Returns:
             Return format is `(status, data)` for values discussed above.
         """
@@ -50,9 +47,6 @@ class PlayerRegistry:
 
             if len(nickname) > MAX_NICKNAME_LENGTH:
                 return ("long_nickname", None)
-
-            if self.has_id(client.player_id):
-                return ("dupe_id", None)
 
             # Save player
             self.players[client.player_id] = client
