@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 import random
+from enum import Enum
 
 from models.question import Question
 
@@ -39,13 +40,13 @@ class Quiz:
         Validates the quiz and its questions.
 
         Return values:
-            `(False, "quiz_id", None)`
+            `(False, "empty_id", None)`
                 Quiz ID does not exist or is not a string.
 
-            `(False, "quiz_title", None)`
+            `(False, "empty_title", None)`
                 Quiz title does not exist or is not a string.
 
-            `(False, "questions", None)`
+            `(False, "empty_questions", None)`
                 Quiz questions do not exist.
 
             `(False, "id_used", index)`
@@ -72,13 +73,13 @@ class Quiz:
 
         # General quiz metadata information validation
         if not self.quiz_id or not isinstance(self.quiz_id, str):
-            return (False, "quiz_id", None)
+            return (False, "empty_id", None)
 
         if not self.quiz_title or not isinstance(self.quiz_title, str):
-            return (False, "quiz_title", None)
+            return (False, "empty_title", None)
 
         if not self.questions:
-            return (False, "questions", None)
+            return (False, "empty_questions", None)
 
         # Store all IDs that were currently used
         # Set used to increase lookup speed
