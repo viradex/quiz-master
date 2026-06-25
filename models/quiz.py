@@ -112,8 +112,8 @@ class Quiz:
     def to_dict(self) -> dict:
         """Convert to a dictionary for serialization."""
         return {
-            "quiz_id": self.question_id,
-            "quiz_title": self.question_text,
+            "quiz_id": self.quiz_id,
+            "quiz_title": self.quiz_title,
             "questions": [q.to_dict() for q in self.questions],
         }
 

@@ -23,12 +23,12 @@ class ClientSetupScreen(BaseScreen):
 
     submitted = pyqtSignal(dict)
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         title_font = QFont()
         title_font.setPointSize(20)
 
@@ -38,8 +38,6 @@ class ClientSetupScreen(BaseScreen):
         form_font = QFont()
         form_font.setPointSize(14)
 
-        # TODO add IP hint if users get confused in testing
-        # something like "see server screen for IP"
         ip_lbl = QLabel("Server IP:")
         ip_lbl.setFont(form_font)
         ip_lbl.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
@@ -48,6 +46,7 @@ class ClientSetupScreen(BaseScreen):
         self.ip_input.setFont(form_font)
         self.ip_input.returnPressed.connect(self.on_submit)
 
+        # Static text for debugging purposes
         self.port_lbl = QLabel(f"Connecting to port: {PORT}")
         self.port_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.port_lbl.setStyleSheet("font-size: 12px;" "color: #A7A7A7;")
@@ -73,7 +72,7 @@ class ClientSetupScreen(BaseScreen):
         self.menu_btn = QPushButton("Return to Menu")
         self.menu_btn.setFixedSize(200, 45)
         self.menu_btn.setStyleSheet("font-size: 16px;")
-        self.menu_btn.clicked.connect(self.on_return)
+        self.menu_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         self.join_btn = QPushButton("Join")
         self.join_btn.setFixedSize(240, 50)
@@ -97,25 +96,26 @@ class ClientSetupScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def clear_fields(self):
+    def clear_fields(self) -> None:
+        """Reset all form fields."""
         self.ip_input.setText(DEFAULT_IP_ADDRESS)
         self.nickname_input.setText("")
 
-    def on_submit(self):
+    def on_submit(self) -> None:
+        """Gets text from form fields and validates it."""
         data = {
             "ip": self.ip_input.text().strip(),
             "nickname": self.nickname_input.text().strip(),
         }
 
+        # Validate data (shows UI errors if failed)
         if not self.validate_data():
             return
 
         self.submitted.emit(data)
 
-    def on_return(self):
-        self.go_to(Screens.COMMON_MENU)
-
-    def validate_data(self):
+    def validate_data(self) -> None:
+        """Validate all form field data through basic validation."""
         ip_address = self.ip_input.text().strip()
         nickname = self.nickname_input.text().strip()
 
@@ -143,8 +143,9 @@ class ClientSetupScreen(BaseScreen):
 
         return True
 
-    def show_connection_error(self, title, desc):
+    def show_connection_error(self, title: str, desc: str) -> None:
+        """Show any connection error."""
         QMessageBox.critical(self, title, desc)
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.clear_fields()

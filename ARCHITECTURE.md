@@ -1,18 +1,20 @@
 # Quiz Master - Architecture Overview
 
-⚠️ This file is a work in progress!! ⚠️
+⚠️ This file is a work in progress! ⚠️
+
+If you are in VS Code, press Ctrl+Shift+V for easier reading!
 
 ## 1. Overview
 
-This project is a client-server quiz application built with Python and PyQt6.  
-It uses a layered architecture separating UI, logic, core services, and networking.
+This project is a client-server quiz application built with Python and PyQt6,
+using a layered architecture to allow for separation of concerns.
 
-The system is designed around:
+The program contains:
 
 - A central server controlling game state.
 - Lightweight clients rendering UI and sending input.
 - A screen-based UI navigation system.
-- A modular logic layer separating UI from business logic.
+- A modular logic layer separating UI from game logic.
 
 ## 2. High-Level Architecture
 
@@ -28,8 +30,7 @@ flowchart LR
     UI["UI Layer (PyQt Screens)"] <--> LOGIC["Logic Layer"]
     LOGIC <--> CORE["Core Services"]
     CORE <--> NET["Networking Layer"]
-    NET <--> SERVER["Game Server"]
-    SERVER <--> QUIZ["Quiz Manager"]
+    NET <--> QUIZ["Quiz Manager"]
     QUIZ <--> DATA["Quiz Repository"]
 ```
 
@@ -73,15 +74,27 @@ Manages quiz storage and persistent data.
 
 ## 4. Screen System
 
+The screen system is controlled by the MainWindow, which is controlled by the QApplication (a core component of PyQt).
+
+Each screen is connected with their respective logic file. The screens and logic are stored in their own registry entry
+in `core/app/screen_factory.py`, allowing for easier scalability. When a screen requests to switch the screen from a
+PyQt signal (allowing for separation of concerns), the MainWindow controls switching the screen UI and logic. It also runs
+lifecycle functions for the screens and logic (`on_enter` and `on_leave`) for the screens and logic to run specific code.
+
 ```mermaid
-flowchart LR
-    APP["QApplication"] --> MAIN["MainWindow"]
-    MAIN --> SCREEN["Current Screen"]
-    MAIN --> LOGIC["Current Logic"]
+sequenceDiagram
+    participant App as QApplication
+    participant Main as MainWindow
+    participant Factory as ScreenFactory
+    participant Screen
+    participant Logic
 
-    SCREEN <--> LOGIC
-
-    LOGIC -->|Switch screen| MAIN
+    App->>Main: Create MainWindow
+    Screen-->>Main: Request screen change
+    Main->>Factory: Request screen + logic from registry
+    Factory-->>Main: Screen + logic
+    Main->>Screen: Lifecycle calls + screen change
+    Main->>Logic: Lifecycle calls + logic change
 ```
 
 ## 5. Networking Protocol
@@ -95,7 +108,6 @@ Example of data transfer:
 {
   "type": "join_lobby",
   "data": {
-    "player_id": "bb4c6faa",
     "nickname": "Player 1"
   }
 }

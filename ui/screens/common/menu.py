@@ -17,12 +17,12 @@ from ui.components.dialogs import not_implemented
 class CommonMenuScreen(BaseScreen):
     start_server = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         title_font = QFont()
         title_font.setPointSize(24)
         title_font.setBold(True)
@@ -63,6 +63,7 @@ class CommonMenuScreen(BaseScreen):
         small_btn_hbox.addWidget(self.exit_btn)
         small_btn_hbox.addStretch()
 
+        # Applies styling to all buttons with same class
         self.setStyleSheet("""
             QPushButton[class="large_btn"] {
                 font-size: 22px;
@@ -96,16 +97,21 @@ class CommonMenuScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def _create_button(self, text, size, qss_class):
+    def _create_button(
+        self, text: str, size: tuple[int, int], qss_class: str
+    ) -> QPushButton:
+        """Create an individual button with own size, text, and styling."""
         btn = QPushButton(text)
         btn.setFixedSize(*size)
         btn.setProperty("class", qss_class)
+
         return btn
 
-    def on_start_server_clicked(self):
+    def on_start_server_clicked(self) -> None:
         self.start_server.emit()
 
-    def show_starting_error(self, reason):
+    def show_starting_error(self, reason: str) -> None:
+        """Shows an error dialog if an error occurred when starting the server."""
         if reason == "in_use":
             QMessageBox.critical(
                 self,

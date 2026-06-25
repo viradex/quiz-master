@@ -5,11 +5,11 @@ from ui.main_window import MainWindow
 from core.services.app_context import Services
 
 
-def run():
+def run() -> None:
     """Create and run the application's main GUI window."""
     app = QApplication(sys.argv)
 
-    # UI elements can appear broken on macOS
+    # UI elements can appear broken on macOS, so show warning
     if sys.platform == "darwin":
         QMessageBox.warning(
             None,

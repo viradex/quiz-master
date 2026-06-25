@@ -21,12 +21,12 @@ class ClientLobbyScreen(BaseScreen):
 
     leave_server = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         ### LEFT SIDE ###
         title_font = QFont()
         title_font.setPointSize(24)
@@ -106,7 +106,11 @@ class ClientLobbyScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def add_player_lobby(self, player, is_you=False):
+    def add_player_lobby(self, player: str, is_you: bool = False) -> None:
+        """
+        Adds a player to the lobby table. If `is_you`, makes the player bolded
+        and with '(you)' suffixed. If the player is themselves, they should be added first.
+        """
         row = self.lobby_table.rowCount()
         self.lobby_table.insertRow(row)
 
@@ -117,6 +121,7 @@ class ClientLobbyScreen(BaseScreen):
             Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
         )
 
+        # Adds special formatting to the row if the player is themselves
         if is_you:
             font = item.font()
             font.setBold(True)
@@ -124,19 +129,26 @@ class ClientLobbyScreen(BaseScreen):
 
         self.lobby_table.setItem(row, 0, item)
 
-    def remove_player_lobby(self, player):
+    def remove_player_lobby(self, player: str) -> bool:
+        """Removes a specific player from the lobby table"""
         for row in range(self.lobby_table.rowCount()):
             item = self.lobby_table.item(row, 0)
+
             if item and item.text() == player:
                 self.lobby_table.removeRow(row)
                 return True
 
         return False
 
-    def reset_lobby(self):
+    def reset_lobby(self) -> None:
+        """Reset lobby table to remove all rows."""
         self.lobby_table.setRowCount(0)
 
-    def set_connection_details(self, ip=None, port=None):
+    def set_connection_details(
+        self, ip: str | None = None, port: str | None = None
+    ) -> None:
+        """Set connection details on the UI. The message text changes depending on the values provided."""
+
         if ip is None:
             self.connection_details.setText("Connected to server")
         elif port is None:
@@ -144,7 +156,8 @@ class ClientLobbyScreen(BaseScreen):
         else:
             self.connection_details.setText(f"Connected to {ip}:{port}")
 
-    def leave_lobby(self):
+    def leave_lobby(self) -> None:
+        """Displays a warning modal box before leaving the server."""
         confirm = confirm_warning(
             self,
             "Confirm Leaving",
@@ -154,10 +167,10 @@ class ClientLobbyScreen(BaseScreen):
         if confirm:
             self.leave_server.emit()
 
-    def on_enter(self, payload=None):
+    def on_enter(self, payload: dict | None = None) -> None:
         self.spinner.start()
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.spinner.stop()
 
         self.reset_lobby()

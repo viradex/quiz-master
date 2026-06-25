@@ -11,12 +11,12 @@ DEFAULT_LOADING_TEXT = "Loading..."
 class CommonLoadingScreen(BaseScreen):
     title_text = "Quiz Master – Loading..."
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         loading_font = QFont()
         loading_font.setPointSize(32)
 
@@ -48,11 +48,12 @@ class CommonLoadingScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def set_loading_status(self, loading, status):
+    def set_loading_status(self, loading: str, status: str) -> None:
+        """Set loading text and subtext status."""
         self.loading_lbl.setText(loading)
         self.status_lbl.setText(status)
 
-    def on_enter(self, payload=None):
+    def on_enter(self, payload: dict | None = None) -> None:
         self.spinner.start()
 
         if payload:
@@ -61,6 +62,6 @@ class CommonLoadingScreen(BaseScreen):
                 payload.get("status_msg", ""),
             )
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.spinner.stop()
         self.set_loading_status(DEFAULT_LOADING_TEXT, "")
