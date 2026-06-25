@@ -30,14 +30,14 @@ class ServerLobbyScreen(BaseScreen):
 
     close_server = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.players = 0
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         ### LEFT SIDE ###
         title_font = QFont()
         title_font.setPointSize(24)
@@ -112,6 +112,7 @@ class ServerLobbyScreen(BaseScreen):
         ip_font = QFont()
         ip_font.setPointSize(32)
 
+        # Dynamic IP address display
         self.ip_address = QLabel(f"Server IP: {get_ip_address()}")
         self.ip_address.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ip_address.setFont(ip_font)
@@ -125,31 +126,30 @@ class ServerLobbyScreen(BaseScreen):
 
         # TODO for prototype only
         quizzes = [
-            "Maths Quiz",
-            "Science Quiz",
             "General Knowledge Quiz",
-            "History Quiz",
             "Geography Quiz",
-            "Sports Quiz",
-            "Music Quiz",
-            "Movie Trivia Quiz",
-            "Technology Quiz",
+            "History Quiz",
             "Literature Quiz",
+            "Maths Quiz",
+            "Movie Trivia Quiz",
+            "Music Quiz",
+            "Science Quiz",
+            "Sports Quiz",
+            "Technology Quiz",
         ]
-        quizzes.sort()
 
         self.quiz_combo = SearchableCombobox(quizzes)
         self.quiz_combo.setFont(combobox_font)
-        self.quiz_combo.setCurrentIndex(-1)
+        self.quiz_combo.setCurrentIndex(-1)  # Select no value when starting
         self.quiz_combo.setFixedWidth(400)
 
         self.start_btn = QPushButton("Start Game")
         self.start_btn.setFixedSize(220, 60)
         self.start_btn.setStyleSheet("font-size: 22px;")
         self.start_btn.setDisabled(True)
-        self.start_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_COUNTDOWN))
+        # self.start_btn.clicked.connect()
 
-        self.start_status = QLabel("(not implemented)")
+        self.start_status = QLabel("(not implemented)")  # temporary static status text
         self.start_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.start_status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
@@ -177,7 +177,8 @@ class ServerLobbyScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def _get_selected_player(self):
+    def _get_selected_player(self) -> None:
+        """Get selected player name from lobby table."""
         selected_items = self.lobby_table.selectedItems()
         if selected_items:
             item = selected_items[0]
@@ -185,7 +186,8 @@ class ServerLobbyScreen(BaseScreen):
         else:
             return None
 
-    def _add_player(self, player):
+    def _add_player(self, player: str) -> None:
+        """Add a player to the lobby table."""
         row = self.lobby_table.rowCount()
         self.lobby_table.insertRow(row)
 
@@ -196,17 +198,18 @@ class ServerLobbyScreen(BaseScreen):
 
         self.lobby_table.setItem(row, 0, item)
 
-    def _remove_player(self, player):
+    def _remove_player(self, player: str) -> bool:
+        """Remove a player from the lobby table based on nickname."""
         for row in range(self.lobby_table.rowCount()):
             item = self.lobby_table.item(row, 0)
+
             if item and item.text() == player:
                 self.lobby_table.removeRow(row)
                 return True
 
         return False
 
-    def on_get_info(self):
-        # TODO dummy function, should call logic
+    def on_get_info(self) -> None:
         selected_player = self._get_selected_player()
         if selected_player is None:
             QMessageBox.warning(self, "No Player Selected", "Please select a player.")
@@ -214,8 +217,7 @@ class ServerLobbyScreen(BaseScreen):
 
         self.get_player_info.emit(selected_player)
 
-    def on_kick_player(self):
-        # TODO dummy function, should call logic
+    def on_kick_player(self) -> None:
         selected_player = self._get_selected_player()
         if selected_player is None:
             QMessageBox.warning(self, "No Player Selected", "Please select a player.")
@@ -233,34 +235,47 @@ class ServerLobbyScreen(BaseScreen):
 
         self.kick_player.emit(selected_player)
 
-    def update_player_count(self, amount):
+    def update_player_count(self, amount: int) -> None:
+        """
+        Updates the player counter. The amount should be `1` or `-1` in almost all cases.
+        To add player(s), make `amount` a positive integer, otherwise, make it negative.
+
+        Amounts that evaluate to less than zero are set to `0`.
+        """
         self.players += amount
         self.players = 0 if self.players < 0 else self.players
 
         self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
 
-    def add_player_lobby(self, player):
+    def add_player_lobby(self, player: str) -> None:
+        """Adds a player to the lobby table and increases the player counter."""
         self.update_player_count(1)
         self._add_player(player)
 
-    def remove_player_lobby(self, player):
+    def remove_player_lobby(self, player: str) -> None:
+        """Removes a player from the lobby table and decreases the player counter."""
         self.update_player_count(-1)
         self._remove_player(player)
 
-    def reset_lobby(self):
+    def reset_lobby(self) -> None:
+        """Resets the player counter to `0`, and removes all values from the lobby table."""
         self.players = 0
 
         self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
         self.lobby_table.setRowCount(0)
 
-    def show_player_info(self, nickname, ip, port, hostname):
+    def show_player_info(
+        self, nickname: str, ip: str, port: str | int, hostname: str
+    ) -> None:
+        """Displays a dialog box showing player information."""
         QMessageBox.information(
             self,
             "Player Info",
             f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
         )
 
-    def close_lobby(self):
+    def close_lobby(self) -> None:
+        """Displays a warning modal box before closing the server."""
         confirm = confirm_warning(
             self,
             "Confirm Closing",
@@ -270,9 +285,9 @@ class ServerLobbyScreen(BaseScreen):
         if confirm:
             self.close_server.emit()
 
-    def on_enter(self, payload=None):
+    def on_enter(self, payload: dict | None = None) -> None:
         self.spinner.start()
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.spinner.stop()
         self.reset_lobby()

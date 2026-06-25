@@ -12,24 +12,26 @@ from PyQt6.QtCore import Qt
 
 
 class Card(QFrame):
+    """Creates a card. This serves no purpose other than looking visually aesthetic."""
+
     def __init__(
         self,
-        parent=None,
-        radius=20,
-        blur_radius=30,
-        accent=None,
-    ):
+        parent: QWidget | None = None,
+        radius: int = 20,
+        blur_radius: int = 30,
+        accent: QColor | str | None = None,
+    ) -> None:
         super().__init__(parent)
-        self.blur_radius = blur_radius
-        self.radius = radius
-        self.accent = self._to_color(accent) if accent else None
+        self.blur_radius: int = blur_radius
+        self.radius: int = radius
+        self.accent: QColor | None = self._to_color(accent) if accent else None
 
         self.setObjectName("card")
 
         self._apply_style()
         self._apply_shadow()
 
-    def _apply_style(self):
+    def _apply_style(self) -> None:
         border_color = "#2A2A2A"
 
         if self.accent:
@@ -43,7 +45,7 @@ class Card(QFrame):
             }}
         """)
 
-    def _apply_shadow(self):
+    def _apply_shadow(self) -> None:
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(self.blur_radius)
         shadow.setOffset(0, 6)
@@ -57,25 +59,30 @@ class Card(QFrame):
         shadow.setColor(color)
         self.setGraphicsEffect(shadow)
 
-    def set_accent(self, accent):
+    def set_accent(self, accent) -> None:
+        """Set custom accent."""
         self.accent = self._to_color(accent)
         self._apply_style()
         self._apply_shadow()
 
-    def clear_accent(self):
+    def clear_accent(self) -> None:
+        """Clear custom accent."""
         self.accent = None
         self._apply_style()
         self._apply_shadow()
 
-    def _to_color(self, value):
+    def _to_color(self, value: QColor | str) -> QColor:
+        """Convert a color to a QColor, if it not already one."""
         if isinstance(value, QColor):
             return value
         return QColor(value)
 
 
-# TODO change to class
-# class has broken styling
-def make_stat_card(title, value, icon_path: Path | None = None):
+# TODO change to class, but class has broken styling :(
+def make_stat_card(title: str, value: str, icon_path: Path | None = None) -> QWidget:
+    """Creates a statistic card, which is smaller than a normal Card, without a shadow,
+    and less flexible. Only should be used for displaying player stats."""
+
     container = QWidget()
     container.setStyleSheet("""
         background-color: #2B2B2B;
@@ -89,6 +96,7 @@ def make_stat_card(title, value, icon_path: Path | None = None):
     header_layout = QHBoxLayout()
     header_layout.setSpacing(6)
 
+    # Shows icon if provided
     if icon_path is not None:
         icon_path = Path(icon_path)
 

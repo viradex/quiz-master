@@ -11,7 +11,7 @@ class JSONSocket:
         self.buffer = b""
 
     def _validate_socket(self) -> None:
-        """Internal method. Ensures socket is set."""
+        """Ensures socket is set."""
         if self.sock is None:
             raise ValueError("Socket must be set before sending/receiving")
 
@@ -23,7 +23,7 @@ class JSONSocket:
         msg = json.dumps(data) + "\n"
         self.sock.sendall(msg.encode())
 
-    def recv(self) -> dict | None:
+    def recv(self) -> dict | bool | None:
         """
         Receives any incoming message. The data is deserialized before returning.
 

@@ -154,11 +154,13 @@ class MainWindow(QMainWindow):
             # Calls function once after the delay
             QTimer.singleShot(timeout, self._set_status_after_timeout)
 
-    def handle_status_reset(self):
+    def handle_status_reset(self) -> None:
+        """Reset status message to the default status message (not the last permanent one)."""
         self.status_text = DEFAULT_STATUS_BAR_MESSAGE
         self.status_bar.showMessage(self.status_text)
 
     def _set_status_after_timeout(self) -> None:
+        """Gets the original status after a temporary one concludes."""
         self.status_bar.showMessage(self.status_text)
 
     def show_warning(self, title: str, text: str) -> None:

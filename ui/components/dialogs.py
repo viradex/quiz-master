@@ -1,7 +1,9 @@
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QWidget
 
 
-def not_implemented(parent):
+# TODO eventually should have its definition and all calls to it removed
+def not_implemented(parent: QWidget | None = None) -> None:
+    """Show a 'not implemented' message box."""
     QMessageBox.warning(
         parent,
         "Coming Soon",
@@ -9,7 +11,8 @@ def not_implemented(parent):
     )
 
 
-def confirm_warning(parent, title, desc):
+def confirm_warning(parent: QWidget | None, title: str, desc: str) -> bool:
+    """Creates a custom warning confirmation box. Returns True if the user selected Yes."""
     msg = QMessageBox(parent)
     msg.setIcon(QMessageBox.Icon.Warning)
     msg.setWindowTitle(title)

@@ -9,12 +9,12 @@ from core.app.screen_ids import Screens
 class ClientDisconnectScreen(BaseScreen):
     title_text = "Quiz Master – Disconnected"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         title_font = QFont()
         title_font.setPointSize(24)
         title_font.setBold(True)
@@ -53,10 +53,10 @@ class ClientDisconnectScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def on_enter(self, payload=None):
+    def on_enter(self, payload: dict | None = None) -> None:
         if payload:
             reason = payload.get("reason", "Unknown")
             self.reason.setText(f"Reason: {reason}")
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.reason.setText("Reason: Unknown")
