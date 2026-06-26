@@ -5,7 +5,7 @@ from core.app.screen_ids import Screens
 
 
 class ClientLobbyLogic(BaseLogic):
-    def __init__(self, screen, services):
+    def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: ClientLobbyScreen = screen
         self.game_client: GameClient = services.client
@@ -16,33 +16,35 @@ class ClientLobbyLogic(BaseLogic):
 
         self.screen.leave_server.connect(self.on_leave_server)
 
-    def on_connection_success(self, player_list):
+    def on_connection_success(self, player_list: list[str]) -> None:
         own_nickname = self.game_client.nickname
 
+        # Adds own player name as the first person in the lobby table
         if own_nickname in player_list:
             player_list.remove(own_nickname)
             player_list.insert(0, own_nickname)
 
+        # Refreshes and adds all players to the lobby screen
         self.screen.reset_lobby()
 
         for player in player_list:
             is_you = player == own_nickname
-            self.screen.add_player_lobby(player, is_you=is_you)
+            self.screen.add_player_lobby(player, is_you)
 
-    def on_player_joined(self, player):
+    def on_player_joined(self, player: str) -> None:
         if player != self.game_client.nickname:
             self.screen.add_player_lobby(player, is_you=False)
 
-    def on_player_left(self, player):
+    def on_player_left(self, player: str) -> None:
         self.screen.remove_player_lobby(player)
 
-    def on_leave_server(self):
+    def on_leave_server(self) -> None:
         self.game_client.disconnect_client()
         self.screen.go_to(Screens.COMMON_MENU)
 
         self.screen.reset_status()
         self.screen.set_status("Disconnected from server", 2000)
 
-    def on_enter(self):
+    def on_enter(self) -> None:
         ip, port = self.game_client.get_server_address()
         self.screen.set_connection_details(ip, port)

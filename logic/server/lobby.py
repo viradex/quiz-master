@@ -1,5 +1,3 @@
-import socket
-
 from ui.screens.server.lobby import ServerLobbyScreen
 from logic.base_logic import BaseLogic
 from core.services.app_context import GameServer
@@ -8,7 +6,7 @@ from utils.networking import get_hostname
 
 
 class ServerLobbyLogic(BaseLogic):
-    def __init__(self, screen, services):
+    def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: ServerLobbyScreen = screen
         self.server: GameServer = services.server
@@ -20,15 +18,15 @@ class ServerLobbyLogic(BaseLogic):
         self.screen.kick_player.connect(self.on_kick_player)
         self.screen.close_server.connect(self.on_close_server)
 
-    def on_player_joined(self, nickname):
+    def on_player_joined(self, nickname: str) -> None:
         self.screen.add_player_lobby(nickname)
         self.screen.set_status("Player joined", 2000)
 
-    def on_player_left(self, nickname):
+    def on_player_left(self, nickname: str) -> None:
         self.screen.remove_player_lobby(nickname)
         self.screen.set_status("Player left", 2000)
 
-    def on_get_player_info(self, nickname):
+    def on_get_player_info(self, nickname: str) -> None:
         player_id = self.server.get_id_from_nickname(nickname)
 
         ip, port = self.server.get_player_address(player_id)
@@ -36,13 +34,13 @@ class ServerLobbyLogic(BaseLogic):
 
         self.screen.show_player_info(nickname, ip, port, hostname)
 
-    def on_kick_player(self, nickname):
+    def on_kick_player(self, nickname: str) -> None:
         player_id = self.server.get_id_from_nickname(nickname)
         self.server.kick_player(player_id, "Kicked by host")
 
         self.screen.set_status("Kicked player", 2000)
 
-    def on_close_server(self):
+    def on_close_server(self) -> None:
         self.server.stop()
         self.screen.go_to(Screens.COMMON_MENU)
 

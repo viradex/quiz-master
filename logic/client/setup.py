@@ -5,7 +5,7 @@ from core.app.screen_ids import Screens
 
 
 class ClientSetupLogic(BaseLogic):
-    def __init__(self, screen, services):
+    def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: ClientSetupScreen = screen
         self.game_client: GameClient = services.client
@@ -15,7 +15,7 @@ class ClientSetupLogic(BaseLogic):
         self.game_client.connection_success.connect(self.on_connection_success)
         self.game_client.connection_fail.connect(self.on_connection_fail)
 
-    def handle_submit(self, data):
+    def handle_submit(self, data: dict[str, str]) -> None:
         self.game_client.set_ip(data["ip"])
         self.game_client.set_nickname(data["nickname"])
 
@@ -27,11 +27,11 @@ class ClientSetupLogic(BaseLogic):
             {"loading_msg": "Connecting...", "status_msg": "Connecting to server..."},
         )
 
-    def on_connection_success(self):
+    def on_connection_success(self) -> None:
         self.screen.go_to(Screens.CLIENT_LOBBY)
         self.screen.set_status("In lobby")
 
-    def on_connection_fail(self, reason):
+    def on_connection_fail(self, reason: str) -> None:
         self.screen.go_to(Screens.CLIENT_SETUP)
 
         self.screen.reset_status()

@@ -108,7 +108,7 @@ class ClientLobbyScreen(BaseScreen):
 
     def add_player_lobby(self, player: str, is_you: bool = False) -> None:
         """
-        Adds a player to the lobby table. If `is_you`, makes the player bolded
+        Adds a player to the lobby table. If `is_you` is True, makes the player bolded
         and with '(you)' suffixed. If the player is themselves, they should be added first.
         """
         row = self.lobby_table.rowCount()

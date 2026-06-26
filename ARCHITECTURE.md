@@ -18,20 +18,32 @@ The program contains:
 
 ## 2. High-Level Architecture
 
-The app can be split into layers. More information about each layer is present in Section 3.
+The app can be split into four main layers. More information about each layer is present in Section 3.
 
 - UI layer
 - Logic layer
-- Game logic layer
-- Networking layer
+- Game logic and networking layer
+- Data storage layer
+
+The layers communicate to each other using either `pyqtSignal` or direct function calls. The way the layers
+interact is shown below. Signals are typically used to decouple the layer from knowing about other layers,
+however, the logic layer is the "glue" between the UI and game/networking layer, and thus can know about both
+and do direct function calls.
 
 ```mermaid
-flowchart LR
-    UI["UI Layer (PyQt Screens)"] <--> LOGIC["Logic Layer"]
-    LOGIC <--> CORE["Core Services"]
-    CORE <--> NET["Networking Layer"]
-    NET <--> QUIZ["Quiz Manager"]
-    QUIZ <--> DATA["Quiz Repository"]
+flowchart TD
+    UI[UI]
+    Logic[Logic]
+    Game[Game / Network]
+    Data[Data]
+
+    UI -. Signal .-> Logic
+    Logic -- Direct call --> UI
+
+    Game -. Signal .-> Logic
+    Logic -- Direct call --> Game
+
+    Game <-- Direct call --> Data
 ```
 
 ## 3. Core Layers
@@ -90,9 +102,11 @@ sequenceDiagram
     participant Logic
 
     App->>Main: Create MainWindow
+
     Screen-->>Main: Request screen change
     Main->>Factory: Request screen + logic from registry
     Factory-->>Main: Screen + logic
+
     Main->>Screen: Lifecycle calls + screen change
     Main->>Logic: Lifecycle calls + logic change
 ```
