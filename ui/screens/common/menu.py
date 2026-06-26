@@ -110,11 +110,6 @@ class CommonMenuScreen(BaseScreen):
     def on_start_server_clicked(self) -> None:
         self.start_server.emit()
 
-    def show_starting_error(self, reason: str) -> None:
-        """Shows an error dialog if an error occurred when starting the server."""
-        if reason == "in_use":
-            QMessageBox.critical(
-                self,
-                "Server Already Running",
-                "Another instance of the server is already running on this device. Only one server instance can be run per device.",
-            )
+    def show_error(self, title: str, desc: str) -> None:
+        """Shows an error dialog."""
+        QMessageBox.critical(self, title, desc)

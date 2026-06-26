@@ -5,7 +5,7 @@ from core.app.screen_ids import Screens
 
 
 class CommonMenuLogic(BaseLogic):
-    def __init__(self, screen, services):
+    def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: CommonMenuScreen = screen
         self.game_server: GameServer = services.server
@@ -15,16 +15,20 @@ class CommonMenuLogic(BaseLogic):
         self.game_server.start_success.connect(self.on_start_success)
         self.game_server.start_fail.connect(self.on_start_fail)
 
-    def handle_start(self):
+    def handle_start(self) -> None:
         self.game_server.start()
         self.screen.set_status("Starting...")
 
-    def on_start_success(self):
+    def on_start_success(self) -> None:
         self.screen.go_to(Screens.SERVER_LOBBY)
         self.screen.set_status("In lobby")
 
-    def on_start_fail(self, reason):
+    def on_start_fail(self, reason: str) -> None:
         self.screen.reset_status()
         self.screen.set_status("Failed to start server", 5000)
 
-        self.screen.show_starting_error(reason)
+        if reason == "in_use":
+            self.screen.show_error(
+                "Server Already Running",
+                "Another instance of the server is already running on this device. Only one server instance can be run per device.",
+            )

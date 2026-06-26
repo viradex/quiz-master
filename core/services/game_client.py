@@ -155,8 +155,9 @@ class GameClient(QObject):
                 self.connection_fail.emit("unreachable")
                 return
             else:
-                # technically, start_fail could be emitted,
-                # but it would be pointless due to the 'raise'
+                # Technically, start_fail could be emitted,
+                # but since this is an unexpected error, it's
+                # better to just have a regular Python error
                 raise
 
         self.is_connected = True
