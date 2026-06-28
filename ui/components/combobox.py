@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 class SearchableCombobox(QComboBox):
     """Searchable dropdown menu."""
 
-    def __init__(self, items: list[str], parent=None) -> None:
+    def __init__(self, items: list[str] = [], parent=None) -> None:
         super().__init__(parent)
         self.items = items
 
@@ -20,6 +20,7 @@ class SearchableCombobox(QComboBox):
 
         if self.items:
             self.addItems(self.items)
+            self.setCurrentIndex(-1)  # Select no value when starting
 
         # QCompleter for search functionality
         completer = QCompleter(self.model(), self)
@@ -34,3 +35,5 @@ class SearchableCombobox(QComboBox):
 
         self.clear()
         self.addItems(self.items)
+
+        self.setCurrentIndex(-1)

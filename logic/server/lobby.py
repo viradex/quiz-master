@@ -1,7 +1,10 @@
 from ui.screens.server.lobby import ServerLobbyScreen
 from logic.base_logic import BaseLogic
+
 from core.services.app_context import GameServer
 from core.app.screen_ids import Screens
+from data.quiz_repo import QuizRepository
+
 from utils.networking import get_hostname
 
 
@@ -10,6 +13,7 @@ class ServerLobbyLogic(BaseLogic):
         super().__init__()
         self.screen: ServerLobbyScreen = screen
         self.server: GameServer = services.server
+        self.quiz_repo: QuizRepository = services.quiz_repo
 
         self.server.player_joined.connect(self.on_player_joined)
         self.server.player_left.connect(self.on_player_left)
@@ -46,3 +50,9 @@ class ServerLobbyLogic(BaseLogic):
 
         self.screen.reset_status()
         self.screen.set_status("Stopped server", 2000)
+
+    def on_enter(self):
+        quizzes = self.quiz_repo.load_quizzes()
+        names = [q.quiz_title for q in quizzes.values()]
+
+        self.screen.set_quizzes(names)

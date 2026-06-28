@@ -1,6 +1,8 @@
 {
   "quiz_id": "5f2c91a7",
   "quiz_title": "Science Quiz",
+  "shuffle_questions": false,
+  "is_default": true,
   "questions": [
     {
       "question_id": "a8c1f3d9",

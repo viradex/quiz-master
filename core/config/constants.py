@@ -26,3 +26,6 @@ RESPONSE_TIMEOUT = 15
 
 # Generic validation config
 MAX_NICKNAME_LENGTH = 40
+
+# Game config
+COUNTDOWN_TIME = 3

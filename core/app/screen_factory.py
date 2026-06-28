@@ -81,5 +81,5 @@ def create_screen_bundle(
         logic = logic_cls(widget, services)
 
         return widget, logic
-    except KeyError:
-        raise ValueError(f"Unknown screen: {screen}")
+    except KeyError as e:
+        raise ValueError(f"Unknown screen: {screen}") from e

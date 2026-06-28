@@ -1,17 +1,18 @@
 from dataclasses import dataclass
 import random
-from enum import Enum
 
 from models.question import Question
 
 
 @dataclass
 class Quiz:
-    """Represents a Quiz and the data fields it contains (not file system manipulation)."""
+    """Represents a Quiz and the data fields it contains."""
 
     quiz_id: str
     quiz_title: str
     questions: list[Question]
+    do_shuffle: bool
+    is_default: bool
 
     def add_question(self, question: Question) -> None:
         """Adds a new question to the quiz."""
@@ -49,6 +50,12 @@ class Quiz:
             `(False, "empty_questions", None)`
                 Quiz questions do not exist.
 
+            `(False, "no_shuffle_info", None)`
+                The shuffle questions info does not exist.
+
+            `(False, "no_default_info", None)`
+                The default quiz info does not exist.
+
             `(False, "id_used", index)`
                 Question ID has been duplicated.
 
@@ -80,6 +87,12 @@ class Quiz:
 
         if not self.questions:
             return (False, "empty_questions", None)
+
+        if not isinstance(self.do_shuffle, bool):
+            return (False, "no_shuffle_info", None)
+
+        if not isinstance(self.is_default, bool):
+            return (False, "no_default_info", None)
 
         # Store all IDs that were currently used
         # Set used to increase lookup speed
@@ -115,6 +128,8 @@ class Quiz:
             "quiz_id": self.quiz_id,
             "quiz_title": self.quiz_title,
             "questions": [q.to_dict() for q in self.questions],
+            "shuffle_questions": self.do_shuffle,
+            "is_default": self.is_default,
         }
 
     @staticmethod
@@ -124,4 +139,6 @@ class Quiz:
             quiz_id=data["quiz_id"],
             quiz_title=data["quiz_title"],
             questions=[Question.from_dict(q) for q in data["questions"]],
+            do_shuffle=data["shuffle_questions"],
+            is_default=data["is_default"],
         )

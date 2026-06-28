@@ -1,6 +1,8 @@
 {
   "quiz_id": "d971be3d",
-  "quiz_title": "General Knowledge",
+  "quiz_title": "General Knowledge Quiz",
+  "shuffle_questions": false,
+  "is_default": true,
   "questions": [
     {
       "question_id": "a3f91c7d",

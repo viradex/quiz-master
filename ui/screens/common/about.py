@@ -1,7 +1,17 @@
 from pathlib import Path
-from PyQt6.QtWidgets import QWidget, QTabWidget, QLabel, QPlainTextEdit, QVBoxLayout
+from PyQt6.QtWidgets import (
+    QWidget,
+    QTabWidget,
+    QLabel,
+    QPushButton,
+    QPlainTextEdit,
+    QVBoxLayout,
+    QHBoxLayout,
+)
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 
+from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 
 
@@ -22,16 +32,17 @@ class CommonAboutScreen(BaseScreen):
             }
         """)
 
-        tabs.addTab(AboutTab(), "About")
-        tabs.addTab(HelpTab(), "Help")
+        tabs.addTab(AboutTab(self), "About")
+        tabs.addTab(HelpTab(self), "Help")
 
         vbox.addWidget(tabs, stretch=1)
         self.setLayout(vbox)
 
 
 class AboutTab(QWidget):
-    def __init__(self):
+    def __init__(self, parent_screen):
         super().__init__()
+        self.parent_screen = parent_screen
 
         self.license_text = self.get_license_text()
 
@@ -45,6 +56,15 @@ class AboutTab(QWidget):
 
         title = QLabel("About Quiz Master")
         title.setFont(title_font)
+
+        menu_btn = QPushButton("Return to Menu")
+        menu_btn.setFixedSize(140, 40)
+        menu_btn.setStyleSheet("font-size: 14px;")
+        menu_btn.clicked.connect(lambda: self.parent_screen.go_to(Screens.COMMON_MENU))
+
+        title_hbox = QHBoxLayout()
+        title_hbox.addWidget(title)
+        title_hbox.addWidget(menu_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         desc_font = QFont()
         desc_font.setPointSize(12)
@@ -67,7 +87,7 @@ class AboutTab(QWidget):
         self.license_area.setPlainText(self.license_text)
 
         vbox = QVBoxLayout()
-        vbox.addWidget(title)
+        vbox.addLayout(title_hbox)
         vbox.addSpacing(2)
         vbox.addWidget(desc)
         vbox.addSpacing(10)
@@ -133,8 +153,9 @@ Meow."""
 
 
 class HelpTab(QWidget):
-    def __init__(self):
+    def __init__(self, parent_screen):
         super().__init__()
+        self.parent_screen = parent_screen
 
         self.setup_tab()
 

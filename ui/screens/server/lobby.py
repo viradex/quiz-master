@@ -124,24 +124,10 @@ class ServerLobbyScreen(BaseScreen):
         select_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         select_lbl.setFont(combobox_font)
 
-        # TODO for prototype only
-        quizzes = [
-            "General Knowledge Quiz",
-            "Geography Quiz",
-            "History Quiz",
-            "Literature Quiz",
-            "Maths Quiz",
-            "Movie Trivia Quiz",
-            "Music Quiz",
-            "Science Quiz",
-            "Sports Quiz",
-            "Technology Quiz",
-        ]
-
-        self.quiz_combo = SearchableCombobox(quizzes)
+        self.quiz_combo = SearchableCombobox()
         self.quiz_combo.setFont(combobox_font)
-        self.quiz_combo.setCurrentIndex(-1)  # Select no value when starting
         self.quiz_combo.setFixedWidth(400)
+        self.quiz_combo.currentIndexChanged.connect(self.check_start_game_state)
 
         self.start_btn = QPushButton("Start Game")
         self.start_btn.setFixedSize(220, 60)
@@ -149,7 +135,7 @@ class ServerLobbyScreen(BaseScreen):
         self.start_btn.setDisabled(True)
         # self.start_btn.clicked.connect()
 
-        self.start_status = QLabel("(not implemented)")  # temporary static status text
+        self.start_status = QLabel()
         self.start_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.start_status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
@@ -197,6 +183,7 @@ class ServerLobbyScreen(BaseScreen):
         )
 
         self.lobby_table.setItem(row, 0, item)
+        self.check_start_game_state()
 
     def _remove_player(self, player: str) -> bool:
         """Remove a player from the lobby table based on nickname."""
@@ -205,6 +192,8 @@ class ServerLobbyScreen(BaseScreen):
 
             if item and item.text() == player:
                 self.lobby_table.removeRow(row)
+                self.check_start_game_state()
+
                 return True
 
         return False
@@ -263,6 +252,7 @@ class ServerLobbyScreen(BaseScreen):
 
         self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
         self.lobby_table.setRowCount(0)
+        self.quiz_combo.clear()
 
     def show_player_info(
         self, nickname: str, ip: str, port: str | int, hostname: str
@@ -284,6 +274,23 @@ class ServerLobbyScreen(BaseScreen):
 
         if confirm:
             self.close_server.emit()
+
+    def set_quizzes(self, quizzes: list[str]) -> None:
+        """Set the quizzes that can be selected from the dropdown."""
+        self.quiz_combo.set_items(quizzes)
+
+    def check_start_game_state(self) -> None:
+        """Loosely checks if the game can be started, and if the checks are successful, enables the Start button.
+        Strict checks should be performed in the logic layer."""
+        if self.quiz_combo.currentIndex() == -1:
+            self.start_btn.setDisabled(True)
+            self.start_status.setText("(select a quiz from the list)")
+        elif self.lobby_table.rowCount() < 2:
+            self.start_btn.setDisabled(True)
+            self.start_status.setText("(at least two players are required)")
+        else:
+            self.start_btn.setDisabled(False)
+            self.start_status.setText("")
 
     def on_enter(self, payload: dict | None = None) -> None:
         self.spinner.start()

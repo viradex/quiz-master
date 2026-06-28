@@ -34,7 +34,7 @@ class GameServer(QObject):
         self.quiz_manager = QuizManager()
         self.player_registry = PlayerRegistry()
 
-        self.handlers: dict[ServerMessageType, function] = {
+        self.handlers: dict[ClientMessageType, function] = {
             ClientMessageType.PING: self.handle_ping,
             ClientMessageType.JOIN_LOBBY: self.handle_join_lobby,
             ClientMessageType.LEAVE_LOBBY: self.handle_leave_lobby,

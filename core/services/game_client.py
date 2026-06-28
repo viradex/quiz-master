@@ -162,12 +162,13 @@ class GameClient(QObject):
 
         self.is_connected = True
 
+        # Start listening for server pings and ensure connection remains through watchdog
+        threading.Thread(target=self.listen, daemon=True).start()
+
         # Inform server of join and reset server ping time
         self.send_join()
         self.last_ping_time = time.monotonic()
 
-        # Start listening for server pings and ensure connection remains through watchdog
-        threading.Thread(target=self.listen, daemon=True).start()
         self.start_ping_loop()
         self.start_watchdog()
 

@@ -26,7 +26,7 @@ class AppController:
 
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
         self.window.show_error(
-            "Unexpected Network Error",
+            "Protocol Error",
             f"The connection was terminated by the server due to a communication error.\n\nReason: {reason}",
         )
 

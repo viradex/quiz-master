@@ -16,7 +16,6 @@ class ClientMultiQuestionScreen(BaseScreen):
         super().__init__(parent)
 
         self.setup_ui()
-        self.setup_sound()
 
     def setup_ui(self):
         question_num_font = QFont()

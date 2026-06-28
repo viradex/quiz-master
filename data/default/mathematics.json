@@ -1,6 +1,8 @@
 {
   "quiz_id": "9c4f18d2",
   "quiz_title": "Mathematics Quiz",
+  "shuffle_questions": false,
+  "is_default": true,
   "questions": [
     {
       "question_id": "a1f3c9d7",
