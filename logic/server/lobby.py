@@ -1,18 +1,21 @@
 from ui.screens.server.lobby import ServerLobbyScreen
 from logic.base_logic import BaseLogic
-
 from core.services.app_context import GameServer
 from core.app.screen_ids import Screens
+from core.game.game_controller import GameController
 from data.quiz_repo import QuizRepository
 
 from utils.networking import get_hostname
+from core.config.constants import MIN_PLAYERS_FOR_START
 
 
 class ServerLobbyLogic(BaseLogic):
     def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: ServerLobbyScreen = screen
+
         self.server: GameServer = services.server
+        self.controller: GameController = services.controller
         self.quiz_repo: QuizRepository = services.quiz_repo
 
         self.server.player_joined.connect(self.on_player_joined)
@@ -20,6 +23,7 @@ class ServerLobbyLogic(BaseLogic):
 
         self.screen.get_player_info.connect(self.on_get_player_info)
         self.screen.kick_player.connect(self.on_kick_player)
+        self.screen.start_game.connect(self.on_start_game)
         self.screen.close_server.connect(self.on_close_server)
 
     def on_player_joined(self, nickname: str) -> None:
@@ -43,6 +47,25 @@ class ServerLobbyLogic(BaseLogic):
         self.server.kick_player(player_id, "Kicked by host")
 
         self.screen.set_status("Kicked player", 2000)
+
+    def on_start_game(self, quiz_name: str) -> None:
+        players = len(self.server.player_registry.get_clients())
+
+        self.quiz_repo.refresh_cache()
+        quizzes = self.quiz_repo.load_quizzes()
+        names = [q.quiz_title for q in quizzes.values()]
+
+        if quiz_name not in names:
+            self.screen.show_error(
+                "Invalid Conditions for Start", "The quiz selected does not exist."
+            )
+            return
+        elif players < MIN_PLAYERS_FOR_START:
+            self.screen.show_error(
+                "Invalid Conditions for Start",
+                "There are not enough players to start the game.",
+            )
+            return
 
     def on_close_server(self) -> None:
         self.server.stop()

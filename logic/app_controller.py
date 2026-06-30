@@ -5,7 +5,7 @@ from core.app.screen_ids import Screens
 class AppController:
     """Global logic, connected to MainWindow and generally used to catch general network/app errors."""
 
-    def __init__(self, window, services) -> None:
+    def __init__(self, window, services: Services) -> None:
         super().__init__()
         self.window = window
         self.services: Services = services

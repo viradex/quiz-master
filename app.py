@@ -9,7 +9,7 @@ def run() -> None:
     """Create and run the application's main GUI window."""
     app = QApplication(sys.argv)
 
-    # UI elements can appear broken on macOS, so show warning
+    # App can crash on macOS, and UI elements can appear broken
     if sys.platform == "darwin":
         QMessageBox.warning(
             None,

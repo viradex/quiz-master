@@ -110,13 +110,13 @@ class MainWindow(QMainWindow):
 
     def build_screens(self) -> None:
         """Build all eager screens."""
-        self.screen_widgets = {}
-        self.screen_logic = {}
+        self.screen_widgets: dict[Screens, BaseScreen] = {}
+        self.screen_logic: dict[Screens, BaseLogic] = {}
 
         for screen in EAGER_SCREENS:
             self._build_screen(screen)
 
-    def get_screen(self, screen: Screens) -> None:
+    def get_screen(self, screen: Screens) -> BaseScreen:
         """Gets a screen reference. If it does not exist, builds the screen."""
         if screen not in self.screen_widgets:
             self._build_screen(screen)
@@ -163,10 +163,14 @@ class MainWindow(QMainWindow):
         """Gets the original status after a temporary one concludes."""
         self.status_bar.showMessage(self.status_text)
 
-    def show_warning(self, title: str, text: str) -> None:
-        """Show warning modal box. Only intended to be used by AppController."""
-        QMessageBox.warning(self, title, text)
+    def show_error(self, title: str, desc: str) -> None:
+        """Show an error modal window. Only intended to be used by AppController."""
+        QMessageBox.critical(self, title, desc)
 
-    def show_error(self, title: str, text: str) -> None:
-        """Show error modal box. Only intended to be used by AppController."""
-        QMessageBox.critical(self, title, text)
+    def show_warning(self, title: str, desc: str) -> None:
+        """Show a warning modal window. Only intended to be used by AppController."""
+        QMessageBox.warning(self, title, desc)
+
+    def show_info(self, title: str, desc: str) -> None:
+        """Show an informational modal window. Only intended to be used by AppController."""
+        QMessageBox.information(self, title, desc)

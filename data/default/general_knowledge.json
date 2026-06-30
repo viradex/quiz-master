@@ -1,7 +1,7 @@
 {
   "quiz_id": "d971be3d",
   "quiz_title": "General Knowledge Quiz",
-  "shuffle_questions": false,
+  "do_shuffle": false,
   "is_default": true,
   "questions": [
     {

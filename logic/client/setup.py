@@ -38,17 +38,17 @@ class ClientSetupLogic(BaseLogic):
         self.screen.set_status("Failed to connect", 5000)
 
         if reason == "refused":
-            self.screen.show_connection_error(
+            self.screen.show_error(
                 "Failed to Connect",
                 "Unable to connect to the server. The connection was refused. Please try again.",
             )
         elif reason == "timeout":
-            self.screen.show_connection_error(
+            self.screen.show_error(
                 "Failed to Connect",
                 "Unable to connect to the server. The server did not respond within a certain period of time. Please try again.",
             )
         elif reason == "unreachable":
-            self.screen.show_connection_error(
+            self.screen.show_error(
                 "Failed to Connect",
                 "Unable to connect to the server. The server is unreachable. Please try again.",
             )

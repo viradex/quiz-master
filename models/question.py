@@ -49,7 +49,7 @@ class Question:
         }
 
     @staticmethod
-    def from_dict(data: dict) -> Question:
+    def from_dict(data: dict) -> "Question":
         """Convert from a dictionary for deserialization."""
         return Question(
             question_id=data["question_id"],

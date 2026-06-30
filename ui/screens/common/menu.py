@@ -109,7 +109,3 @@ class CommonMenuScreen(BaseScreen):
 
     def on_start_server_clicked(self) -> None:
         self.start_server.emit()
-
-    def show_error(self, title: str, desc: str) -> None:
-        """Shows an error dialog."""
-        QMessageBox.critical(self, title, desc)

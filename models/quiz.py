@@ -128,17 +128,17 @@ class Quiz:
             "quiz_id": self.quiz_id,
             "quiz_title": self.quiz_title,
             "questions": [q.to_dict() for q in self.questions],
-            "shuffle_questions": self.do_shuffle,
+            "do_shuffle": self.do_shuffle,
             "is_default": self.is_default,
         }
 
     @staticmethod
-    def from_dict(data: dict) -> Quiz:
+    def from_dict(data: dict) -> "Quiz":
         """Convert from a dictionary for deserialization."""
         return Quiz(
             quiz_id=data["quiz_id"],
             quiz_title=data["quiz_title"],
             questions=[Question.from_dict(q) for q in data["questions"]],
-            do_shuffle=data["shuffle_questions"],
+            do_shuffle=data["do_shuffle"],
             is_default=data["is_default"],
         )

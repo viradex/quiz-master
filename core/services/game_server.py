@@ -46,7 +46,7 @@ class GameServer(QObject):
 
     def get_player_address(self, player_id: str) -> tuple[str, int] | None:
         """Get IP address and port of a certain player."""
-        client = self.player_registry.get_player(player_id)
+        client = self.player_registry.get_client(player_id)
 
         if client:
             return client.socket.getpeername()
@@ -68,7 +68,7 @@ class GameServer(QObject):
         if self.server_socket is None:
             raise ValueError("Server cannot be stopped without active socket")
 
-        connected_players = self.player_registry.get_players().values()
+        connected_players = self.player_registry.get_clients().values()
         self.player_registry.clear_players()
 
         for client in connected_players:
@@ -133,7 +133,7 @@ class GameServer(QObject):
         while self.is_running:
             time.sleep(1)
 
-            connected_players = self.player_registry.get_players().values()
+            connected_players = self.player_registry.get_clients().values()
 
             # If the client is somehow still connected, send kick request
             for client in connected_players:
@@ -142,7 +142,7 @@ class GameServer(QObject):
 
     def broadcast(self, msg: dict) -> None:
         """Broadcast message to all connected players."""
-        connected_players = self.player_registry.get_players().values()
+        connected_players = self.player_registry.get_clients().values()
 
         for client in connected_players:
             try:
@@ -152,26 +152,27 @@ class GameServer(QObject):
 
     def kick_player(self, player_id: str, reason: str) -> None:
         """Kicks a player from the server, and sends a `KICK` request if they are in the registry."""
-        client = self.player_registry.get_player(player_id)
+        client = self.player_registry.get_client(player_id)
 
         if client:
             self._kick(client, reason)
 
     def remove_client(self, player_id: str) -> None:
         """Removes a client from the server. Unlike `kick_player()`, this does not send a request to the player."""
-        client = self.player_registry.get_player(player_id)
+        client = self.player_registry.get_client(player_id)
+        player = self.player_registry.get_player(player_id)
 
         if client is None:
             return
 
         self.player_registry.remove_player(player_id)
-        self.player_left.emit(client.nickname)
+        self.player_left.emit(player.nickname)
 
         # Inform all clients other than the one that left
         self.broadcast(
             {
                 "type": ServerMessageType.PLAYER_LEFT,
-                "data": {"nickname": client.nickname},
+                "data": {"nickname": player.nickname},
             }
         )
 
@@ -240,8 +241,7 @@ class GameServer(QObject):
                 }
             )
 
-        client.nickname = nickname
-        status, player = self.player_registry.add_player(nickname, client)
+        status = self.player_registry.add_player(nickname, client)
 
         # Validation checks before adding new player
         # Provided by registry; registry does not add player if any of these conditions are True
@@ -261,7 +261,6 @@ class GameServer(QObject):
             self._kick(client, "The player does not fit in the server")
             return
 
-        client.player = player
         self.player_joined.emit(nickname)
 
         # Inform clients of player join
@@ -274,7 +273,7 @@ class GameServer(QObject):
 
         # Get list of players for client player list UI
         connected_players = self.player_registry.get_players().values()
-        player_list = [c.nickname for c in connected_players]
+        player_list = [p.nickname for p in connected_players]
 
         # Inform client of player ID and current lobby state
         client.send(
@@ -293,7 +292,7 @@ class GameServer(QObject):
         try:
             client.send(msg)
         finally:
-            if client.player is not None:
+            if self.player_registry.get_player(client.player_id) is not None:
                 self.remove_client(client.player_id)
 
             client.close()

@@ -1,23 +1,17 @@
 import time
 import socket
 
-from models.player import Player
 from core.services.network.transport import JSONSocket
 
 
 class ConnectedClient:
-    """Represents a connected client in the server. Contains a Player instance."""
+    """Represents a connected client in the server."""
 
-    def __init__(
-        self, sock: socket.socket, player_id: str, player: Player | None = None
-    ) -> None:
-        """Initializes a ConnectedClient with an optional Player instance."""
+    def __init__(self, sock: socket.socket, player_id: str) -> None:
+        """Initializes a ConnectedClient."""
         self.socket = sock
         self.player_id = player_id
         self.jsock = JSONSocket(sock)
-
-        self.player: Player | None = player
-        self.nickname: str | None = None
 
         self.last_seen = time.monotonic()
 

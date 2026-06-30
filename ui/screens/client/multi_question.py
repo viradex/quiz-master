@@ -72,8 +72,8 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.question_timer.lock()
 
     def on_enter(self, payload=None):
-        self.question_timer.on_enter()
+        self.question_timer.start()
 
     def on_leave(self):
-        self.question_timer.on_leave()
+        self.question_timer.stop()
         self.answer_button_grid.reset_buttons()

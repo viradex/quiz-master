@@ -134,7 +134,7 @@ class QuestionTimer(QWidget):
         dim = darken_color("#22c55e", 0.8)
         self.timer_bar.setStyleSheet(self._style_progress_bar(dim))
 
-    def on_enter(self) -> None:
+    def start(self) -> None:
         self.elapsed_ms = 0
         self.locked = False
         self.current_color = None
@@ -142,5 +142,5 @@ class QuestionTimer(QWidget):
         self._update_ui()
         self.timer.start(INTERVAL)
 
-    def on_leave(self) -> None:
+    def stop(self) -> None:
         self.timer.stop()

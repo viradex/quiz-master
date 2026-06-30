@@ -19,7 +19,7 @@ from ui.components.spinner import Spinner
 
 from utils.networking import get_ip_address
 from ui.components.dialogs import confirm_warning
-from core.config.constants import MAX_PLAYERS
+from core.config.constants import MAX_PLAYERS, MIN_PLAYERS_FOR_START
 
 
 class ServerLobbyScreen(BaseScreen):
@@ -27,6 +27,7 @@ class ServerLobbyScreen(BaseScreen):
 
     get_player_info = pyqtSignal(str)
     kick_player = pyqtSignal(str)
+    start_game = pyqtSignal(str)
 
     close_server = pyqtSignal()
 
@@ -133,7 +134,7 @@ class ServerLobbyScreen(BaseScreen):
         self.start_btn.setFixedSize(220, 60)
         self.start_btn.setStyleSheet("font-size: 22px;")
         self.start_btn.setDisabled(True)
-        # self.start_btn.clicked.connect()
+        self.start_btn.clicked.connect(self.on_start_game)
 
         self.start_status = QLabel()
         self.start_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -163,7 +164,7 @@ class ServerLobbyScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def _get_selected_player(self) -> None:
+    def _get_selected_player(self) -> str | None:
         """Get selected player name from lobby table."""
         selected_items = self.lobby_table.selectedItems()
         if selected_items:
@@ -285,12 +286,17 @@ class ServerLobbyScreen(BaseScreen):
         if self.quiz_combo.currentIndex() == -1:
             self.start_btn.setDisabled(True)
             self.start_status.setText("(select a quiz from the list)")
-        elif self.lobby_table.rowCount() < 2:
+        elif self.players < MIN_PLAYERS_FOR_START:
             self.start_btn.setDisabled(True)
-            self.start_status.setText("(at least two players are required)")
+            self.start_status.setText(
+                f"(at least {MIN_PLAYERS_FOR_START} {"player" if MIN_PLAYERS_FOR_START == 1 else "players"} are required)"
+            )
         else:
             self.start_btn.setDisabled(False)
             self.start_status.setText("")
+
+    def on_start_game(self) -> None:
+        self.start_game.emit(self.quiz_combo.currentText())
 
     def on_enter(self, payload: dict | None = None) -> None:
         self.spinner.start()

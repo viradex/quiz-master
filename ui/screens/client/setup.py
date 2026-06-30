@@ -143,9 +143,5 @@ class ClientSetupScreen(BaseScreen):
 
         return True
 
-    def show_connection_error(self, title: str, desc: str) -> None:
-        """Show any connection error."""
-        QMessageBox.critical(self, title, desc)
-
     def on_leave(self) -> None:
         self.clear_fields()
