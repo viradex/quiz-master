@@ -28,5 +28,5 @@ RESPONSE_TIMEOUT = 15
 MAX_NICKNAME_LENGTH = 40
 
 # Game config
-MIN_PLAYERS_FOR_START = 2
+MIN_PLAYERS_FOR_START = 1  # should be 2, but 1 easier for testing :)
 COUNTDOWN_TIME = 3

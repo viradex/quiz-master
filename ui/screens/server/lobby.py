@@ -289,7 +289,7 @@ class ServerLobbyScreen(BaseScreen):
         elif self.players < MIN_PLAYERS_FOR_START:
             self.start_btn.setDisabled(True)
             self.start_status.setText(
-                f"(at least {MIN_PLAYERS_FOR_START} {"player" if MIN_PLAYERS_FOR_START == 1 else "players"} are required)"
+                f"(at least {MIN_PLAYERS_FOR_START} {"player is" if MIN_PLAYERS_FOR_START == 1 else "players are"} required)"
             )
         else:
             self.start_btn.setDisabled(False)

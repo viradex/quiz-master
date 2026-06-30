@@ -2,6 +2,7 @@ import threading
 
 from core.services.network.connected_client import ConnectedClient
 from models.player import Player
+from models.session import Session
 from core.config.constants import MAX_PLAYERS, MAX_NICKNAME_LENGTH
 
 
@@ -9,104 +10,88 @@ class PlayerRegistry:
     """Stores and manages connected players."""
 
     def __init__(self):
-        # TODO the code really assumes that the player ID is always shared between
-        # players and clients. Maybe do a dict with player ID -> tuple(ConnectedClient, Player)
-        # or even make a new Session class if you really want
-        self.players: dict[str, Player] = {}
-        self.clients: dict[str, ConnectedClient] = {}
+        self.sessions: dict[str, Session] = {}
         self.max_players = MAX_PLAYERS
 
         self.lock = threading.Lock()
 
-    def add_player(self, nickname: str, client: ConnectedClient) -> str:
+    def add(self, nickname: str, client: ConnectedClient) -> tuple[bool, str]:
         """
         Add a client/player to the registry.
 
         Return values:
-            `ok`
+            `(True, "")`
                 Player was added successfully.
 
-            `lobby_full`
+            `(False, "lobby_full")`
                 Registry has reached the maximum player count.
 
-            `dupe_nickname`
+            `(False, "dupe_nickname")`
                 Nickname is already in use.
 
-            `long_nickname`
+            `(False, "long_nickname")`
                 Nickname exceeds maximum character length.
 
         Returns:
-            Return format is a string for values discussed above.
+            Return format is a (success, reason) for values discussed above.
         """
 
         with self.lock:
             # Lobby full if player was added
-            if len(self.clients) + 1 > self.max_players:
-                return "lobby_full"
+            if len(self.sessions) + 1 > self.max_players:
+                return (False, "lobby_full")
 
             if self.has_nickname(nickname):
-                return "dupe_nickname"
+                return (False, "dupe_nickname")
 
             if len(nickname) > MAX_NICKNAME_LENGTH:
-                return "long_nickname"
+                return (False, "long_nickname")
 
             # Save player
             player_id = client.player_id
             player = Player(player_id, nickname)
 
-            self.players[player_id] = player
-            self.clients[player_id] = client
+            self.sessions[player_id] = Session(player, client)
+            return (True, "")
 
-            return "ok"
-
-    def remove_player(self, player_id: str) -> bool:
+    def remove(self, player_id: str) -> bool:
         """Remove a client/player from the registry."""
         with self.lock:
-            self.players.pop(player_id, None)
-            client = self.clients.pop(player_id, None)
+            session = self.sessions.pop(player_id, None)
 
-        return client is not None
+        return session is not None
 
-    def clear_all(self) -> None:
-        """Clear the client and player registry."""
+    def clear(self) -> None:
+        """Clear the registry."""
         with self.lock:
-            self.clients.clear()
-            self.players.clear()
+            self.sessions.clear()
 
-    def get_client(self, player_id: str) -> ConnectedClient | None:
-        """Retrieve a client from the registry as a ConnectedClient."""
-        return self.clients.get(player_id)
-
-    def get_player(self, player_id: str) -> Player | None:
-        """Retrieve a player from the registry as a Player."""
-        return self.players.get(player_id)
+    def get(self, player_id: str) -> Session | None:
+        """Retrieve a client and player from the registry as a Session."""
+        with self.lock:
+            return self.sessions.get(player_id)
 
     def get_id_by_nickname(self, nickname: str) -> str | None:
         """Get player ID from the registry based on nickname."""
-        for player_id, player in self.players.items():
-            if player.nickname == nickname:
+        for player_id, session in self.sessions.items():
+            if session.player.nickname == nickname:
                 return player_id
 
         return None
 
-    def get_clients(self) -> dict[str, ConnectedClient]:
+    def get_all(self) -> dict[str, Session]:
         """Retrieve all clients from the registry as a dictionary, with player ID as the key."""
         with self.lock:
-            return self.clients.copy()
-
-    def get_players(self) -> dict[str, Player]:
-        """Retrieve all players from the registry as a dictionary, with player ID as the key."""
-        with self.lock:
-            return self.players.copy()
+            return self.sessions.copy()
 
     def has_id(self, player_id: str) -> bool:
-        """Whether the registry contains a matching player ID in clients."""
-        return player_id in self.clients
+        """Whether the registry contains a matching player ID."""
+        return player_id in self.sessions
 
     def has_nickname(self, nickname: str) -> bool:
         """Whether the registry contains a matching player nickname in players."""
-        for player in self.players.values():
-            if player.nickname == nickname:
+        for session in self.sessions.values():
+            if session.player.nickname == nickname:
                 return True
 
         return False

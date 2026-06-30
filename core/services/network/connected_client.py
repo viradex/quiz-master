@@ -1,5 +1,6 @@
 import time
 import socket
+import threading
 
 from core.services.network.transport import JSONSocket
 
@@ -14,6 +15,7 @@ class ConnectedClient:
         self.jsock = JSONSocket(sock)
 
         self.last_seen = time.monotonic()
+        self.lock = threading.Lock()
 
     def update_last_seen(self) -> None:
         """Update time since client was last seen."""
@@ -21,7 +23,8 @@ class ConnectedClient:
 
     def send(self, msg: dict) -> None:
         """Send a message to the client."""
-        self.jsock.send(msg)
+        with self.lock:
+            self.jsock.send(msg)
 
     def recv(self) -> None:
         """Receive a message from the client."""

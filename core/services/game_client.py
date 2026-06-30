@@ -26,7 +26,7 @@ class GameClient(QObject):
     player_left = pyqtSignal(str)
     player_list = pyqtSignal(list)
 
-    disconnecting = pyqtSignal()
+    start_countdown = pyqtSignal(float, int)
 
     kick = pyqtSignal(str)
     error = pyqtSignal(str)
@@ -51,6 +51,7 @@ class GameClient(QObject):
             ServerMessageType.CONNECTION_SUCCESSFUL: self.handle_connection_successful,
             ServerMessageType.PLAYER_JOINED: self.handle_player_joined,
             ServerMessageType.PLAYER_LEFT: self.handle_player_left,
+            ServerMessageType.COUNTDOWN_STARTED: self.handle_countdown_started,
             ServerMessageType.KICK: self.handle_kick,
             ServerMessageType.ERROR: self.handle_error,
             ServerMessageType.INVALID_ACTION: self.handle_invalid_action,
@@ -95,8 +96,6 @@ class GameClient(QObject):
             self.jsock.send({"type": ClientMessageType.LEAVE_LOBBY})
         except OSError:
             pass
-
-        self.disconnecting.emit()
 
         self.is_connected = False
         self.client_socket.close()
@@ -238,6 +237,12 @@ class GameClient(QObject):
         """Handles the `PLAYER_LEFT` message type."""
         nickname = msg["data"]["nickname"]
         self.player_left.emit(nickname)
+
+    def handle_countdown_started(self, msg: dict) -> None:
+        # Contains "start_time" and "duration" keys
+        start_time = msg["data"]["start_time"]
+        duration = msg["data"]["duration"]
+        self.start_countdown.emit(start_time, duration)
 
     def handle_kick(self, msg: dict) -> None:
         """Handles the `KICK` message type. Disconnects the client."""

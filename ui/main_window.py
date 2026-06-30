@@ -14,7 +14,9 @@ from PyQt6.QtCore import QTimer
 
 from core.app.screen_ids import Screens
 from core.services.app_context import Services
-from logic.app_controller import AppController
+from logic.app_controller.client import ClientAppController
+from logic.app_controller.server import ServerAppController
+from logic.app_controller.common import CommonAppController
 from logic.base_logic import BaseLogic
 from ui.screens.base_screen import BaseScreen
 
@@ -92,7 +94,9 @@ class MainWindow(QMainWindow):
 
     def setup_app_controller(self) -> None:
         """Set up app controller (global logic)."""
-        self.app_controller = AppController(self, self.services)
+        self.client_app_controller = ClientAppController(self, self.services)
+        self.server_app_controller = ServerAppController(self, self.services)
+        self.common_app_controller = CommonAppController(self, self.services)
 
     def _build_screen(self, screen: Screens) -> None:
         """Build an individual screen and its respective logic."""

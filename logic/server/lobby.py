@@ -1,6 +1,6 @@
 from ui.screens.server.lobby import ServerLobbyScreen
 from logic.base_logic import BaseLogic
-from core.services.app_context import GameServer
+from core.services.game_server import GameServer
 from core.app.screen_ids import Screens
 from core.game.game_controller import GameController
 from data.quiz_repo import QuizRepository
@@ -28,14 +28,14 @@ class ServerLobbyLogic(BaseLogic):
 
     def on_player_joined(self, nickname: str) -> None:
         self.screen.add_player_lobby(nickname)
-        self.screen.set_status("Player joined", 2000)
+        self.screen.set_status(f"{nickname} joined the game", 5000)
 
     def on_player_left(self, nickname: str) -> None:
         self.screen.remove_player_lobby(nickname)
-        self.screen.set_status("Player left", 2000)
+        self.screen.set_status(f"{nickname} left the game", 5000)
 
     def on_get_player_info(self, nickname: str) -> None:
-        player_id = self.server.get_id_from_nickname(nickname)
+        player_id = self.server.registry.get_id_by_nickname(nickname)
 
         ip, port = self.server.get_player_address(player_id)
         hostname = get_hostname(ip)
@@ -43,17 +43,17 @@ class ServerLobbyLogic(BaseLogic):
         self.screen.show_player_info(nickname, ip, port, hostname)
 
     def on_kick_player(self, nickname: str) -> None:
-        player_id = self.server.get_id_from_nickname(nickname)
+        player_id = self.server.registry.get_id_by_nickname(nickname)
         self.server.kick_player(player_id, "Kicked by host")
 
         self.screen.set_status("Kicked player", 2000)
 
     def on_start_game(self, quiz_name: str) -> None:
-        players = len(self.server.player_registry.get_clients())
+        players = len(self.server.registry.get_all())
 
         self.quiz_repo.refresh_cache()
         quizzes = self.quiz_repo.load_quizzes()
-        names = [q.quiz_title for q in quizzes.values()]
+        names = {q.quiz_title for q in quizzes.values()}
 
         if quiz_name not in names:
             self.screen.show_error(
@@ -66,6 +66,16 @@ class ServerLobbyLogic(BaseLogic):
                 "There are not enough players to start the game.",
             )
             return
+
+        for quiz in quizzes.values():
+            if quiz_name == quiz.quiz_title:
+                quiz_id = quiz.quiz_id
+                break
+
+        quiz = self.quiz_repo.load_quiz(quiz_id)
+        self.controller.load_quiz(quiz)
+
+        self.controller.start_game()
 
     def on_close_server(self) -> None:
         self.server.stop()

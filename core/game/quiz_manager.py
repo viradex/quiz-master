@@ -1,15 +1,11 @@
-from PyQt6.QtCore import QObject, pyqtSignal
-
 from models.player import Player
 from models.leaderboard import Leaderboard
 from models.quiz import Quiz
 from models.question import Question
 
 
-class QuizManager(QObject):
+class QuizManager:
     def __init__(self) -> None:
-        super().__init__()
-
         self.quiz: Quiz | None = None
         self.players: dict[str, Player] = {}
         self.leaderboard = Leaderboard()
@@ -21,13 +17,13 @@ class QuizManager(QObject):
         self.submissions: dict[str, tuple[int, float]] = {}
 
     def load_quiz(self, quiz: Quiz) -> None:
-        pass
+        self.quiz = quiz
 
     def add_player(self, player: Player) -> None:
-        pass
+        self.players[player.player_id] = player
 
     def remove_player(self, player_id: str) -> None:
-        pass
+        self.players.pop(player_id, None)
 
     def get_current_question(self) -> Question | None:
         pass

@@ -15,7 +15,7 @@ class CommonCountdownScreen(BaseScreen):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.total_ms = 3000
+        self.total_ms = None
         self.elapsed_ms = 0
 
         self.timer = QTimer()
@@ -29,7 +29,7 @@ class CommonCountdownScreen(BaseScreen):
         loading_font = QFont()
         loading_font.setPointSize(72)
 
-        self.countdown_lbl = QLabel(str(self.total_ms // 1000))
+        self.countdown_lbl = QLabel()
         self.countdown_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.countdown_lbl.setFont(loading_font)
 
@@ -61,8 +61,12 @@ class CommonCountdownScreen(BaseScreen):
         if remaining <= 0:
             self.timer.stop()
 
-    def on_enter(self, payload=None):
+    def on_enter(self, payload: dict | None = None):
+        duration = payload["duration"]
+
+        self.total_ms = int(duration * 1000)
         self.elapsed_ms = 0
+
         self.countdown_lbl.setText(str(self.total_ms // 1000))
         self.progress_bar.setValue(10000)
 

@@ -22,9 +22,8 @@ class ServerMessageType(StrEnum):
     PLAYER_LEFT = "player_left"
     CONNECTION_SUCCESSFUL = "connection_successful"
 
-    GAME_STARTING = "game_starting"
-    GAME_START = "game_start"
-    COUNTDOWN = "countdown"
+    COUNTDOWN_STARTED = "countdown_started"
+    COUNTDOWN_ENDED = "countdown_ended"
     QUESTION_DATA = "question_data"
     RESULTS = "results"
     FINAL_RESULTS = "final_results"
