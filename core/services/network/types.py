@@ -23,7 +23,6 @@ class ServerMessageType(StrEnum):
     CONNECTION_SUCCESSFUL = "connection_successful"
 
     COUNTDOWN_STARTED = "countdown_started"
-    COUNTDOWN_ENDED = "countdown_ended"
     QUESTION_DATA = "question_data"
     RESULTS = "results"
     FINAL_RESULTS = "final_results"

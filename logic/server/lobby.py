@@ -13,7 +13,6 @@ class ServerLobbyLogic(BaseLogic):
     def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: ServerLobbyScreen = screen
-
         self.server: GameServer = services.server
         self.controller: GameController = services.controller
         self.quiz_repo: QuizRepository = services.quiz_repo
@@ -76,6 +75,7 @@ class ServerLobbyLogic(BaseLogic):
         self.controller.load_quiz(quiz)
 
         self.controller.start_game()
+        self.server.game_started = True
 
     def on_close_server(self) -> None:
         self.server.stop()

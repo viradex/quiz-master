@@ -134,11 +134,11 @@ class Leaderboard:
         it empty (for the final leaderboard)."""
         leaderboard = []
 
-        for index, player in enumerate(players):
+        for index, player in enumerate(players, start=1):
             player_data = {
                 "id": player.player_id,
                 "name": player.nickname,
-                "place": index + 1,
+                "place": index,
                 "total": player.score,
             }
 

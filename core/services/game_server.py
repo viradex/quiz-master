@@ -2,12 +2,12 @@ import socket
 import threading
 import secrets
 import time
+from collections.abc import Callable  # for type checking
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.services.network.connected_client import ConnectedClient
 from core.services.network.player_registry import PlayerRegistry
 from core.services.network.types import ClientMessageType, ServerMessageType
-from core.game.quiz_manager import QuizManager
 from core.config.constants import PORT, RESPONSE_TIMEOUT
 
 
@@ -22,6 +22,8 @@ class GameServer(QObject):
     player_joined = pyqtSignal(str)
     player_left = pyqtSignal(str)
 
+    answer_submitted = pyqtSignal(str, int, float)
+
     def __init__(self) -> None:
         """Initialize client attributes and handlers for client messages."""
         super().__init__()
@@ -34,10 +36,13 @@ class GameServer(QObject):
         self.server_socket: socket.socket = None
         self.registry = PlayerRegistry()
 
-        self.handlers: dict[ClientMessageType, function] = {
+        self.handlers: dict[
+            ClientMessageType, Callable[[ConnectedClient, dict], None]
+        ] = {
             ClientMessageType.PING: self.handle_ping,
             ClientMessageType.JOIN_LOBBY: self.handle_join_lobby,
             ClientMessageType.LEAVE_LOBBY: self.handle_leave_lobby,
+            ClientMessageType.ANSWER_SUBMIT: self.handle_answer_submit,
         }
 
     def get_player_address(self, player_id: str) -> tuple[str, int] | None:
@@ -147,14 +152,14 @@ class GameServer(QObject):
                 self._kick_client(session.client, "Failed to broadcast")
 
     def kick_player(self, player_id: str, reason: str) -> None:
-        """Kicks a player from the server, and sends a `KICK` request if they are in the registry."""
+        """Kicks a player from the server, and sends a `KICK` message if they are in the registry."""
         session = self.registry.get(player_id)
 
         if session:
             self._kick_client(session.client, reason)
 
     def remove_client(self, player_id: str) -> None:
-        """Removes a client from the server. Unlike `kick_player()`, this does not send a request to the player."""
+        """Removes a client from the server. Unlike `kick_player()`, this does not send a message to the player."""
         session = self.registry.get(player_id)
 
         if session is None:
@@ -209,7 +214,7 @@ class GameServer(QObject):
 
         # Message type does not have a respective handler
         if handler is None:
-            print(f"The msg_type {msg_type} did not match any types (server)")
+            print(f"The msg_type {msg_type} did not match any types")
             self._fail_and_disconnect(client, "Unknown message type")
             return
 
@@ -235,6 +240,7 @@ class GameServer(QObject):
                     "data": {"reason": "Cannot join twice"},
                 }
             )
+            return
 
         if self.game_started:
             self._kick_client(client, "Game has already started")
@@ -293,23 +299,57 @@ class GameServer(QObject):
         """Handles the `LEAVE_LOBBY` message type."""
         self.remove_client(client.player_id)
 
-    def send_countdown_start(self, start_time: float, duration: int) -> None:
+    def handle_answer_submit(self, client: ConnectedClient, msg: dict) -> None:
+        """Handles the `ANSWER_SUBMIT` message type. Also records the time the data was received."""
+        try:
+            selected_index = msg["data"]["selected_index"]
+        except KeyError:
+            print(f"Invalid data in message, received: {msg}")
+            self._fail_and_disconnect(client, "Missing answer index")
+            return
+
+        if not self.game_started:
+            client.send(
+                {
+                    "type": ServerMessageType.INVALID_ACTION,
+                    "data": {
+                        "reason": "Cannot submit an answer when a game is not running"
+                    },
+                }
+            )
+            return
+
+        received_time = time.monotonic()
+        self.answer_submitted.emit(client.player_id, selected_index, received_time)
+
+    def send_countdown_start(self, countdown_info: dict) -> None:
         self.broadcast(
-            {
-                "type": ServerMessageType.COUNTDOWN_STARTED,
-                "data": {"start_time": start_time, "duration": duration},
-            }
+            {"type": ServerMessageType.COUNTDOWN_STARTED, "data": countdown_info}
         )
+
+    def send_question_data(self, question_info: dict) -> None:
+        self.broadcast({"type": ServerMessageType.QUESTION_DATA, "data": question_info})
+
+    def send_invalid_answer(self, player_id: str, reason: str) -> None:
+        session = self.registry.get(player_id)
+
+        if session:
+            session.client.send(
+                {"type": ServerMessageType.INVALID_ACTION, "data": {"reason": reason}}
+            )
 
     def _send_and_disconnect(self, client: ConnectedClient, msg: dict) -> None:
         """Sends a message to a client and disconnects them immediately afterwards."""
         try:
             client.send(msg)
-        finally:
-            if self.registry.get(client.player_id) is not None:
-                self.remove_client(client.player_id)
+            client.socket.shutdown(socket.SHUT_WR)
+        except OSError:
+            pass
 
-            client.close()
+        if self.registry.get(client.player_id) is not None:
+            self.remove_client(client.player_id)
+
+        client.close()
 
     def _fail_and_disconnect(self, client: ConnectedClient, reason: str) -> None:
         """Sends an `ERROR` message type to the client, then disconnects them."""

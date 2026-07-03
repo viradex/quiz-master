@@ -7,21 +7,22 @@ class Player:
 
     player_id: str
     nickname: str
-    score: int = 0
-    current_answer: int | None = None
-    has_answered: bool = False
+    total_points: int = 0
 
-    def update_score(self, points: int) -> int:
-        """Increment player points by a certain amount. Returns new score."""
-        self.score += points
-        return self.score
+    delta_points: int = 0
+    selected_answer: int | None = None
+    is_correct: bool = False
 
-    def submit_answer(self, answer_index: int) -> None:
-        """Submit answer index and change answer state."""
-        self.current_answer = answer_index
-        self.has_answered = True
+    def update_total_score(self, points: int) -> None:
+        self.delta_points = points
+        self.total_points += points
+
+    def submit_answer(self, points: int, selected_answer: int, is_correct) -> None:
+        self.update_total_score(points)
+        self.selected_answer = selected_answer
+        self.is_correct = is_correct
 
     def reset_for_question(self) -> None:
-        """Reset values for new question."""
-        self.current_answer = None
-        self.has_answered = False
+        self.delta_points = 0
+        self.selected_answer = None
+        self.is_correct = False

@@ -12,18 +12,16 @@ class QuestionTimer(QWidget):
     """Custom question countdown timer widget, for questions."""
 
     timeup = pyqtSignal()
-    timeout = pyqtSignal(int)
 
-    def __init__(self, total_ms: int, parent: QWidget | None = None) -> None:
+    def __init__(
+        self, total_ms: int | None = None, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
 
-        if total_ms < 0:
-            raise ValueError(
-                f"total_ms must be a number greater than zero (received {total_ms})"
-            )
+        self.set_duration(total_ms)
 
         # Initialize properties
-        self.reset(total_ms)
+        self.reset()
 
         self.setup_component()
         self.setup_timer()
@@ -62,6 +60,18 @@ class QuestionTimer(QWidget):
         self.timer = QTimer(self)
         self.timer.setTimerType(Qt.TimerType.PreciseTimer)  # To reduce jittering
         self.timer.timeout.connect(self._on_elapsed)
+
+    def set_duration(self, total_ms: int | None) -> None:
+        if total_ms is None:
+            self.total_ms = None
+            return
+
+        if total_ms < 0:
+            raise ValueError(
+                f"total_ms must be a number greater than zero (received {total_ms})"
+            )
+
+        self.total_ms = total_ms
 
     def _style_progress_bar(self, bg: str) -> str:
         """Returns a QSS stylesheet for styling the progress bar."""
@@ -109,7 +119,6 @@ class QuestionTimer(QWidget):
     def _on_elapsed(self) -> None:
         """Updates timer UI when timer elapses."""
         self.elapsed_ms += INTERVAL
-        self.timeout.emit(self.elapsed_ms)
 
         # If timer has completed
         if self.elapsed_ms >= self.total_ms:
@@ -119,9 +128,8 @@ class QuestionTimer(QWidget):
 
         self._update_ui()
 
-    def reset(self, total_ms: int) -> None:
+    def reset(self) -> None:
         """Reset all properties of the component."""
-        self.total_ms = total_ms
         self.elapsed_ms = 0
         self.locked = False
         self.current_color = None
@@ -135,6 +143,7 @@ class QuestionTimer(QWidget):
         self.timer_bar.setStyleSheet(self._style_progress_bar(dim))
 
     def start(self) -> None:
+        """Start the timer."""
         self.elapsed_ms = 0
         self.locked = False
         self.current_color = None
@@ -143,4 +152,5 @@ class QuestionTimer(QWidget):
         self.timer.start(INTERVAL)
 
     def stop(self) -> None:
+        """Stop the timer."""
         self.timer.stop()

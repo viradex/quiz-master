@@ -15,16 +15,19 @@ class ServerMultiQuestionScreen(BaseScreen):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.submissions = 0
+
         self.setup_ui()
 
     def setup_ui(self):
         question_num_font = QFont()
         question_num_font.setPointSize(12)
 
-        self.question_num = QLabel("Question 1 / 2")
+        self.question_num = QLabel()
         self.question_num.setFont(question_num_font)
 
-        self.submitted = QLabel("3")
+        # TODO this capsule makes question_num have more spacing between it and question_lbl
+        self.submitted = QLabel("0")
         self.submitted.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.submitted.setFixedSize(40, 40)
         self.submitted.setStyleSheet("""
@@ -47,12 +50,11 @@ class ServerMultiQuestionScreen(BaseScreen):
         question_font.setPointSize(26)
         question_font.setBold(True)
 
-        self.question_lbl = QLabel("What is the largest planet in the solar system?")
+        self.question_lbl = QLabel()
         self.question_lbl.setWordWrap(True)
         self.question_lbl.setFont(question_font)
 
         self.answer_button_grid = AnswerButtonGrid("server")
-        self.answer_button_grid.set_answers(["Jupiter", "Saturn", "Uranus", "Neptune"])
 
         vbox_left = QVBoxLayout()
         vbox_left.addSpacing(20)
@@ -66,9 +68,7 @@ class ServerMultiQuestionScreen(BaseScreen):
         skip_btn = LeaveButton("Skip", btn_width=50, do_confirm=False)
         skip_btn.confirm_leave.connect(lambda: self.go_to(Screens.SERVER_MULTI_RESULT))
 
-        self.question_timer = QuestionTimer(total_ms=20000, parent=self)
-        # TODO use this for calling func when timer ends
-        # self.question_timer.timeup.connect()
+        self.question_timer = QuestionTimer()
 
         right_vbox = QVBoxLayout()
         right_vbox.addSpacing(5)
@@ -85,8 +85,26 @@ class ServerMultiQuestionScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def on_enter(self, payload=None):
+    def update_submission_count(self, amount: int) -> None:
+        self.submissions += amount
+        self.submitted.setText(str(self.submissions))
+
+    def on_enter(self, payload: dict | None = None):
+        self.question_num.setText(
+            f"Question {payload['question_num']} / {payload['total_questions']}"
+        )
+        self.question_lbl.setText(payload["question_text"])
+
+        self.answer_button_grid.set_answers(payload["answer_options"])
+        self.question_timer.set_duration(payload["time_limit"] * 1000)
+
         self.question_timer.start()
 
     def on_leave(self):
+        self.question_num.setText("")
+        self.question_lbl.setText("")
+
+        self.submissions = 0
+        self.submitted.setText("0")
+
         self.question_timer.stop()

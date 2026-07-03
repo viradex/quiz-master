@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING
 import time
-from PyQt6.QtCore import QTimer
 
 from core.services.app_context import Services
 from core.app.screen_ids import Screens
@@ -19,6 +18,7 @@ class ClientAppController:
         self.client: GameClient = services.client
 
         self.client.start_countdown.connect(self.on_start_countdown)
+        self.client.question_data.connect(self.on_question_data)
         self.client.kick.connect(self.on_kick)
         self.client.error.connect(self.on_error)
         self.client.invalid_action.connect(self.on_invalid_action)
@@ -47,15 +47,16 @@ class ClientAppController:
             f"The server rejected the request because it is not valid in the current state.\n\nReason: {reason}",
         )
 
-    def on_start_countdown(self, start_time: float, duration: int) -> None:
+    def on_start_countdown(self, countdown_info: dict) -> None:
+        start_time = countdown_info["start_time"]
+        duration = countdown_info["duration"]
+
         # TODO does not account for network latency
         now = time.time()
         remaining = (start_time + duration) - now
-
-        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": duration})
-
         remaining_ms = max(0, int(remaining * 1000))
-        QTimer.singleShot(remaining_ms, self._on_countdown_finish)
 
-    def _on_countdown_finish(self) -> None:
-        self.window.go_to(Screens.CLIENT_MULTI_QUESTION)
+        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": remaining_ms})
+
+    def on_question_data(self, question_info: dict) -> None:
+        self.window.go_to(Screens.CLIENT_MULTI_QUESTION, question_info)

@@ -17,7 +17,7 @@ WINDOW_HEIGHT = 600
 DEFAULT_STATUS_BAR_MESSAGE = "Ready"
 
 # Client/server config
-DEFAULT_IP_ADDRESS = "127.0.0.1"  # should only be used for development
+DEFAULT_IP_ADDRESS = "127.0.0.1"  # only for development; set blank or remove when done
 PORT = 7878
 MAX_PLAYERS = 50
 
@@ -29,4 +29,4 @@ MAX_NICKNAME_LENGTH = 40
 
 # Game config
 MIN_PLAYERS_FOR_START = 1  # should be 2, but 1 easier for testing :)
-COUNTDOWN_TIME = 3
+COUNTDOWN_TIME = 1  # should be 3, but 1 easier for testing :)

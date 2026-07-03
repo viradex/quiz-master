@@ -12,6 +12,8 @@ from core.config.constants import COUNTDOWN_TIME
 class GameController(QObject):
     start_countdown = pyqtSignal(dict)
 
+    start_question = pyqtSignal(dict)
+
     def __init__(self) -> None:
         super().__init__()
         self.quiz_manager = QuizManager()
@@ -20,13 +22,7 @@ class GameController(QObject):
         self.question_running: bool = False
 
         self.current_question_index: int = -1
-
-        self.countdown_start_monotonic: float | None = None
-        self.countdown_end_monotonic: float | None = None
-
-        self.countdown_start_wall: float | None = None
-        self.countdown_duration: float | None = None
-
+        self.current_question: Question | None = None
         self.question_start_time: float | None = None
         self.question_deadline: float | None = None
 
@@ -40,43 +36,76 @@ class GameController(QObject):
         self.quiz_manager.remove_player(player_id)
 
     def start_game(self) -> None:
-        self.countdown_start()
+        self.game_running = True
+        self.start_next_question()
 
     def end_game(self) -> None:
         pass
 
-    def countdown_start(self) -> None:
+    def start_next_question(self) -> None:
         self.current_question_index += 1
+        self.countdown_start()
 
-        now_monotonic = time.monotonic()
-        now_wall = time.time()
-
-        self.countdown_start_monotonic = now_monotonic
-        self.countdown_end_monotonic = now_monotonic + COUNTDOWN_TIME
-        self.countdown_start_wall = now_wall
-
-        self.start_countdown.emit(
-            {"start_time": self.countdown_start_wall, "duration": COUNTDOWN_TIME}
-        )
+    def countdown_start(self) -> None:
+        now = time.time()
+        self.start_countdown.emit({"start_time": now, "duration": COUNTDOWN_TIME})
 
         QTimer.singleShot(COUNTDOWN_TIME * 1000, self.start_current_question)
 
-    def start_next_question(self) -> bool:
-        pass
-
     def start_current_question(self) -> None:
-        pass
+        self.question = self.quiz_manager.get_question(self.current_question_index)
+        self.question_running = True
+        self.question_start_time = time.monotonic()
+        self.question_deadline = self.question_start_time + self.question.time_limit
+
+        QTimer.singleShot(self.question.time_limit * 1000, self.finish_current_question)
+
+        self.start_question.emit(
+            {
+                "question_num": self.current_question_index + 1,
+                "total_questions": self.quiz_manager.get_total_questions(),
+                "question_text": self.question.question_text,
+                "answer_options": self.question.answer_options,
+                "time_limit": self.question.time_limit,
+            }
+        )
 
     def finish_current_question(self) -> None:
-        pass
+        self.question_running = False
+
+        print("Question finished whether you like it or not >:)")
 
     def receive_answer(
         self, player_id: str, answer_index: int, timestamp: float
     ) -> None:
-        pass
+        is_valid, reason = self.is_answer_valid(answer_index, timestamp)
+        if not is_valid:
+            self.invalid_answer.emit(player_id, reason)
+            return
 
-    def check_question_expired(self, current_time: float) -> bool:
-        pass
+        is_correct = self.quiz_manager.is_answer_correct(self.question, answer_index)
+
+        if is_correct:
+            time_taken = timestamp - self.question_start_time
+            points = self.quiz_manager.calculate_score(
+                time_taken, self.question.time_limit
+            )
+        else:
+            points = 0
+
+        print(f"{player_id=} {points=} {answer_index=} {is_correct=}")  # temp debug
+        self.quiz_manager.submit_answer(player_id, points, answer_index, is_correct)
+
+    def is_answer_valid(self, answer_index: int, timestamp: float) -> tuple[bool, str]:
+        is_time_valid = self.question_start_time <= timestamp <= self.question_deadline
+        is_answer_valid = self.quiz_manager.is_answer_valid(self.question, answer_index)
+
+        if not is_time_valid:
+            return (False, "time")
+        elif not is_answer_valid:
+            return (False, "answer")
+        else:
+            return (True, "")
 
     def skip_question(self) -> None:
         pass

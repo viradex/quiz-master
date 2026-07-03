@@ -1,3 +1,5 @@
+import math
+
 from models.player import Player
 from models.leaderboard import Leaderboard
 from models.quiz import Quiz
@@ -10,12 +12,6 @@ class QuizManager:
         self.players: dict[str, Player] = {}
         self.leaderboard = Leaderboard()
 
-        self.question_time_limit: int | None = None
-        self.answers_locked: bool = True
-
-        # player_id -> (answer_index, timestamp)
-        self.submissions: dict[str, tuple[int, float]] = {}
-
     def load_quiz(self, quiz: Quiz) -> None:
         self.quiz = quiz
 
@@ -25,19 +21,46 @@ class QuizManager:
     def remove_player(self, player_id: str) -> None:
         self.players.pop(player_id, None)
 
-    def get_current_question(self) -> Question | None:
-        pass
+    def get_question(self, index: int) -> Question:
+        # Raises IndexError if question does not exist
+        return self.quiz.questions[index]
+
+    def get_total_questions(self) -> int:
+        return len(self.quiz.questions)
 
     def submit_answer(
-        self, player_id: str, answer_index: int, timestamp: float
+        self, player_id: str, points: int, selected_answer: int, is_correct: bool
     ) -> None:
-        pass
+        player = self.players[player_id]
+        player.submit_answer(points, selected_answer, is_correct)
 
-    def validate_answer(self, answer_index: int) -> bool:
-        pass
+    def reset_for_question(self) -> None:
+        for player in self.players.values():
+            player.reset_for_question()
 
-    def calculate_score(self, timestamp: float) -> int:
-        pass
+    def is_answer_valid(self, question: Question, answer_index: int) -> bool:
+        if answer_index < 0 or answer_index > len(question.answer_options) - 1:
+            return False
+
+        return True
+
+    def is_answer_correct(self, question: Question, answer_index: int) -> bool:
+        return answer_index == question.correct_answer_index
+
+    def calculate_score(self, time_taken: float, max_time: float | int) -> int:
+        if max_time <= 0.5:
+            raise ValueError("max_time must be greater than 0.5")
+
+        if time_taken < 0 or time_taken > max_time:
+            return 0
+
+        if time_taken <= 0.5:
+            score = 1000
+        elif time_taken > 0.5 and time_taken <= max_time:
+            slope = -500 / (max_time - 0.5)
+            score = slope * (time_taken - 0.5) + 1000
+
+        return math.floor(score)
 
     def update_player_score(self, player_id: str, points: int) -> None:
         pass
@@ -51,11 +74,8 @@ class QuizManager:
     def unlock_answers(self) -> None:
         pass
 
-    def _reset_submissions(self) -> None:
+    def all_players_answered(self) -> bool:
         pass
 
-    def _all_players_answered(self) -> bool:
-        pass
-
-    def _apply_scores(self) -> None:
+    def apply_scores(self) -> None:
         pass

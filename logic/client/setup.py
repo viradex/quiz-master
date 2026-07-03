@@ -52,3 +52,8 @@ class ClientSetupLogic(BaseLogic):
                 "Failed to Connect",
                 "Unable to connect to the server. The server is unreachable. Please try again.",
             )
+        elif reason == "invalid":
+            self.screen.show_error(
+                "Failed to Connect",
+                "Unable to connect to the server. The IP address is invalid for connecting to a server. Please try again.",
+            )

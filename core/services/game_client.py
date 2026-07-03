@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+from collections.abc import Callable  # for type checking
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.services.network.transport import JSONSocket
@@ -26,7 +27,8 @@ class GameClient(QObject):
     player_left = pyqtSignal(str)
     player_list = pyqtSignal(list)
 
-    start_countdown = pyqtSignal(float, int)
+    start_countdown = pyqtSignal(dict)
+    question_data = pyqtSignal(dict)
 
     kick = pyqtSignal(str)
     error = pyqtSignal(str)
@@ -46,12 +48,13 @@ class GameClient(QObject):
         self.nickname: str | None = None
         self.last_ping_time: float | None = None
 
-        self.handlers: dict[ServerMessageType, function] = {
+        self.handlers: dict[ServerMessageType, Callable[[dict], None]] = {
             ServerMessageType.PONG: lambda *args: None,
             ServerMessageType.CONNECTION_SUCCESSFUL: self.handle_connection_successful,
             ServerMessageType.PLAYER_JOINED: self.handle_player_joined,
             ServerMessageType.PLAYER_LEFT: self.handle_player_left,
             ServerMessageType.COUNTDOWN_STARTED: self.handle_countdown_started,
+            ServerMessageType.QUESTION_DATA: self.handle_question_data,
             ServerMessageType.KICK: self.handle_kick,
             ServerMessageType.ERROR: self.handle_error,
             ServerMessageType.INVALID_ACTION: self.handle_invalid_action,
@@ -153,6 +156,10 @@ class GameClient(QObject):
                 # Server is unreachable
                 self.connection_fail.emit("unreachable")
                 return
+            elif e.errno == 10049:
+                # Invalid IP (e.g. 0.0.0.0)
+                self.connection_fail.emit("invalid")
+                return
             else:
                 # Technically, start_fail could be emitted,
                 # but since this is an unexpected error, it's
@@ -239,10 +246,10 @@ class GameClient(QObject):
         self.player_left.emit(nickname)
 
     def handle_countdown_started(self, msg: dict) -> None:
-        # Contains "start_time" and "duration" keys
-        start_time = msg["data"]["start_time"]
-        duration = msg["data"]["duration"]
-        self.start_countdown.emit(start_time, duration)
+        self.start_countdown.emit(msg["data"])
+
+    def handle_question_data(self, msg: dict) -> None:
+        self.question_data.emit(msg["data"])
 
     def handle_kick(self, msg: dict) -> None:
         """Handles the `KICK` message type. Disconnects the client."""
@@ -270,4 +277,10 @@ class GameClient(QObject):
                 "type": ClientMessageType.JOIN_LOBBY,
                 "data": {"nickname": self.nickname},
             }
+        )
+
+    def send_answer_submit(self, index: int) -> None:
+        """Sends a `ANSWER_SUBMIT` message type. Sends selected answer index to server."""
+        self.jsock.send(
+            {"type": ClientMessageType.ANSWER_SUBMIT, "data": {"selected_index": index}}
         )

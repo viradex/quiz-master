@@ -64,7 +64,7 @@ class CommonCountdownScreen(BaseScreen):
     def on_enter(self, payload: dict | None = None):
         duration = payload["duration"]
 
-        self.total_ms = int(duration * 1000)
+        self.total_ms = duration
         self.elapsed_ms = 0
 
         self.countdown_lbl.setText(str(self.total_ms // 1000))

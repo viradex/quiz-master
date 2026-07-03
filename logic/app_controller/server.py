@@ -1,6 +1,4 @@
 from typing import TYPE_CHECKING
-import time
-from PyQt6.QtCore import QTimer
 
 from core.services.app_context import Services
 from core.app.screen_ids import Screens
@@ -26,6 +24,7 @@ class ServerAppController:
         self.server.player_left.connect(self.on_player_left)
 
         self.controller.start_countdown.connect(self.on_start_countdown)
+        self.controller.start_question.connect(self.on_start_question)
 
     def on_player_joined(self, nickname: str) -> None:
         player_id = self.server.registry.get_id_by_nickname(nickname)
@@ -37,19 +36,13 @@ class ServerAppController:
         player_id = self.server.registry.get_id_by_nickname(nickname)
         self.controller.remove_player(player_id)
 
-    def on_start_countdown(self, time_info: dict) -> None:
-        start_time = time_info["start_time"]
-        duration = time_info["duration"]
+    def on_start_countdown(self, countdown_info: dict) -> None:
+        duration = countdown_info["duration"]
+        remaining_ms = max(0, int(duration * 1000))
 
-        self.server.send_countdown_start(start_time, duration)
+        self.server.send_countdown_start(countdown_info)
+        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": remaining_ms})
 
-        now = time.time()
-        remaining = (start_time + duration) - now
-
-        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": duration})
-
-        remaining_ms = max(0, int(remaining * 1000))
-        QTimer.singleShot(remaining_ms, self._on_countdown_finish)
-
-    def _on_countdown_finish(self) -> None:
-        self.window.go_to(Screens.SERVER_MULTI_QUESTION)
+    def on_start_question(self, question_info: dict) -> None:
+        self.server.send_question_data(question_info)
+        self.window.go_to(Screens.SERVER_MULTI_QUESTION, question_info)
