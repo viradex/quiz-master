@@ -11,6 +11,7 @@ class Player:
 
     question_points: int = 0
     selected_answer: int | None = None
+    time_taken: float | None = None
     is_correct: bool = False
     submitted: bool = False
 
@@ -18,20 +19,25 @@ class Player:
         self.question_points = points
         self.total_points += points
 
-    def submit_answer(self, points: int, selected_answer: int, is_correct) -> None:
+    def submit_answer(
+        self, points: int, selected_answer: int, time_taken: float, is_correct: bool
+    ) -> None:
         self.update_total_score(points)
         self.selected_answer = selected_answer
+        self.time_taken = time_taken
         self.is_correct = is_correct
         self.submitted = True
 
     def submit_forced_answer(self) -> None:
         self.question_points = 0
         self.selected_answer = None
+        self.time_taken = None
         self.is_correct = False
         self.submitted = True
 
     def reset_for_question(self) -> None:
         self.question_points = 0
         self.selected_answer = None
+        self.time_taken = None
         self.is_correct = False
         self.submitted = False

@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QStatusBar,
 )
-from PyQt6.QtGui import QIcon
+from PyQt6.QtGui import QIcon, QFontMetrics
 from PyQt6.QtCore import Qt, QTimer
 
 from core.app.screen_ids import Screens
@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self.setup_icon()
         self.setup_theme()
+        self.setup_font()
         self.setup_app_controllers()
         self.build_screens()
 
@@ -78,6 +79,11 @@ class MainWindow(QMainWindow):
     def setup_theme(self) -> None:
         """Set up application theme. Forces dark mode even if the system is in light mode. Only works in Windows 11."""
         QApplication.styleHints().setColorScheme(Qt.ColorScheme.Dark)
+
+    def setup_font(self) -> None:
+        """Set up font details. Preloads emojis/glyphs width details so they do not lag the UI when rendering."""
+        QFontMetrics(self.font()).horizontalAdvance("✔")
+        QFontMetrics(self.font()).horizontalAdvance("✖")
 
     def setup_ui(self) -> None:
         """Create MainWindow UI with the stacked widget for showing individual screens, as well as status bar."""
@@ -115,6 +121,7 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(widget)
 
         widget.navigate.connect(self.go_to)
+        widget.title_change.connect(self.set_title)
         widget.status.connect(self.handle_status)
         widget.status_reset.connect(self.handle_status_reset)
 
@@ -150,6 +157,9 @@ class MainWindow(QMainWindow):
 
         self.current_screen = widget
         self.current_logic = logic
+
+    def set_title(self, title: str) -> None:
+        self.setWindowTitle(title)
 
     def handle_status(self, message: str, timeout: int = 0) -> None:
         """Set status bar message. If no message is shown, display default message.

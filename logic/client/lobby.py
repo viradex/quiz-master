@@ -10,13 +10,13 @@ class ClientLobbyLogic(BaseLogic):
         self.screen: ClientLobbyScreen = screen
         self.game_client: GameClient = services.client
 
-        self.game_client.connection_success.connect(self.on_connection_success)
+        self.game_client.connected.connect(self.on_connected)
         self.game_client.player_joined.connect(self.on_player_joined)
         self.game_client.player_left.connect(self.on_player_left)
 
         self.screen.leave_server.connect(self.on_leave_server)
 
-    def on_connection_success(self, player_list: list[str]) -> None:
+    def on_connected(self, player_list: list[str]) -> None:
         own_nickname = self.game_client.nickname
 
         # Adds own player name as the first person in the lobby table

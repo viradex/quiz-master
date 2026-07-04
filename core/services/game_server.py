@@ -15,9 +15,8 @@ class GameServer(QObject):
     """Manages the networking relating to the game server."""
 
     # Define signals for communicating from service to logic
-    starting = pyqtSignal()
-    start_fail = pyqtSignal(str)
-    start_success = pyqtSignal()
+    start_failed = pyqtSignal(str)
+    started = pyqtSignal()
 
     player_joined = pyqtSignal(str)
     player_left = pyqtSignal(str)
@@ -25,7 +24,7 @@ class GameServer(QObject):
     answer_submitted = pyqtSignal(str, int, float)
 
     def __init__(self) -> None:
-        """Initialize client attributes and handlers for client messages."""
+        """Initialize server attributes and handlers for client messages."""
         super().__init__()
 
         self.host_ip = "0.0.0.0"  # listens to all network interfaces
@@ -61,7 +60,6 @@ class GameServer(QObject):
 
     def start(self) -> None:
         """Starts the server and accepts clients."""
-        self.starting.emit()
         threading.Thread(target=self._start_and_listen, daemon=True).start()
 
     def stop(self) -> None:
@@ -98,7 +96,7 @@ class GameServer(QObject):
         except OSError as e:
             # Address in use
             if e.errno == 10048:
-                self.start_fail.emit("in_use")
+                self.start_failed.emit("in_use")
                 return
             else:
                 # technically, start_fail could be emitted,
@@ -106,8 +104,7 @@ class GameServer(QObject):
                 raise
 
         self.is_running = True
-
-        self.start_success.emit()
+        self.started.emit()
 
         # Start global watchdog and accept clients
         self.start_client_watchdog()
@@ -336,6 +333,14 @@ class GameServer(QObject):
         if session:
             session.client.send(
                 {"type": ServerMessageType.INVALID_ACTION, "data": {"reason": reason}}
+            )
+
+    def send_question_results(self, player_id: str, results_data: dict) -> None:
+        session = self.registry.get(player_id)
+
+        if session:
+            session.client.send(
+                {"type": ServerMessageType.RESULTS, "data": results_data}
             )
 
     def _send_and_disconnect(self, client: ConnectedClient, msg: dict) -> None:

@@ -14,6 +14,8 @@ class GameController(QObject):
 
     start_question = pyqtSignal(dict)
 
+    question_results = pyqtSignal(dict, dict)
+
     def __init__(self) -> None:
         super().__init__()
         self.quiz_manager = QuizManager()
@@ -54,8 +56,7 @@ class GameController(QObject):
         self.countdown_start()
 
     def countdown_start(self) -> None:
-        now = time.time()
-        self.start_countdown.emit({"start_time": now, "duration": COUNTDOWN_TIME})
+        self.start_countdown.emit({"duration": COUNTDOWN_TIME})
 
         QTimer.singleShot(COUNTDOWN_TIME * 1000, self.start_current_question)
 
@@ -85,20 +86,25 @@ class GameController(QObject):
 
     def finish_current_question(self) -> None:
         self.question_running = False
-        self.quiz_manager.force_submissions()
+        self.quiz_manager.force_remaining_submissions()
 
         global_leaderboard = self.quiz_manager.generate_global_leaderboard(
             include_delta=True
         )
-        individual_leaderboards = self.quiz_manager.generate_individual_leaderboards(
-            include_delta=True
+        global_stats = self.quiz_manager.get_live_global_results(
+            self.current_question, self.current_question_index + 1
         )
 
-        print(global_leaderboard)
-        print(individual_leaderboards)
+        global_data = {**global_stats, "leaderboard": global_leaderboard}
+        individual_data = self.quiz_manager.generate_individual_live_results(
+            self.current_question
+        )
+
+        self.question_results.emit(global_data, individual_data)
 
     def skip_question(self) -> None:
-        pass
+        self.question_timer.stop()
+        self.finish_current_question()
 
     def receive_answer(
         self, player_id: str, answer_index: int, timestamp: float
@@ -106,17 +112,21 @@ class GameController(QObject):
         is_correct = self.quiz_manager.is_answer_correct(
             self.current_question, answer_index
         )
+        time_taken = timestamp - self.question_start_time
 
         if is_correct:
-            time_taken = timestamp - self.question_start_time
             points = self.quiz_manager.calculate_score(
                 time_taken, self.current_question.time_limit
             )
         else:
             points = 0
 
-        print(f"{player_id=} {points=} {answer_index=} {is_correct=}")  # temp debug
-        self.quiz_manager.submit_answer(player_id, points, answer_index, is_correct)
+        print(
+            f"{player_id=} {points=} {answer_index=} {time_taken=} {is_correct=}"
+        )  # TODO temp debug
+        self.quiz_manager.submit_answer(
+            player_id, points, answer_index, time_taken, is_correct
+        )
 
         if self.quiz_manager.all_players_answered():
             self.question_timer.stop()

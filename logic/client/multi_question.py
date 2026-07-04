@@ -12,5 +12,12 @@ class ClientMultiQuestionLogic(BaseLogic):
 
         self.screen.answer_submit.connect(self.on_answer_submit)
 
+        self.game_client.results_data.connect(self.on_results_data)
+
     def on_answer_submit(self, index: int) -> None:
         self.game_client.send_answer_submit(index)
+        self.screen.set_status("Answer submitted")
+
+    def on_results_data(self, data: dict) -> None:
+        results_data = {**data, "nickname": self.game_client.nickname}
+        self.screen.go_to(Screens.CLIENT_MULTI_RESULT, results_data)

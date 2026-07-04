@@ -20,16 +20,15 @@ class GameClient(QObject):
     """Manages the networking relating to the game client."""
 
     # Define signals for communicating from service to logic
-    connecting = pyqtSignal()
-    connection_fail = pyqtSignal(str)
-    connection_success = pyqtSignal(list)
+    connection_failed = pyqtSignal(str)
+    connected = pyqtSignal(list)
 
     player_joined = pyqtSignal(str)
     player_left = pyqtSignal(str)
-    player_list = pyqtSignal(list)
 
-    start_countdown = pyqtSignal(dict)
+    countdown_started = pyqtSignal(dict)
     question_data = pyqtSignal(dict)
+    results_data = pyqtSignal(dict)
 
     kick = pyqtSignal(str)
     error = pyqtSignal(str)
@@ -56,6 +55,7 @@ class GameClient(QObject):
             ServerMessageType.PLAYER_LEFT: self.handle_player_left,
             ServerMessageType.COUNTDOWN_STARTED: self.handle_countdown_started,
             ServerMessageType.QUESTION_DATA: self.handle_question_data,
+            ServerMessageType.RESULTS: self.handle_results,
             ServerMessageType.KICK: self.handle_kick,
             ServerMessageType.ERROR: self.handle_error,
             ServerMessageType.INVALID_ACTION: self.handle_invalid_action,
@@ -85,8 +85,6 @@ class GameClient(QObject):
         """Connects to the server set in `server_ip`."""
         if not self.server_ip or not self.nickname:
             raise ValueError("Server IP and nickname must have values")
-
-        self.connecting.emit()
 
         # Run in separate thread to avoid freezing UI
         threading.Thread(target=self._connect_and_listen, daemon=True).start()
@@ -146,20 +144,20 @@ class GameClient(QObject):
             self.jsock.set_socket(self.client_socket)
         except ConnectionRefusedError:
             # Server refused connction
-            self.connection_fail.emit("refused")
+            self.connection_failed.emit("refused")
             return
         except TimeoutError:
             # Could not connect to server within timeout
-            self.connection_fail.emit("timeout")
+            self.connection_failed.emit("timeout")
             return
         except OSError as e:
             if e.errno == 10065:
                 # Server is unreachable
-                self.connection_fail.emit("unreachable")
+                self.connection_failed.emit("unreachable")
                 return
             elif e.errno == 10049:
                 # Invalid IP (e.g. 0.0.0.0)
-                self.connection_fail.emit("invalid")
+                self.connection_failed.emit("invalid")
                 return
             else:
                 # Technically, start_fail could be emitted,
@@ -234,7 +232,7 @@ class GameClient(QObject):
         player_list = msg["data"]["player_list"]
         self.player_id = player_id
 
-        self.connection_success.emit(player_list)
+        self.connected.emit(player_list)
 
     def handle_player_joined(self, msg: dict) -> None:
         """Handles the `PLAYER_JOINED` message type."""
@@ -247,10 +245,13 @@ class GameClient(QObject):
         self.player_left.emit(nickname)
 
     def handle_countdown_started(self, msg: dict) -> None:
-        self.start_countdown.emit(msg["data"])
+        self.countdown_started.emit(msg["data"])
 
     def handle_question_data(self, msg: dict) -> None:
         self.question_data.emit(msg["data"])
+
+    def handle_results(self, msg: dict) -> None:
+        self.results_data.emit(msg["data"])
 
     def handle_kick(self, msg: dict) -> None:
         """Handles the `KICK` message type. Disconnects the client."""

@@ -14,8 +14,8 @@ class ClientSetupLogic(BaseLogic):
 
         self.screen.submitted.connect(self.handle_submit)
 
-        self.game_client.connection_success.connect(self.on_connection_success)
-        self.game_client.connection_fail.connect(self.on_connection_fail)
+        self.game_client.connected.connect(self.on_connected)
+        self.game_client.connection_failed.connect(self.on_connection_failed)
 
     def handle_submit(self, data: dict[str, str]) -> None:
         self.game_client.set_ip(data["ip"])
@@ -29,11 +29,11 @@ class ClientSetupLogic(BaseLogic):
             {"loading_msg": "Connecting...", "status_msg": "Connecting to server..."},
         )
 
-    def on_connection_success(self) -> None:
+    def on_connected(self) -> None:
         self.screen.go_to(Screens.CLIENT_LOBBY)
         self.screen.set_status("In lobby")
 
-    def on_connection_fail(self, reason: str) -> None:
+    def on_connection_failed(self, reason: str) -> None:
         self.screen.go_to(Screens.CLIENT_SETUP)
 
         self.screen.reset_status()

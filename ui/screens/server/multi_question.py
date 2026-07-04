@@ -1,16 +1,19 @@
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout
 from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 
-from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.question_timer import QuestionTimer
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.button import LeaveButton
 
+from ui.components.dialogs import confirm_warning
+
 
 class ServerMultiQuestionScreen(BaseScreen):
-    title_text = "Quiz Master – Question 1 / 2"
+    title_text = "Quiz Master – Question"
+
+    question_skipped = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -26,7 +29,6 @@ class ServerMultiQuestionScreen(BaseScreen):
         self.question_num = QLabel()
         self.question_num.setFont(question_num_font)
 
-        # TODO this capsule makes question_num have more spacing between it and question_lbl
         self.submitted = QLabel("0")
         self.submitted.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.submitted.setFixedSize(40, 40)
@@ -59,14 +61,14 @@ class ServerMultiQuestionScreen(BaseScreen):
         vbox_left = QVBoxLayout()
         vbox_left.addSpacing(20)
         vbox_left.addLayout(question_info_hbox)
-        vbox_left.addSpacing(10)
+        vbox_left.addSpacing(2)
         vbox_left.addWidget(self.question_lbl)
         vbox_left.addSpacing(20)
         vbox_left.addWidget(self.answer_button_grid, 1)
         vbox_left.addSpacing(10)
 
         skip_btn = LeaveButton("Skip", btn_width=50, do_confirm=False)
-        skip_btn.confirm_leave.connect(lambda: self.go_to(Screens.SERVER_MULTI_RESULT))
+        skip_btn.clicked.connect(self.skip_question)
 
         self.question_timer = QuestionTimer()
 
@@ -89,10 +91,21 @@ class ServerMultiQuestionScreen(BaseScreen):
         self.submissions += amount
         self.submitted.setText(str(self.submissions))
 
-    def on_enter(self, payload: dict | None = None):
-        self.question_num.setText(
-            f"Question {payload['question_num']} / {payload['total_questions']}"
+    def skip_question(self) -> None:
+        confirm = confirm_warning(
+            self,
+            "Confirm Skipping",
+            "Are you sure you want to skip this question? Players who haven't answered will lose the chance to respond.",
         )
+
+        if confirm:
+            self.question_skipped.emit()
+
+    def on_enter(self, payload: dict | None = None):
+        question_progress = f"{payload['question_num']} / {payload['total_questions']}"
+        self.set_title(f"Quiz Master – Question {question_progress}")
+
+        self.question_num.setText(f"Question {question_progress}")
         self.question_lbl.setText(payload["question_text"])
 
         self.answer_button_grid.set_answers(payload["answer_options"])
@@ -101,6 +114,8 @@ class ServerMultiQuestionScreen(BaseScreen):
         self.question_timer.start()
 
     def on_leave(self):
+        self.set_title("Quiz Master – Question")
+
         self.question_num.setText("")
         self.question_lbl.setText("")
 

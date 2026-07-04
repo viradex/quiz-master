@@ -17,7 +17,7 @@ class ClientAppController:
         self.window: MainWindow = window
         self.client: GameClient = services.client
 
-        self.client.start_countdown.connect(self.on_start_countdown)
+        self.client.countdown_started.connect(self.on_countdown_started)
         self.client.question_data.connect(self.on_question_data)
         self.client.kick.connect(self.on_kick)
         self.client.error.connect(self.on_error)
@@ -47,16 +47,12 @@ class ClientAppController:
             f"The server rejected the request because it is not valid in the current state.\n\nReason: {reason}",
         )
 
-    def on_start_countdown(self, countdown_info: dict) -> None:
-        start_time = countdown_info["start_time"]
+    def on_countdown_started(self, countdown_info: dict) -> None:
         duration = countdown_info["duration"]
 
-        # TODO does not account for network latency
-        now = time.time()
-        remaining = (start_time + duration) - now
-        remaining_ms = max(0, int(remaining * 1000))
-
-        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": remaining_ms})
+        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": duration * 1000})
+        self.window.handle_status("Counting down...")
 
     def on_question_data(self, question_info: dict) -> None:
         self.window.go_to(Screens.CLIENT_MULTI_QUESTION, question_info)
+        self.window.handle_status("Waiting for answer")

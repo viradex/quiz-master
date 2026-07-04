@@ -16,10 +16,10 @@ class Card(QFrame):
 
     def __init__(
         self,
-        parent: QWidget | None = None,
         radius: int = 20,
         blur_radius: int = 30,
         accent: QColor | str | None = None,
+        parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.blur_radius: int = blur_radius
@@ -65,7 +65,7 @@ class Card(QFrame):
         self._apply_style()
         self._apply_shadow()
 
-    def clear_accent(self) -> None:
+    def reset_accent(self) -> None:
         """Clear custom accent."""
         self.accent = None
         self._apply_style()
@@ -78,10 +78,90 @@ class Card(QFrame):
         return QColor(value)
 
 
-# TODO change to class, but class has broken styling :(
-def make_stat_card(title: str, value: str, icon_path: Path | None = None) -> QWidget:
+class StatCard(QFrame):
     """Creates a statistic card, which is smaller than a normal Card, without a shadow,
     and less flexible. Only should be used for displaying player stats."""
+
+    def __init__(
+        self,
+        title: str,
+        value: str,
+        icon_path: Path | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
+        super().__init__(parent)
+        self.title = title
+        self.value = value
+        self.icon_path = icon_path
+
+        self.setObjectName("statCard")
+
+        self.setup_component()
+
+    def setup_component(self) -> None:
+        self.setStyleSheet("""
+            QFrame#statCard {
+                background-color: #2B2B2B;
+                border-radius: 10px;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(12, 10, 12, 10)
+        layout.setSpacing(2)
+
+        header_layout = QHBoxLayout()
+        header_layout.setSpacing(6)
+
+        # Shows icon if provided
+        if self.icon_path is not None:
+            self.icon_lbl = QLabel()
+
+            pixmap = QPixmap(str(self.icon_path)).scaled(
+                16,
+                16,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+
+            self.icon_lbl.setPixmap(pixmap)
+            header_layout.addWidget(self.icon_lbl)
+
+        self.title_lbl = QLabel(self.title)
+        self.title_lbl.setStyleSheet("""
+            font-size: 14px;
+            color: #8A8A8A;
+        """)
+        header_layout.addWidget(self.title_lbl)
+        header_layout.addStretch()
+
+        self.value_lbl = QLabel(self.value)
+        self.value_lbl.setStyleSheet("""
+            font-size: 24px;
+            font-weight: 600;
+        """)
+
+        layout.addLayout(header_layout)
+        layout.addSpacing(5)
+        layout.addWidget(self.value_lbl)
+
+    def set_title(self, title: str) -> None:
+        self.title = title
+        self.title_lbl.setText(title)
+
+    def set_value(self, value: str) -> None:
+        self.value = value
+        self.value_lbl.setText(value)
+
+
+# TODO change to class, but class has broken styling :(
+def make_stat_card(title: str, value: str, icon_path: Path | None = None) -> QWidget:
+    """
+    **DEPRECATED - USE StatCard()!**
+
+    Creates a statistic card, which is smaller than a normal Card, without a shadow,
+    and less flexible. Only should be used for displaying player stats.
+    """
 
     container = QWidget()
     container.setStyleSheet("""

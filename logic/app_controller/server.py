@@ -38,11 +38,14 @@ class ServerAppController:
 
     def on_start_countdown(self, countdown_info: dict) -> None:
         duration = countdown_info["duration"]
-        remaining_ms = max(0, int(duration * 1000))
 
         self.server.send_countdown_start(countdown_info)
-        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": remaining_ms})
+        self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": duration * 1000})
+
+        self.window.handle_status("Counting down...")
 
     def on_start_question(self, question_info: dict) -> None:
         self.server.send_question_data(question_info)
         self.window.go_to(Screens.SERVER_MULTI_QUESTION, question_info)
+
+        self.window.handle_status("In question")

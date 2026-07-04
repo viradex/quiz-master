@@ -8,6 +8,7 @@ class BaseScreen(QWidget):
     """Base screen for all screens of the app."""
 
     navigate = pyqtSignal(Screens, dict)
+    title_change = pyqtSignal(str)
     status = pyqtSignal(str, int)
     status_reset = pyqtSignal()
 
@@ -22,6 +23,10 @@ class BaseScreen(QWidget):
             payload = {}
 
         self.navigate.emit(screen, payload)
+
+    def set_title(self, title: str) -> None:
+        """Change the application window title."""
+        self.title_change.emit(title)
 
     def set_status(self, message: str, timeout: int = 0) -> None:
         """Set status bar message, with optional timeout (in milliseconds).

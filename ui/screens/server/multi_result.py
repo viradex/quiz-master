@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QHeaderView,
 )
 from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QBrush, QColor
+from PyQt6.QtGui import QFont, QColor
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
@@ -29,42 +29,34 @@ class ServerMultiResultScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self):
-        heading = QLabel("Question Results")
-        heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # Correct: #3DDC84
-        # Incorrect: #FF5C5C
-        heading.setStyleSheet("font-size: 36px;" "font-weight: 600;" "color: #3DDC84;")
+        self.heading = QLabel("Question Results")
+        self.heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
 
-        self.accuracy = QLabel("Question 1 / 2 • 60% answered correctly")
+        self.accuracy = QLabel()
         self.accuracy.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.accuracy.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
         header_layout = QVBoxLayout()
-        header_layout.addWidget(heading)
+        header_layout.addWidget(self.heading)
         header_layout.addSpacing(2)
         header_layout.addWidget(self.accuracy)
         header_layout.addSpacing(20)
 
-        self.question_lbl = QLabel("What is the largest planet in the solar system?")
+        self.question_lbl = QLabel()
         self.question_lbl.setWordWrap(True)
         self.question_lbl.setStyleSheet("font-size: 24px;" "font-weight: 600;")
 
-        self.correct_answer = QLabel("Correct answer: Jupiter")
+        self.correct_answer = QLabel()
         self.correct_answer.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
         self.answer_bar_chart = AnswerBarChart()
-        self.answer_bar_chart.set_values([3, 1, 2, 1])
 
         self.answer_button_grid = AnswerButtonGrid("result")
-        self.answer_button_grid.set_answers(["Jupiter", "Saturn", "Uranus", "Neptune"])
-        self.answer_button_grid.set_result(0, 0)
         self.answer_button_grid.setMaximumHeight(500)
 
-        left_card = Card(
-            accent=darken_color("#3DDC84", 0.6),
-            blur_radius=35,
-        )
-        left_layout = QVBoxLayout(left_card)
+        self.left_card = Card()
+        left_layout = QVBoxLayout(self.left_card)
         left_layout.setContentsMargins(20, 20, 20, 20)
 
         left_layout.addWidget(self.question_lbl)
@@ -90,7 +82,7 @@ class ServerMultiResultScreen(BaseScreen):
         self.leaderboard_table.setAlternatingRowColors(True)
         self.leaderboard_table.setColumnCount(4)
         self.leaderboard_table.setHorizontalHeaderLabels(
-            ["Place", "Name", "Gained", "Total"]
+            ["Rank", "Name", "Gained", "Total"]
         )
         self.leaderboard_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers
@@ -118,50 +110,8 @@ class ServerMultiResultScreen(BaseScreen):
             }
         """)
 
-        # TODO only for prototype
-        data = [
-            ("#1", "Peptalker101", "+982", "982"),
-            ("#2", "ItsJakePlayz21", "+980", "980"),
-            ("#3", "Viradex", "+978", "978"),
-            ("#4", "TrexGamerGirl", "+972", "972"),
-            ("#5", "Scyrist", "+966", "966"),
-        ]
-
-        for index, (place, name, gained, total) in enumerate(data):
-            row = self.leaderboard_table.rowCount()
-            self.leaderboard_table.insertRow(row)
-
-            place_item = QTableWidgetItem(place)
-            name_item = QTableWidgetItem(name)
-            gained_item = QTableWidgetItem(gained)
-            total_item = QTableWidgetItem(total)
-
-            if index == 0:
-                color = QBrush(QColor("#F5C542"))
-            elif index == 1:
-                color = QBrush(QColor("#C9CED6"))
-            elif index == 2:
-                color = QBrush(QColor("#CD7F32"))
-            else:
-                color = QBrush(QColor("#D6D1C7"))
-
-            place_item.setForeground(color)
-            name_item.setForeground(color)
-            gained_item.setForeground(color)
-            total_item.setForeground(color)
-
-            place_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            gained_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            total_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-
-            self.leaderboard_table.setItem(row, 0, place_item)
-            self.leaderboard_table.setItem(row, 1, name_item)
-            self.leaderboard_table.setItem(row, 2, gained_item)
-            self.leaderboard_table.setItem(row, 3, total_item)
-
         end_game_btn = LeaveButton("End Game", btn_width=80)
-        end_game_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        end_game_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         return_btn = QPushButton("Next Question")
         return_btn.setFixedSize(140, 40)
@@ -184,7 +134,7 @@ class ServerMultiResultScreen(BaseScreen):
         right_layout.addStretch(1)
 
         hbox = QHBoxLayout()
-        hbox.addWidget(left_card, 5)
+        hbox.addWidget(self.left_card, 5)
         hbox.addSpacing(20)
         hbox.addWidget(right_card, 4)
 
@@ -195,3 +145,91 @@ class ServerMultiResultScreen(BaseScreen):
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
+
+    def show_leaderboard_values(self, players: list[tuple[str]]) -> None:
+        for index, (rank, name, gained, total) in enumerate(players):
+            row = self.leaderboard_table.rowCount()
+            self.leaderboard_table.insertRow(row)
+
+            rank_item = QTableWidgetItem(rank)
+            name_item = QTableWidgetItem(name)
+            gained_item = QTableWidgetItem(gained)
+            total_item = QTableWidgetItem(total)
+
+            if index == 0:
+                color = QColor("#F5C542")
+            elif index == 1:
+                color = QColor("#C9CED6")
+            elif index == 2:
+                color = QColor("#CD7F32")
+            else:
+                color = QColor("#D6D1C7")
+
+            rank_item.setForeground(color)
+            name_item.setForeground(color)
+            gained_item.setForeground(color)
+            total_item.setForeground(color)
+
+            rank_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            gained_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            total_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            self.leaderboard_table.setItem(row, 0, rank_item)
+            self.leaderboard_table.setItem(row, 1, name_item)
+            self.leaderboard_table.setItem(row, 2, gained_item)
+            self.leaderboard_table.setItem(row, 3, total_item)
+
+    def clear_leaderboard(self) -> None:
+        self.leaderboard_table.setRowCount(0)
+
+    def on_enter(self, payload: dict) -> None:
+        # Correct: #3DDC84
+        # Incorrect: #FF5C5C
+        accuracy = round(payload["accuracy"] * 100)
+        theme_color = "#3DDC84" if accuracy >= 50 else "#FF5C5C"
+
+        self.heading.setStyleSheet(
+            f"font-size: 36px; font-weight: 600; color: {theme_color};"
+        )
+        self.accuracy.setText(
+            f"Question {payload['question_num']} / {payload['total_questions']} • {accuracy}% answered correctly"
+        )
+
+        correct_answer = payload["answer_options"][payload["correct_answer"]]
+
+        self.left_card.set_accent(darken_color(theme_color, 0.6))
+        self.question_lbl.setText(payload["question_text"])
+        self.correct_answer.setText(f"Correct answer: {correct_answer}")
+
+        self.answer_bar_chart.set_values(
+            payload["answer_frequency"], payload["correct_answer"]
+        )
+
+        self.answer_button_grid.set_answers(payload["answer_options"])
+        self.answer_button_grid.set_result(
+            payload["correct_answer"], payload["correct_answer"]
+        )
+
+        leaderboard_players = []
+        for player in payload["leaderboard"]:
+            leaderboard_players.append(
+                (
+                    f"#{player['rank']}",
+                    player["name"],
+                    f"+{player['gained']}",
+                    str(player["total"]),
+                )
+            )
+
+        self.show_leaderboard_values(leaderboard_players)
+
+    def on_leave(self):
+        self.heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
+        self.accuracy.setText("")
+
+        self.left_card.reset_accent()
+        self.question_lbl.setText("")
+        self.correct_answer.setText("")
+
+        self.clear_leaderboard()

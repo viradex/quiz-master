@@ -2,6 +2,8 @@ from PyQt6.QtWidgets import QWidget
 from PyQt6.QtGui import QPainter, QColor, QFont
 from PyQt6.QtCore import Qt
 
+from utils.color import darken_color
+
 
 class AnswerBarChart(QWidget):
     """Used to show a visual bar chart representation of the amount of answers for each answer."""
@@ -17,7 +19,7 @@ class AnswerBarChart(QWidget):
             "#3E9B68",
         ]
 
-    def set_values(self, values: list[int]) -> None:
+    def set_values(self, values: list[int], correct_index: int) -> None:
         """Set values for bars."""
         if len(values) > 4:
             raise ValueError(
@@ -28,6 +30,8 @@ class AnswerBarChart(QWidget):
 
         self.labels = ["A", "B", "C", "D"]
         self.labels = self.labels[: len(self.values)]
+
+        self.correct_index = correct_index
 
     def paintEvent(self, event) -> None:
         """Automatically called whenever the widget needs repainting (e.g. due to resizing)."""
@@ -71,13 +75,22 @@ class AnswerBarChart(QWidget):
             zip(self.values, self.labels, self.colors)
         ):
             # Caluculates height based on bar with max height,
-            # and ratio of other bars to that
-            height_ratio = value / max_value
-            bar_height = chart_height * height_ratio
+            # and ratio of other bars to that, ensuring 0 values
+            # will have a thin sliver
+            if value == 0:
+                bar_height = 3
+            else:
+                height_ratio = value / max_value
+                bar_height = max(chart_height * height_ratio, 3)
 
             # Positions bars
             x = side_margin + i * (bar_width + gap)
             y = top_margin + chart_height - bar_height
+
+            if i != self.correct_index:
+                color = darken_color(color, factor=0.6)
+            else:
+                value = f"✔ {value}"
 
             # Draw rounded rectangle, representing a bar
             painter.setPen(Qt.PenStyle.NoPen)

@@ -87,7 +87,7 @@ class ClientLobbyScreen(BaseScreen):
         status_lbl.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
         leave_btn = LeaveButton("Leave Lobby", btn_width=100, do_confirm=False)
-        leave_btn.confirm_leave.connect(self.leave_lobby)
+        leave_btn.clicked.connect(self.leave_lobby)
 
         vbox_right = QVBoxLayout()
         vbox_right.addStretch(1)

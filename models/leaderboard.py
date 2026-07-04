@@ -135,7 +135,7 @@ class Leaderboard:
             player_data = {
                 "id": player.player_id,
                 "name": player.nickname,
-                "place": index,
+                "rank": index,
                 "total": player.total_points,
             }
 

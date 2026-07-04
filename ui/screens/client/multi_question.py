@@ -10,7 +10,7 @@ from ui.components.button import LeaveButton
 
 
 class ClientMultiQuestionScreen(BaseScreen):
-    title_text = "Quiz Master – Question 1 / 2"
+    title_text = "Quiz Master – Question"
 
     answer_submit = pyqtSignal(int)
 
@@ -49,7 +49,7 @@ class ClientMultiQuestionScreen(BaseScreen):
         vbox_left.addSpacing(20)
 
         leave_btn = LeaveButton("Leave")
-        leave_btn.confirm_leave.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        leave_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         self.question_timer = QuestionTimer()
 
@@ -72,9 +72,10 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.question_timer.lock()
 
     def on_enter(self, payload: dict | None = None) -> None:
-        self.question_num.setText(
-            f"Question {payload['question_num']} / {payload['total_questions']}"
-        )
+        question_progress = f"{payload['question_num']} / {payload['total_questions']}"
+        self.set_title(f"Quiz Master – Question {question_progress}")
+
+        self.question_num.setText(f"Question {question_progress}")
         self.question_lbl.setText(payload["question_text"])
 
         self.answer_button_grid.set_answers(payload["answer_options"])
@@ -83,6 +84,8 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.question_timer.start()
 
     def on_leave(self) -> None:
+        self.set_title("Quiz Master – Question")
+
         self.question_num.setText("")
         self.question_lbl.setText("")
 
