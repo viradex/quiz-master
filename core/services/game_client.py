@@ -10,6 +10,7 @@ from utils.networking import is_valid_ipv4
 from core.config.constants import (
     PORT,
     MAX_NICKNAME_LENGTH,
+    CLIENT_CONNECTION_TIMEOUT,
     CLIENT_PING_INTERVAL,
     RESPONSE_TIMEOUT,
 )
@@ -138,7 +139,7 @@ class GameClient(QObject):
         try:
             # Connect to the server
             self.client_socket = socket.create_connection(
-                (self.server_ip, self.port), timeout=5
+                (self.server_ip, self.port), timeout=CLIENT_CONNECTION_TIMEOUT
             )
             self.client_socket.settimeout(1.0)
 

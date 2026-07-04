@@ -3,6 +3,8 @@ from logic.base_logic import BaseLogic
 from core.services.app_context import GameClient
 from core.app.screen_ids import Screens
 
+from core.config.constants import CLIENT_CONNECTION_TIMEOUT
+
 
 class ClientSetupLogic(BaseLogic):
     def __init__(self, screen, services) -> None:
@@ -45,7 +47,7 @@ class ClientSetupLogic(BaseLogic):
         elif reason == "timeout":
             self.screen.show_error(
                 "Failed to Connect",
-                "Unable to connect to the server. The server did not respond within a certain period of time. Please try again.",
+                f"Unable to connect to the server. The server did not respond within {CLIENT_CONNECTION_TIMEOUT} seconds. Please try again.",
             )
         elif reason == "unreachable":
             self.screen.show_error(

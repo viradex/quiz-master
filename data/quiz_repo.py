@@ -49,6 +49,18 @@ class QuizRepository:
 
         return quiz_id in self.quiz_cache
 
+    def get_id_from_title(self, title: str) -> str | None:
+        """Finds a quiz based on the quiz title, and returns the quiz ID."""
+        if not self.quiz_cache:
+            self._load_cache()
+
+        quizzes = self.load_quizzes()
+
+        for quiz in quizzes.values():
+            if title == quiz.quiz_title:
+                return quiz.quiz_id
+        return None
+
     def refresh_cache(self) -> None:
         """Refresh the cache, such as when a quiz save file has been added, removed, or modified."""
         self._load_cache()

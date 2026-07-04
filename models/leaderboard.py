@@ -7,7 +7,7 @@ class Leaderboard:
     def __init__(self) -> None:
         self.players: dict[str, Player] = {}
         self.sorted_players: list[Player] = []
-        self.previous_scores: dict[str, int] = {}
+        self.previous_points: dict[str, int] = {}
 
     def add_player(self, player: Player) -> None:
         """Add a player to the leaderboard."""
@@ -16,7 +16,7 @@ class Leaderboard:
     def remove_player(self, player_id: str) -> bool:
         """Remove a player from the leaderboard. Returns a boolean value indicating if the player ID existed or not."""
         player = self.players.pop(player_id, None)
-        self.previous_scores.pop(player_id, None)
+        self.previous_points.pop(player_id, None)
 
         self.sorted_players = [
             p for p in self.sorted_players if p.player_id != player_id
@@ -24,12 +24,7 @@ class Leaderboard:
 
         return player is not None
 
-    def update_scores(self, player_scores: dict[str, int]) -> None:
-        """Updates scores of all players specified."""
-        for player_id, score in player_scores.items():
-            self.players[player_id].score = score
-
-    def snapshot_scores(self) -> None:
+    def snapshot_points(self) -> None:
         """
         Saves all current scores saved in the leaderboard to `previous_scores`.
         This should be run before updating scores for the next question. Should be
@@ -41,13 +36,13 @@ class Leaderboard:
             update_scores()  # Then update with new scores
         """
         for player_id, player in self.players.items():
-            self.previous_scores[player_id] = player.score
+            self.previous_points[player_id] = player.total_points
 
     def reset(self) -> None:
         """Clears all players from the leaderboard."""
         self.players.clear()
         self.sorted_players.clear()
-        self.previous_scores.clear()
+        self.previous_points.clear()
 
     def sort_players(self) -> None:
         """Sort players by score in descending order. If scores are tied, they
@@ -56,7 +51,7 @@ class Leaderboard:
 
         # Use negative score to mimic reverse=True
         # score is priority, then nickname if scores are same
-        self.sorted_players.sort(key=lambda p: (-p.score, p.nickname))
+        self.sorted_players.sort(key=lambda p: (-p.total_points, p.nickname))
 
     def get_player_rank(self, player_id: str) -> int | None:
         """Get the position, or rank, of a given player ID, which can be used in numbering or ordinals."""
@@ -67,10 +62,12 @@ class Leaderboard:
 
         return index + 1
 
-    def get_top_players(self, limit: int = 5) -> list[Player]:
-        """Return the top `limit` players from the leaderboard."""
-        top_players = self.sorted_players[:limit]
-        return top_players
+    def get_players(self, limit: int | None = None) -> list[Player]:
+        """Return the `limit` players from the leaderboard. If None, retrieves all players."""
+        if limit:
+            return self.sorted_players[:limit]
+        else:
+            return self.sorted_players.copy()
 
     def get_adjacent_players(
         self, player_id: str, radius: int = 1
@@ -139,7 +136,7 @@ class Leaderboard:
                 "id": player.player_id,
                 "name": player.nickname,
                 "place": index,
-                "total": player.score,
+                "total": player.total_points,
             }
 
             # Only add gained key if delta is given
@@ -150,12 +147,12 @@ class Leaderboard:
 
         return leaderboard
 
-    def get_score_changes(self) -> dict[str, int]:
+    def get_points_delta(self) -> dict[str, int]:
         """Get the delta (difference) between the current player score and previous score, for each player."""
         score_changes = {}
 
-        for player_id, previous_score in self.previous_scores.items():
-            score_delta = self.players[player_id].score - previous_score
+        for player_id, previous_score in self.previous_points.items():
+            score_delta = self.players[player_id].total_points - previous_score
             score_changes[player_id] = score_delta
 
         return score_changes

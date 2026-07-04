@@ -30,6 +30,7 @@ class ServerMultiQuestionLogic(BaseLogic):
                 message = "Invalid answer submitted"
 
             self.server.send_invalid_answer(player_id, message)
+            return
 
         self.controller.receive_answer(player_id, selected_index, received_time)
         self.screen.update_submission_count(1)

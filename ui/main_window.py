@@ -2,6 +2,7 @@ import sys
 import ctypes
 from pathlib import Path
 from PyQt6.QtWidgets import (
+    QApplication,
     QMainWindow,
     QWidget,
     QHBoxLayout,
@@ -9,8 +10,8 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QStatusBar,
 )
-from PyQt6.QtGui import QGuiApplication, QIcon
-from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QTimer
 
 from core.app.screen_ids import Screens
 from core.services.app_context import Services
@@ -46,14 +47,15 @@ class MainWindow(QMainWindow):
 
         self.setup_ui()
         self.setup_icon()
-        self.setup_app_controller()
+        self.setup_theme()
+        self.setup_app_controllers()
         self.build_screens()
 
         self.go_to(STARTUP_SCREEN)
 
     def center_window(self) -> None:
         """Move the window to the center of the primary screen."""
-        screen = QGuiApplication.primaryScreen().availableGeometry()
+        screen = QApplication.primaryScreen().availableGeometry()
 
         x = (screen.width() - WINDOW_WIDTH) // 2
         y = (screen.height() - WINDOW_HEIGHT) // 2
@@ -72,6 +74,10 @@ class MainWindow(QMainWindow):
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
                 "com.viradex.quizmaster"
             )
+
+    def setup_theme(self) -> None:
+        """Set up application theme. Forces dark mode even if the system is in light mode. Only works in Windows 11."""
+        QApplication.styleHints().setColorScheme(Qt.ColorScheme.Dark)
 
     def setup_ui(self) -> None:
         """Create MainWindow UI with the stacked widget for showing individual screens, as well as status bar."""
@@ -92,8 +98,8 @@ class MainWindow(QMainWindow):
 
         self.handle_status(self.status_text, 0)
 
-    def setup_app_controller(self) -> None:
-        """Set up app controller (global logic)."""
+    def setup_app_controllers(self) -> None:
+        """Set up app controllers (global logic)."""
         self.client_app_controller = ClientAppController(self, self.services)
         self.server_app_controller = ServerAppController(self, self.services)
         self.common_app_controller = CommonAppController(self, self.services)

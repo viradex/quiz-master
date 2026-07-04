@@ -26,7 +26,7 @@ class ConnectedClient:
         with self.lock:
             self.jsock.send(msg)
 
-    def recv(self) -> None:
+    def recv(self) -> dict | bool | None:
         """Receive a message from the client."""
         return self.jsock.recv()
 

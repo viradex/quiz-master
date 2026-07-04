@@ -21,6 +21,7 @@ DEFAULT_IP_ADDRESS = "127.0.0.1"  # only for development; set blank or remove wh
 PORT = 7878
 MAX_PLAYERS = 50
 
+CLIENT_CONNECTION_TIMEOUT = 10  # time until client times out for connecting to server
 CLIENT_PING_INTERVAL = 6
 RESPONSE_TIMEOUT = 15
 

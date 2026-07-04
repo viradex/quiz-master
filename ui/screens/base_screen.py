@@ -34,15 +34,15 @@ class BaseScreen(QWidget):
         self.status_reset.emit()
 
     def show_error(self, title: str, desc: str) -> None:
-        """Show an error modal window."""
+        """Show an error modal window. Should preferably only be used by logic."""
         QMessageBox.critical(self, title, desc)
 
     def show_warning(self, title: str, desc: str) -> None:
-        """Show a warning modal window."""
+        """Show a warning modal window. Should preferably only be used by logic."""
         QMessageBox.warning(self, title, desc)
 
     def show_info(self, title: str, desc: str) -> None:
-        """Show an informational modal window."""
+        """Show an informational modal window. Should preferably only be used by logic."""
         QMessageBox.information(self, title, desc)
 
     def on_enter(self, payload: dict | None = None) -> None:

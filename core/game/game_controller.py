@@ -26,6 +26,13 @@ class GameController(QObject):
         self.question_start_time: float | None = None
         self.question_deadline: float | None = None
 
+        self.setup_question_timer()
+
+    def setup_question_timer(self) -> None:
+        self.question_timer = QTimer(self)
+        self.question_timer.setSingleShot(True)
+        self.question_timer.timeout.connect(self.finish_current_question)
+
     def load_quiz(self, quiz: Quiz) -> None:
         self.quiz_manager.load_quiz(quiz)
 
@@ -53,42 +60,57 @@ class GameController(QObject):
         QTimer.singleShot(COUNTDOWN_TIME * 1000, self.start_current_question)
 
     def start_current_question(self) -> None:
-        self.question = self.quiz_manager.get_question(self.current_question_index)
+        self.quiz_manager.prepare_for_question()
+
+        self.current_question = self.quiz_manager.get_question(
+            self.current_question_index
+        )
         self.question_running = True
         self.question_start_time = time.monotonic()
-        self.question_deadline = self.question_start_time + self.question.time_limit
+        self.question_deadline = (
+            self.question_start_time + self.current_question.time_limit
+        )
 
-        QTimer.singleShot(self.question.time_limit * 1000, self.finish_current_question)
+        self.question_timer.start(self.current_question.time_limit * 1000)
 
         self.start_question.emit(
             {
                 "question_num": self.current_question_index + 1,
                 "total_questions": self.quiz_manager.get_total_questions(),
-                "question_text": self.question.question_text,
-                "answer_options": self.question.answer_options,
-                "time_limit": self.question.time_limit,
+                "question_text": self.current_question.question_text,
+                "answer_options": self.current_question.answer_options,
+                "time_limit": self.current_question.time_limit,
             }
         )
 
     def finish_current_question(self) -> None:
         self.question_running = False
+        self.quiz_manager.force_submissions()
 
-        print("Question finished whether you like it or not >:)")
+        global_leaderboard = self.quiz_manager.generate_global_leaderboard(
+            include_delta=True
+        )
+        individual_leaderboards = self.quiz_manager.generate_individual_leaderboards(
+            include_delta=True
+        )
+
+        print(global_leaderboard)
+        print(individual_leaderboards)
+
+    def skip_question(self) -> None:
+        pass
 
     def receive_answer(
         self, player_id: str, answer_index: int, timestamp: float
     ) -> None:
-        is_valid, reason = self.is_answer_valid(answer_index, timestamp)
-        if not is_valid:
-            self.invalid_answer.emit(player_id, reason)
-            return
-
-        is_correct = self.quiz_manager.is_answer_correct(self.question, answer_index)
+        is_correct = self.quiz_manager.is_answer_correct(
+            self.current_question, answer_index
+        )
 
         if is_correct:
             time_taken = timestamp - self.question_start_time
             points = self.quiz_manager.calculate_score(
-                time_taken, self.question.time_limit
+                time_taken, self.current_question.time_limit
             )
         else:
             points = 0
@@ -96,9 +118,15 @@ class GameController(QObject):
         print(f"{player_id=} {points=} {answer_index=} {is_correct=}")  # temp debug
         self.quiz_manager.submit_answer(player_id, points, answer_index, is_correct)
 
+        if self.quiz_manager.all_players_answered():
+            self.question_timer.stop()
+            self.finish_current_question()
+
     def is_answer_valid(self, answer_index: int, timestamp: float) -> tuple[bool, str]:
         is_time_valid = self.question_start_time <= timestamp <= self.question_deadline
-        is_answer_valid = self.quiz_manager.is_answer_valid(self.question, answer_index)
+        is_answer_valid = self.quiz_manager.is_answer_valid(
+            self.current_question, answer_index
+        )
 
         if not is_time_valid:
             return (False, "time")
@@ -106,24 +134,6 @@ class GameController(QObject):
             return (False, "answer")
         else:
             return (True, "")
-
-    def skip_question(self) -> None:
-        pass
-
-    def can_start_next_question(self) -> bool:
-        pass
-
-    def get_current_question(self) -> Question | None:
-        pass
-
-    def get_time_remaining(self, current_time: float) -> float:
-        pass
-
-    def get_live_leaderboard(self) -> list[dict]:
-        pass
-
-    def get_final_leaderboard(self) -> list[dict]:
-        pass
 
     def reset(self) -> None:
         pass

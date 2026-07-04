@@ -66,10 +66,7 @@ class ServerLobbyLogic(BaseLogic):
             )
             return
 
-        for quiz in quizzes.values():
-            if quiz_name == quiz.quiz_title:
-                quiz_id = quiz.quiz_id
-                break
+        quiz_id = self.quiz_repo.get_id_from_title(quiz_name)
 
         quiz = self.quiz_repo.load_quiz(quiz_id)
         self.controller.load_quiz(quiz)

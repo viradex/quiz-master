@@ -17,22 +17,35 @@ class QuizManager:
 
     def add_player(self, player: Player) -> None:
         self.players[player.player_id] = player
+        self.leaderboard.add_player(player)
 
     def remove_player(self, player_id: str) -> None:
         self.players.pop(player_id, None)
+        self.leaderboard.remove_player(player_id)
 
     def get_question(self, index: int) -> Question:
-        # Raises IndexError if question does not exist
+        # Raises raw IndexError if question does not exist
         return self.quiz.questions[index]
 
     def get_total_questions(self) -> int:
         return len(self.quiz.questions)
+
+    def prepare_for_question(self) -> None:
+        self.leaderboard.snapshot_points()
 
     def submit_answer(
         self, player_id: str, points: int, selected_answer: int, is_correct: bool
     ) -> None:
         player = self.players[player_id]
         player.submit_answer(points, selected_answer, is_correct)
+
+    def force_submissions(self) -> None:
+        for player in self.players.values():
+            if not player.submitted:
+                player.submit_forced_answer()
+
+    def all_players_answered(self) -> bool:
+        return all(player.submitted for player in self.players.values())
 
     def reset_for_question(self) -> None:
         for player in self.players.values():
@@ -62,20 +75,25 @@ class QuizManager:
 
         return math.floor(score)
 
-    def update_player_score(self, player_id: str, points: int) -> None:
-        pass
+    def generate_global_leaderboard(self, include_delta: bool) -> list[dict]:
+        self.leaderboard.sort_players()
 
-    def generate_leaderboard(self, delta: bool = False) -> list[dict]:
-        pass
+        delta = self.leaderboard.get_points_delta() if include_delta else None
+        leaderboard_players = self.leaderboard.get_players()
 
-    def lock_answers(self) -> None:
-        pass
+        return self.leaderboard.get_leaderboard(leaderboard_players, delta)
 
-    def unlock_answers(self) -> None:
-        pass
+    def generate_individual_leaderboards(
+        self, include_delta: bool
+    ) -> dict[str, list[dict]]:
+        self.leaderboard.sort_players()
+        delta = self.leaderboard.get_points_delta() if include_delta else None
 
-    def all_players_answered(self) -> bool:
-        pass
+        individual_leaderboards = {}
+        for player_id in self.players.keys():
+            adjacent = self.leaderboard.get_adjacent_players(player_id, radius=1)
 
-    def apply_scores(self) -> None:
-        pass
+            leaderboard = self.leaderboard.get_leaderboard(adjacent, delta)
+            individual_leaderboards[player_id] = leaderboard
+
+        return individual_leaderboards
