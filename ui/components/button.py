@@ -7,13 +7,10 @@ from PyQt6.QtWidgets import QPushButton
 class LeaveButton(QPushButton):
     """Configure a button that is styled to denote leaving the current screen for UI consistency."""
 
-    def __init__(
-        self, btn_text: str, btn_width: int = 60, do_confirm: bool = True
-    ) -> None:
+    def __init__(self, btn_text: str, btn_width: int = 60) -> None:
         super().__init__()
         self.btn_text = btn_text
         self.btn_width = btn_width
-        self.do_confirm = do_confirm
 
         self.setup_component()
 

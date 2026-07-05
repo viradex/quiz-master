@@ -2,7 +2,7 @@
   "quiz_id": "9c4f18d2",
   "quiz_title": "Mathematics Quiz",
   "do_shuffle": false,
-  "is_default": true,
+  "is_premade": true,
   "questions": [
     {
       "question_id": "a1f3c9d7",

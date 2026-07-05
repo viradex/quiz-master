@@ -29,6 +29,26 @@ class CommonMenuLogic(BaseLogic):
 
         if reason == "in_use":
             self.screen.show_error(
-                "Server Already Running",
-                "Another instance of the server is already running on this device. Only one server instance can be run per device.",
+                "Failed to Start",
+                "Unable to start the server. Another instance of the server is already running on this device, or the port is in use. Please try again.",
+            )
+        if reason == "permission":
+            self.screen.show_error(
+                "Failed to Start",
+                "Unable to start the server. Permission denied. Please try again.",
+            )
+        if reason == "invalid_ip":
+            self.screen.show_error(
+                "Failed to Start",
+                "Unable to start the server. The server was attempted to be started on an IP that does not belong to the device. Please try again.",
+            )
+        if reason == "invalid":
+            self.screen.show_error(
+                "Failed to Start",
+                "Unable to start the server. Invalid argument(s). Please try again.",
+            )
+        if reason == "unknown":
+            self.screen.show_error(
+                "Failed to Start",
+                "Unable to start the server. An unknown error occurred. Please try again.",
             )

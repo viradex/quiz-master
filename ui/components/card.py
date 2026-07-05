@@ -116,15 +116,8 @@ class StatCard(QFrame):
         # Shows icon if provided
         if self.icon_path is not None:
             self.icon_lbl = QLabel()
+            self.set_icon(self.icon_path)
 
-            pixmap = QPixmap(str(self.icon_path)).scaled(
-                16,
-                16,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-
-            self.icon_lbl.setPixmap(pixmap)
             header_layout.addWidget(self.icon_lbl)
 
         self.title_lbl = QLabel(self.title)
@@ -153,8 +146,18 @@ class StatCard(QFrame):
         self.value = value
         self.value_lbl.setText(value)
 
+    def set_icon(self, icon_path: Path) -> None:
+        self.icon_path = icon_path
+        pixmap = QPixmap(self.icon_path.as_posix()).scaled(
+            16,
+            16,
+            Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation,
+        )
 
-# TODO change to class, but class has broken styling :(
+        self.icon_lbl.setPixmap(pixmap)
+
+
 def make_stat_card(title: str, value: str, icon_path: Path | None = None) -> QWidget:
     """
     **DEPRECATED - USE StatCard()!**

@@ -1,6 +1,7 @@
 import socket
 import threading
 import time
+import errno
 from collections.abc import Callable  # for type checking
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -29,6 +30,7 @@ class GameClient(QObject):
     countdown_started = pyqtSignal(dict)
     question_data = pyqtSignal(dict)
     results_data = pyqtSignal(dict)
+    final_results_data = pyqtSignal(dict)
 
     kick = pyqtSignal(str)
     error = pyqtSignal(str)
@@ -56,6 +58,7 @@ class GameClient(QObject):
             ServerMessageType.COUNTDOWN_STARTED: self.handle_countdown_started,
             ServerMessageType.QUESTION_DATA: self.handle_question_data,
             ServerMessageType.RESULTS: self.handle_results,
+            ServerMessageType.FINAL_RESULTS: self.handle_final_results,
             ServerMessageType.KICK: self.handle_kick,
             ServerMessageType.ERROR: self.handle_error,
             ServerMessageType.INVALID_ACTION: self.handle_invalid_action,
@@ -151,19 +154,32 @@ class GameClient(QObject):
             self.connection_failed.emit("timeout")
             return
         except OSError as e:
-            if e.errno == 10065:
+            if e.errno in (errno.EHOSTUNREACH, errno.ENETUNREACH):
                 # Server is unreachable
                 self.connection_failed.emit("unreachable")
-                return
-            elif e.errno == 10049:
+
+            elif e.errno == errno.EADDRNOTAVAIL:
                 # Invalid IP (e.g. 0.0.0.0)
                 self.connection_failed.emit("invalid")
-                return
+
+            elif e.errno == errno.ECONNRESET:
+                # Connection closed by server
+                self.connection_failed.emit("reset")
+
+            elif e.errno == errno.ECONNABORTED:
+                # Connection aborted
+                self.connection_failed.emit("aborted")
+
+            elif e.errno == errno.EACCES:
+                # Permission denied
+                self.connection_failed.emit("permission")
+
             else:
-                # Technically, start_fail could be emitted,
-                # but since this is an unexpected error, it's
-                # better to just have a regular Python error
-                raise
+                # Unknown error
+                print(f"Error connecting client: {e}")
+                self.connection_failed.emit("unknown")
+
+            return
 
         self.is_connected = True
 
@@ -252,6 +268,10 @@ class GameClient(QObject):
 
     def handle_results(self, msg: dict) -> None:
         self.results_data.emit(msg["data"])
+
+    def handle_final_results(self, msg: dict) -> None:
+        self.final_results_data.emit(msg["data"])
+        self.disconnect_client()
 
     def handle_kick(self, msg: dict) -> None:
         """Handles the `KICK` message type. Disconnects the client."""

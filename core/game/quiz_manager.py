@@ -12,8 +12,14 @@ class QuizManager:
         self.players: dict[str, Player] = {}
         self.leaderboard = Leaderboard()
 
+        self.all_time_taken = []
+        self.all_accuracies = []
+
     def load_quiz(self, quiz: Quiz) -> None:
         self.quiz = quiz
+
+        if self.quiz.do_shuffle:
+            self.quiz.shuffle_questions()
 
     def add_player(self, player: Player) -> None:
         self.players[player.player_id] = player
@@ -43,6 +49,12 @@ class QuizManager:
     ) -> None:
         player = self.players[player_id]
         player.submit_answer(points, selected_answer, time_taken, is_correct)
+
+        self.all_time_taken.append(time_taken)
+
+    def finish_question(self) -> None:
+        self.force_remaining_submissions()
+        self.all_accuracies.append(self.calculate_global_question_accuracy())
 
     def force_remaining_submissions(self) -> None:
         for player in self.players.values():
@@ -99,7 +111,7 @@ class QuizManager:
 
         return answers_frequency
 
-    def get_live_global_results(self, question: Question, question_num: int) -> dict:
+    def get_live_global_stats(self, question: Question, question_num: int) -> dict:
         total_questions = self.get_total_questions()
 
         accuracy = self.calculate_global_question_accuracy()
@@ -119,7 +131,30 @@ class QuizManager:
             "correct_answer": correct_answer,
         }
 
-    def get_live_player_results(self, player_id: str, question: Question) -> dict:
+    def get_final_global_stats(self) -> dict:
+        winner = self.leaderboard.sorted_players[0].nickname
+        highest_points = self.leaderboard.sorted_players[0].total_points
+
+        fastest_answer = min(self.all_time_taken, default=None)
+        average_accuracy = (
+            sum(self.all_accuracies) / len(self.all_accuracies)
+            if self.all_accuracies
+            else 0.0
+        )
+
+        total_players = len(self.players)
+        total_questions = self.get_total_questions()
+
+        return {
+            "winner": winner,
+            "highest_points": highest_points,
+            "fastest_answer": fastest_answer,
+            "average_accuracy": average_accuracy,
+            "total_players": total_players,
+            "total_questions": total_questions,
+        }
+
+    def get_live_player_stats(self, player_id: str, question: Question) -> dict:
         player = self.players[player_id]
 
         question_text = question.question_text
@@ -146,6 +181,33 @@ class QuizManager:
             "rank": rank,
         }
 
+    def get_final_player_stats(self, player_id: str) -> dict:
+        player = self.players[player_id]
+
+        rank = self.leaderboard.get_player_rank(player_id)
+        total_points = player.total_points
+        total_correct = player.total_correct
+        total_questions = self.get_total_questions()
+        accuracy = player.calculate_accuracy(self.get_total_questions())
+
+        on_podium = self.leaderboard.is_on_podium(player_id)
+        is_first = self.leaderboard.is_first(player_id)
+        is_last = self.leaderboard.is_last(player_id)
+        behind_nickname, points_behind = self.leaderboard.get_points_behind(player_id)
+
+        return {
+            "rank": rank,
+            "total_points": total_points,
+            "total_correct": total_correct,
+            "total_questions": total_questions,
+            "accuracy": accuracy,
+            "on_podium": on_podium,
+            "is_first": is_first,
+            "is_last": is_last,
+            "behind_nickname": behind_nickname,
+            "points_behind": points_behind,
+        }
+
     def generate_global_leaderboard(self, include_delta: bool) -> list[dict]:
         self.leaderboard.sort_players()
 
@@ -169,11 +231,28 @@ class QuizManager:
 
         return individual_leaderboards
 
-    def generate_individual_live_results(self, question: Question) -> dict[str, dict]:
+    def generate_individual_live_stats(self, question: Question) -> dict[str, dict]:
         individual_stats = {}
 
         for player_id in self.players.keys():
-            stats = self.get_live_player_results(player_id, question)
+            stats = self.get_live_player_stats(player_id, question)
             individual_stats[player_id] = stats
 
         return individual_stats
+
+    def generate_individual_final_stats(self) -> dict[str, dict]:
+        individual_stats = {}
+
+        for player_id in self.players.keys():
+            stats = self.get_final_player_stats(player_id)
+            individual_stats[player_id] = stats
+
+        return individual_stats
+
+    def reset(self) -> None:
+        self.quiz = None
+        self.players.clear()
+        self.leaderboard.reset()
+
+        self.all_time_taken.clear()
+        self.all_accuracies.clear()

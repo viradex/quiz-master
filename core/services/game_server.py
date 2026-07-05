@@ -2,6 +2,7 @@ import socket
 import threading
 import secrets
 import time
+import errno
 from collections.abc import Callable  # for type checking
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -87,6 +88,7 @@ class GameServer(QObject):
 
         self.is_running = False
         self.server_socket.close()
+        self.server_socket = None
 
     def _start_and_listen(self) -> None:
         """Starts the server and listens for incoming clients."""
@@ -94,14 +96,28 @@ class GameServer(QObject):
             # TCP protocol
             self.server_socket = socket.create_server((self.host_ip, self.port))
         except OSError as e:
-            # Address in use
-            if e.errno == 10048:
+            if e.errno == errno.EADDRINUSE:
+                # Port in use
                 self.start_failed.emit("in_use")
-                return
+
+            elif e.errno == errno.EACCES:
+                # Port in use
+                self.start_failed.emit("permission")
+
+            elif e.errno == errno.EADDRNOTAVAIL:
+                # Port in use
+                self.start_failed.emit("invalid_ip")
+
+            elif e.errno == errno.EINVAL:
+                # Port in use
+                self.start_failed.emit("invalid")
+
             else:
-                # technically, start_fail could be emitted,
-                # but it would be pointless due to the 'raise'
-                raise
+                # Unknown error
+                print(f"Error starting server: {e}")
+                self.start_failed.emit("unknown")
+
+            return
 
         self.is_running = True
         self.started.emit()
@@ -342,6 +358,17 @@ class GameServer(QObject):
             session.client.send(
                 {"type": ServerMessageType.RESULTS, "data": results_data}
             )
+
+    def send_final_results(self, player_id: str, results_data: dict) -> None:
+        session = self.registry.get(player_id)
+
+        if session:
+            session.client.send(
+                {"type": ServerMessageType.FINAL_RESULTS, "data": results_data}
+            )
+
+        self.remove_client(player_id)
+        self.game_started = False
 
     def _send_and_disconnect(self, client: ConnectedClient, msg: dict) -> None:
         """Sends a message to a client and disconnects them immediately afterwards."""

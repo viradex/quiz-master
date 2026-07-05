@@ -86,7 +86,7 @@ class ClientLobbyScreen(BaseScreen):
         status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_lbl.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
-        leave_btn = LeaveButton("Leave Lobby", btn_width=100, do_confirm=False)
+        leave_btn = LeaveButton("Leave Lobby", btn_width=100)
         leave_btn.clicked.connect(self.leave_lobby)
 
         vbox_right = QVBoxLayout()

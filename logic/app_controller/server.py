@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 class ServerAppController:
     """Global server-side logic, connected to MainWindow."""
 
-    def __init__(self, window: MainWindow, services: Services) -> None:
+    def __init__(self, window: "MainWindow", services: Services) -> None:
         super().__init__()
         self.window: MainWindow = window
         self.server: GameServer = services.server

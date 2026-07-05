@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class CommonAppController:
     """Global common logic, connected to MainWindow."""
 
-    def __init__(self, window: MainWindow, services: Services) -> None:
+    def __init__(self, window: "MainWindow", services: Services) -> None:
         super().__init__()
         self.window: MainWindow = window
         self.services: Services = services

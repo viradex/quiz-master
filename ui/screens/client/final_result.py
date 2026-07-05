@@ -1,4 +1,5 @@
 from pathlib import Path
+import random
 from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
@@ -15,7 +16,10 @@ from PyQt6.QtGui import QFont
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
-from ui.components.card import Card, make_stat_card
+from ui.components.card import Card, StatCard
+from utils.color import darken_color
+from utils.formatting import to_ordinal
+from utils.feedback_generator import feedback_generator
 
 
 class ClientFinalResultScreen(BaseScreen):
@@ -27,16 +31,11 @@ class ClientFinalResultScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self):
-        self.ordinal_position = QLabel("3rd Place!")
+        self.ordinal_position = QLabel()
         self.ordinal_position.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        # Gold: #F5C542
-        # Silver: #C9CED6
-        # Bronze: #CD7F32
-        self.ordinal_position.setStyleSheet(
-            "font-size: 42px;" "font-weight: 600;" "color: #CD7F32;"
-        )
+        self.ordinal_position.setStyleSheet("font-size: 42px;" "font-weight: 600;")
 
-        self.position_feedback = QLabel("Podium finish!")
+        self.position_feedback = QLabel()
         self.position_feedback.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.position_feedback.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
@@ -49,31 +48,29 @@ class ClientFinalResultScreen(BaseScreen):
         stats_heading = QLabel("Your Performance")
         stats_heading.setStyleSheet("font-size: 24px;" "font-weight: 600;")
 
-        self.nickname = QLabel("Viradex • Podium finish")
+        self.nickname = QLabel()
         self.nickname.setStyleSheet("font-size: 16px;" "color: #6E6E6E;")
 
         base_dir = Path(__file__).resolve().parent.parent.parent
         icons_path = base_dir / "assets" / "icons"
 
-        place_stat = make_stat_card("Place", "#3", icons_path / "trophy.png")
-        points_stat = make_stat_card("Points", "1824", icons_path / "star.png")
-        correct_stat = make_stat_card("Correct", "1 / 2", icons_path / "correct.png")
-        accuracy_stat = make_stat_card("Accuracy", "50%", icons_path / "bullseye.png")
+        self.rank_stat = StatCard("Rank", "", icons_path / "trophy.png")
+        self.points_stat = StatCard("Points", "", icons_path / "star.png")
+        self.correct_stat = StatCard("Correct", "", icons_path / "correct.png")
+        self.accuracy_stat = StatCard("Accuracy", "", icons_path / "bullseye.png")
 
         stats_grid = QGridLayout()
         stats_grid.setSpacing(10)
 
-        stats_grid.addWidget(place_stat, 0, 0)
-        stats_grid.addWidget(points_stat, 0, 1)
-        stats_grid.addWidget(correct_stat, 1, 0)
-        stats_grid.addWidget(accuracy_stat, 1, 1)
+        stats_grid.addWidget(self.rank_stat, 0, 0)
+        stats_grid.addWidget(self.points_stat, 0, 1)
+        stats_grid.addWidget(self.correct_stat, 1, 0)
+        stats_grid.addWidget(self.accuracy_stat, 1, 1)
 
         feedback_font = QFont()
         feedback_font.setPointSize(11)
 
-        self.feedback = QLabel(
-            "You finished on the podium and were 835 points behind ItsJakePlayz21!"
-        )
+        self.feedback = QLabel()
         self.feedback.setWordWrap(True)
         self.feedback.setFont(feedback_font)
         self.feedback.setStyleSheet("""
@@ -83,11 +80,8 @@ class ClientFinalResultScreen(BaseScreen):
             color: #C8C8C8;
         """)
 
-        left_card = Card(
-            accent="#CD7F32",
-            blur_radius=35,
-        )
-        left_layout = QVBoxLayout(left_card)
+        self.left_card = Card()
+        left_layout = QVBoxLayout(self.left_card)
         left_layout.setContentsMargins(20, 20, 20, 20)
 
         left_layout.addWidget(stats_heading)
@@ -108,21 +102,20 @@ class ClientFinalResultScreen(BaseScreen):
         table_font = QFont()
         table_font.setPointSize(12)
 
-        table_bold_font = QFont()
-        table_bold_font.setPointSize(12)
-        table_bold_font.setBold(True)
-
         self.leaderboard_table = QTableWidget()
         self.leaderboard_table.setFont(table_font)
         self.leaderboard_table.setShowGrid(False)
         self.leaderboard_table.setAlternatingRowColors(True)
         self.leaderboard_table.setColumnCount(3)
-        self.leaderboard_table.setHorizontalHeaderLabels(["Place", "Name", "Total"])
+        self.leaderboard_table.setHorizontalHeaderLabels(["Rank", "Name", "Total"])
         self.leaderboard_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers
         )
         self.leaderboard_table.setSelectionMode(
             QAbstractItemView.SelectionMode.NoSelection
+        )
+        self.leaderboard_table.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
 
         self.leaderboard_table.verticalHeader().setVisible(False)
@@ -136,42 +129,11 @@ class ClientFinalResultScreen(BaseScreen):
         self.leaderboard_table.setColumnWidth(0, 80)
         self.leaderboard_table.setColumnWidth(2, 80)
 
-        # TODO round table corners
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {
                 padding: 6px;
             }
         """)
-
-        # TODO only for prototype
-        data = [
-            ("#2", "ItsJakePlayz21", "1835"),
-            ("#3", "Viradex (you)", "978"),
-            ("#4", "TrexGamerGirl", "972"),
-        ]
-
-        for place, name, total in data:
-            row = self.leaderboard_table.rowCount()
-            self.leaderboard_table.insertRow(row)
-
-            place_item = QTableWidgetItem(place)
-            name_item = QTableWidgetItem(name)
-            total_item = QTableWidgetItem(total)
-
-            place_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            total_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-
-            if name.endswith("(you)"):
-                place_item.setFont(table_bold_font)
-                name_item.setFont(table_bold_font)
-                total_item.setFont(table_bold_font)
-
-            self.leaderboard_table.setItem(row, 0, place_item)
-            self.leaderboard_table.setItem(row, 1, name_item)
-            self.leaderboard_table.setItem(row, 2, total_item)
-
-        self._update_table_height()
 
         return_btn = QPushButton("Return to Menu")
         return_btn.setFixedSize(140, 40)
@@ -192,7 +154,7 @@ class ClientFinalResultScreen(BaseScreen):
         right_layout.addStretch(1)
 
         hbox = QHBoxLayout()
-        hbox.addWidget(left_card, 5)
+        hbox.addWidget(self.left_card, 5)
         hbox.addSpacing(20)
         hbox.addWidget(right_card, 4)
 
@@ -205,6 +167,136 @@ class ClientFinalResultScreen(BaseScreen):
         self.setLayout(vbox)
 
     def _update_table_height(self):
-        header_height = self.leaderboard_table.horizontalHeader().height()
-        row_height = self.leaderboard_table.rowHeight(0)
-        self.leaderboard_table.setFixedHeight(header_height + (row_height * 3) + 2)
+        self.leaderboard_table.resizeRowsToContents()
+
+        total = self.leaderboard_table.horizontalHeader().height()
+        total += sum(
+            self.leaderboard_table.rowHeight(i)
+            for i in range(self.leaderboard_table.rowCount())
+        )
+        total += self.leaderboard_table.frameWidth() * 2
+
+        self.leaderboard_table.setFixedHeight(total)
+
+    def show_leaderboard_values(
+        self, players: list[tuple[str, str, str]], own_nickname: str
+    ) -> None:
+        table_bold_font = QFont()
+        table_bold_font.setPointSize(12)
+        table_bold_font.setBold(True)
+
+        for rank, name, total in players:
+            is_you = name == own_nickname
+
+            row = self.leaderboard_table.rowCount()
+            self.leaderboard_table.insertRow(row)
+
+            if is_you:
+                name += " (you)"
+
+            rank_item = QTableWidgetItem(rank)
+            name_item = QTableWidgetItem(name)
+            total_item = QTableWidgetItem(total)
+
+            rank_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            total_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+
+            if is_you:
+                rank_item.setFont(table_bold_font)
+                name_item.setFont(table_bold_font)
+                total_item.setFont(table_bold_font)
+
+            self.leaderboard_table.setItem(row, 0, rank_item)
+            self.leaderboard_table.setItem(row, 1, name_item)
+            self.leaderboard_table.setItem(row, 2, total_item)
+
+        self._update_table_height()
+
+    def clear_leaderboard(self) -> None:
+        self.leaderboard_table.setRowCount(0)
+
+    def on_enter(self, payload: dict) -> None:
+        # Gold: #F5C542
+        # Silver: #C9CED6
+        # Bronze: #CD7F32
+        # Purple: #8A5CFF
+        if payload["rank"] == 1:
+            theme_color = "#F5C542"
+        elif payload["rank"] == 2:
+            theme_color = "#C9CED6"
+        elif payload["rank"] == 3:
+            theme_color = "#CD7F32"
+        else:
+            theme_color = "#8A5CFF"
+
+        message_choices = [
+            "Nice effort!",
+            "Well played!",
+            "Good game!",
+            "Thanks for playing!",
+            "Great participation!",
+        ]
+
+        accuracy = round(payload["accuracy"] * 100)
+
+        self.ordinal_position.setText(f"{to_ordinal(payload['rank'])} Place!")
+        if payload["on_podium"]:
+            self.ordinal_position.setStyleSheet(
+                f"font-size: 42px; font-weight: 600; color: {theme_color};"
+            )
+
+        if payload["on_podium"]:
+            self.position_feedback.setText("You finished on the podium!")
+        else:
+            self.position_feedback.setText(random.choice(message_choices))
+
+        self.left_card.set_accent(darken_color(theme_color, factor=0.6))
+        self.nickname.setText(f"Nickname: {payload['nickname']}")
+
+        self.rank_stat.set_value(f"#{payload['rank']}")
+        self.points_stat.set_value(f"{payload['total_points']}")
+        self.correct_stat.set_value(
+            f"{payload['total_correct']} / {payload['total_questions']}"
+        )
+        self.accuracy_stat.set_value(f"{accuracy}%")
+
+        self.feedback.setText(
+            feedback_generator(
+                payload["on_podium"],
+                payload["is_first"],
+                payload["is_last"],
+                payload["behind_nickname"],
+                payload["points_behind"],
+            )
+        )
+
+        leaderboard_players = []
+        for player in payload["leaderboard"]:
+            leaderboard_players.append(
+                (
+                    f"#{player['rank']}",
+                    player["name"],
+                    str(player["total"]),
+                )
+            )
+
+        self.show_leaderboard_values(leaderboard_players, payload["nickname"])
+
+    def on_leave(self):
+        self.ordinal_position.setText("")
+        self.ordinal_position.setStyleSheet("font-size: 42px;" "font-weight: 600;")
+
+        self.position_feedback.setText("")
+
+        self.left_card.reset_accent()
+        self.nickname.setText("")
+
+        self.rank_stat.set_value("")
+        self.points_stat.set_value("")
+        self.correct_stat.set_value("")
+        self.accuracy_stat.set_value("")
+
+        self.feedback.setText("")
+
+        self.clear_leaderboard()

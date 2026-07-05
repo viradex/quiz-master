@@ -59,3 +59,23 @@ class ClientSetupLogic(BaseLogic):
                 "Failed to Connect",
                 "Unable to connect to the server. The IP address is invalid for connecting to a server. Please try again.",
             )
+        elif reason == "reset":
+            self.screen.show_error(
+                "Failed to Connect",
+                "Unable to connect to the server. The connection was forcibly closed by the server. Please try again.",
+            )
+        elif reason == "aborted":
+            self.screen.show_error(
+                "Failed to Connect",
+                "Unable to connect to the server. The connection was aborted. Please try again.",
+            )
+        elif reason == "permission":
+            self.screen.show_error(
+                "Failed to Connect",
+                "Unable to connect to the server. Permission denied. Please try again.",
+            )
+        elif reason == "unknown":
+            self.screen.show_error(
+                "Failed to Connect",
+                "Unable to connect to the server. An unknown error occurred. Please try again.",
+            )

@@ -39,8 +39,8 @@ class ServerMultiQuestionLogic(BaseLogic):
             self.server.send_invalid_answer(player_id, message)
             return
 
-        self.controller.receive_answer(player_id, selected_index, received_time)
         self.screen.update_submission_count(1)
+        self.controller.receive_answer(player_id, selected_index, received_time)
 
         nickname = self.server.registry.get(player_id).player.nickname
         self.screen.set_status(f"{nickname} submitted an answer", 2000)

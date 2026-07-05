@@ -118,7 +118,7 @@ class ClientMultiResultScreen(BaseScreen):
 
         self.your_answer.setText(f"Your answer: {selected_answer}")
 
-        self.left_card.set_accent(darken_color(theme_color, 0.6))
+        self.left_card.set_accent(darken_color(theme_color, factor=0.6))
         self.question_lbl.setText(payload["question_text"])
         self.correct_answer.setText(f"Correct answer: {correct_answer}")
 
@@ -153,6 +153,7 @@ class ClientMultiResultScreen(BaseScreen):
         self.question_lbl.setText("")
         self.correct_answer.setText("")
 
+        self.answer_button_grid.reset_buttons()
         self.nickname.setText("")
 
         self.time_stat.set_value("")

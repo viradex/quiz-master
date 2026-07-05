@@ -98,6 +98,7 @@ class AnswerButtonGrid(QWidget):
 
     def _place_buttons(self, buttons: list[QPushButton]) -> None:
         """Place buttons in a certain order and layout depending on the count."""
+        self._clear_layout()
         count = len(buttons)
 
         if count == 2:
@@ -143,7 +144,7 @@ class AnswerButtonGrid(QWidget):
 
             # Other buttons
             btn.setText(original_text)
-            darker = darken_color(bg, 0.6)
+            darker = darken_color(bg, factor=0.6)
             btn.setStyleSheet(self._style_button(darker, darker, darker, text))
 
     def reset_buttons(self) -> None:
@@ -153,7 +154,7 @@ class AnswerButtonGrid(QWidget):
 
             btn.setEnabled(True)
             btn.setStyleSheet(self._style_button(bg, hover, click, text))
-            btn._glow.setBlurRadius(0)
+            btn._glow.setBlurRadius(0.1)
 
     def _style_button(self, bg: str, hover: str, click: str, text: str) -> str:
         """Style an individual answer button, and return the QSS for it."""
@@ -207,6 +208,15 @@ class AnswerButtonGrid(QWidget):
 
         return button
 
+    def _clear_layout(self) -> None:
+        while self.button_grid.count():
+            item = self.button_grid.takeAt(0)
+            widget = item.widget()
+
+            if widget is not None:
+                widget.setParent(None)
+                widget.deleteLater()
+
     def on_answer_clicked(self, selected: QPushButton) -> None:
         """Emits a signal for the button that was clicked, when a button is clicked."""
         if self.mode != "live":
@@ -218,7 +228,7 @@ class AnswerButtonGrid(QWidget):
         # Disable all buttons once submitted
         for btn in self.answer_buttons:
             btn.setEnabled(False)
-            btn._glow.setBlurRadius(0)
+            btn._glow.setBlurRadius(0.1)
 
             bg, hover, click, text = btn._base
 

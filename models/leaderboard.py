@@ -62,12 +62,63 @@ class Leaderboard:
 
         return index + 1
 
+    def is_on_podium(self, player_id: str) -> bool | None:
+        """Returns True if the player is in the top three (rank <= 3)."""
+        player_rank = self.get_player_rank(player_id)
+        if player_rank is None:
+            return None
+
+        return player_rank <= 3
+
+    def is_first(self, player_id: str) -> bool | None:
+        """Returns True if the player is first place."""
+        player_rank = self.get_player_rank(player_id)
+        if player_rank is None:
+            return None
+
+        return player_rank == 1
+
+    def is_last(self, player_id: str) -> bool | None:
+        """Returns True if the player is last place."""
+        player_rank = self.get_player_rank(player_id)
+        if player_rank is None:
+            return None
+
+        return player_rank == len(self.players)
+
     def get_players(self, limit: int | None = None) -> list[Player]:
         """Return the `limit` players from the leaderboard. If None, retrieves all players."""
         if limit:
             return self.sorted_players[:limit]
         else:
             return self.sorted_players.copy()
+
+    def get_points_behind(self, player_id: str) -> tuple[str | None, int | None]:
+        """
+        Gets the amount of points the player specified is behind by from the following player,
+        and their nickname.
+
+        If the player does not exist, (None, None) is returned.
+
+        If the player is first place, (None, 0) is returned.
+
+        Otherwise, ("player_name", points) is returned.
+        """
+        try:
+            index = self.sorted_players.index(self.players[player_id])
+        except ValueError:
+            return (None, None)
+
+        # If player is first
+        if index == 0:
+            return (None, 0)
+
+        current_player_points = self.players[player_id].total_points
+
+        player_ahead_points = self.sorted_players[index - 1].total_points
+        player_ahead_nickname = self.sorted_players[index - 1].nickname
+
+        return (player_ahead_nickname, player_ahead_points - current_player_points)
 
     def get_adjacent_players(
         self, player_id: str, radius: int = 1
@@ -131,11 +182,11 @@ class Leaderboard:
         it empty (for the final leaderboard)."""
         leaderboard = []
 
-        for index, player in enumerate(players, start=1):
+        for player in players:
             player_data = {
                 "id": player.player_id,
                 "name": player.nickname,
-                "rank": index,
+                "rank": self.get_player_rank(player.player_id),
                 "total": player.total_points,
             }
 

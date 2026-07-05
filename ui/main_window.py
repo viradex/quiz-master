@@ -78,7 +78,11 @@ class MainWindow(QMainWindow):
 
     def setup_theme(self) -> None:
         """Set up application theme. Forces dark mode even if the system is in light mode. Only works in Windows 11."""
-        QApplication.styleHints().setColorScheme(Qt.ColorScheme.Dark)
+        style_hints = QApplication.styleHints()
+
+        # Some platforms don't have style hints
+        if style_hints is not None:
+            style_hints.setColorScheme(Qt.ColorScheme.Dark)
 
     def setup_font(self) -> None:
         """Set up font details. Preloads emojis/glyphs width details so they do not lag the UI when rendering."""

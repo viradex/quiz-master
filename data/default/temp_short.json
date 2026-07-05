@@ -1,0 +1,29 @@
+{
+  "quiz_id": "802942ec",
+  "quiz_title": "[TEMP] Short Quiz",
+  "do_shuffle": true,
+  "is_premade": true,
+  "questions": [
+    {
+      "question_id": "366a3267",
+      "question_text": "Short quiz 2 answers (originally question 1)",
+      "answer_options": ["Answer 1", "Answer 2 (correct)"],
+      "correct_answer_index": 1,
+      "time_limit": 10
+    },
+    {
+      "question_id": "8dd8114a",
+      "question_text": "Short quiz 3 answers (originally question 2)",
+      "answer_options": ["Answer 1", "Answer 2", "Answer 3 (correct)"],
+      "correct_answer_index": 2,
+      "time_limit": 10
+    },
+    {
+      "question_id": "9633d36f",
+      "question_text": "Short quiz 4 answers (originally question 3)",
+      "answer_options": ["Answer 1", "Answer 2", "Answer 3", "Answer 4 (correct)"],
+      "correct_answer_index": 3,
+      "time_limit": 10
+    }
+  ]
+}

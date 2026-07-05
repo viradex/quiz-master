@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
 )
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor
 
 from core.app.screen_ids import Screens
@@ -22,6 +22,8 @@ from utils.color import darken_color
 
 class ServerMultiResultScreen(BaseScreen):
     title_text = "Quiz Master – Results"
+
+    next_question = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -115,7 +117,7 @@ class ServerMultiResultScreen(BaseScreen):
 
         return_btn = QPushButton("Next Question")
         return_btn.setFixedSize(140, 40)
-        return_btn.clicked.connect(lambda: self.go_to(Screens.SERVER_MULTI_QUESTION))
+        return_btn.clicked.connect(self.on_next_question)
         return_btn.setStyleSheet("font-size: 14px;")
 
         btn_footer = QHBoxLayout()
@@ -146,7 +148,7 @@ class ServerMultiResultScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def show_leaderboard_values(self, players: list[tuple[str]]) -> None:
+    def show_leaderboard_values(self, players: list[tuple[str, str, str, str]]) -> None:
         for index, (rank, name, gained, total) in enumerate(players):
             row = self.leaderboard_table.rowCount()
             self.leaderboard_table.insertRow(row)
@@ -183,6 +185,9 @@ class ServerMultiResultScreen(BaseScreen):
     def clear_leaderboard(self) -> None:
         self.leaderboard_table.setRowCount(0)
 
+    def on_next_question(self) -> None:
+        self.next_question.emit()
+
     def on_enter(self, payload: dict) -> None:
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
@@ -198,7 +203,7 @@ class ServerMultiResultScreen(BaseScreen):
 
         correct_answer = payload["answer_options"][payload["correct_answer"]]
 
-        self.left_card.set_accent(darken_color(theme_color, 0.6))
+        self.left_card.set_accent(darken_color(theme_color, factor=0.6))
         self.question_lbl.setText(payload["question_text"])
         self.correct_answer.setText(f"Correct answer: {correct_answer}")
 
@@ -231,5 +236,7 @@ class ServerMultiResultScreen(BaseScreen):
         self.left_card.reset_accent()
         self.question_lbl.setText("")
         self.correct_answer.setText("")
+
+        self.answer_button_grid.reset_buttons()
 
         self.clear_leaderboard()

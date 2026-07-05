@@ -3,7 +3,6 @@ from PyQt6.QtCore import QObject, QTimer, pyqtSignal
 
 from core.game.quiz_manager import QuizManager
 from models.player import Player
-from models.leaderboard import Leaderboard
 from models.quiz import Quiz
 from models.question import Question
 from core.config.constants import COUNTDOWN_TIME
@@ -11,10 +10,10 @@ from core.config.constants import COUNTDOWN_TIME
 
 class GameController(QObject):
     start_countdown = pyqtSignal(dict)
-
     start_question = pyqtSignal(dict)
 
     question_results = pyqtSignal(dict, dict)
+    final_results = pyqtSignal(dict, dict)
 
     def __init__(self) -> None:
         super().__init__()
@@ -53,7 +52,12 @@ class GameController(QObject):
 
     def start_next_question(self) -> None:
         self.current_question_index += 1
-        self.countdown_start()
+        self.quiz_manager.reset_for_question()
+
+        if self.quiz_manager.get_total_questions() == self.current_question_index:
+            self.finish_quiz()
+        else:
+            self.countdown_start()
 
     def countdown_start(self) -> None:
         self.start_countdown.emit({"duration": COUNTDOWN_TIME})
@@ -86,17 +90,17 @@ class GameController(QObject):
 
     def finish_current_question(self) -> None:
         self.question_running = False
-        self.quiz_manager.force_remaining_submissions()
+        self.quiz_manager.finish_question()
 
         global_leaderboard = self.quiz_manager.generate_global_leaderboard(
             include_delta=True
         )
-        global_stats = self.quiz_manager.get_live_global_results(
+        global_stats = self.quiz_manager.get_live_global_stats(
             self.current_question, self.current_question_index + 1
         )
 
         global_data = {**global_stats, "leaderboard": global_leaderboard}
-        individual_data = self.quiz_manager.generate_individual_live_results(
+        individual_data = self.quiz_manager.generate_individual_live_stats(
             self.current_question
         )
 
@@ -121,9 +125,6 @@ class GameController(QObject):
         else:
             points = 0
 
-        print(
-            f"{player_id=} {points=} {answer_index=} {time_taken=} {is_correct=}"
-        )  # TODO temp debug
         self.quiz_manager.submit_answer(
             player_id, points, answer_index, time_taken, is_correct
         )
@@ -145,5 +146,38 @@ class GameController(QObject):
         else:
             return (True, "")
 
+    def finish_quiz(self) -> None:
+        self.quiz_manager.force_remaining_submissions()
+
+        global_leaderboard = self.quiz_manager.generate_global_leaderboard(
+            include_delta=False
+        )
+        global_stats = self.quiz_manager.get_final_global_stats()
+
+        individual_leaderboards = self.quiz_manager.generate_individual_leaderboards(
+            include_delta=False
+        )
+        individual_stats = self.quiz_manager.generate_individual_final_stats()
+
+        global_data = {**global_stats, "leaderboard": global_leaderboard}
+        individual_data = {
+            player_id: {
+                **stats,
+                "leaderboard": individual_leaderboards[player_id],
+            }
+            for player_id, stats in individual_stats.items()
+        }
+
+        self.final_results.emit(global_data, individual_data)
+        self.reset()
+
     def reset(self) -> None:
-        pass
+        self.quiz_manager.reset()
+
+        self.game_running = False
+        self.question_running = False
+
+        self.current_question_index = -1
+        self.current_question = None
+        self.question_start_time = None
+        self.question_deadline = None

@@ -12,7 +12,7 @@ class Quiz:
     quiz_title: str
     questions: list[Question]
     do_shuffle: bool
-    is_default: bool
+    is_premade: bool
 
     def add_question(self, question: Question) -> None:
         """Adds a new question to the quiz."""
@@ -53,8 +53,8 @@ class Quiz:
             `(False, "no_shuffle_info", None)`
                 The shuffle questions info does not exist.
 
-            `(False, "no_default_info", None)`
-                The default quiz info does not exist.
+            `(False, "no_premade_info", None)`
+                The premade quiz info does not exist.
 
             `(False, "id_used", index)`
                 Question ID has been duplicated.
@@ -91,8 +91,8 @@ class Quiz:
         if not isinstance(self.do_shuffle, bool):
             return (False, "no_shuffle_info", None)
 
-        if not isinstance(self.is_default, bool):
-            return (False, "no_default_info", None)
+        if not isinstance(self.is_premade, bool):
+            return (False, "no_premade_info", None)
 
         # Store all IDs that were currently used
         # Set used to increase lookup speed
@@ -129,7 +129,7 @@ class Quiz:
             "quiz_title": self.quiz_title,
             "questions": [q.to_dict() for q in self.questions],
             "do_shuffle": self.do_shuffle,
-            "is_default": self.is_default,
+            "is_premade": self.is_premade,
         }
 
     @staticmethod
@@ -140,5 +140,5 @@ class Quiz:
             quiz_title=data["quiz_title"],
             questions=[Question.from_dict(q) for q in data["questions"]],
             do_shuffle=data["do_shuffle"],
-            is_default=data["is_default"],
+            is_premade=data["is_premade"],
         )
