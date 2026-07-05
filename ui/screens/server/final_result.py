@@ -130,7 +130,7 @@ class ServerFinalResultScreen(BaseScreen):
 
         return_btn = QPushButton("Return to Menu")
         return_btn.setFixedSize(140, 40)
-        return_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        return_btn.clicked.connect(self.on_return)
         return_btn.setStyleSheet("font-size: 14px;")
 
         right_card = Card()
@@ -197,6 +197,10 @@ class ServerFinalResultScreen(BaseScreen):
 
     def clear_leaderboard(self) -> None:
         self.leaderboard_table.setRowCount(0)
+
+    def on_return(self) -> None:
+        self.reset_status()
+        self.go_to(Screens.COMMON_MENU)
 
     def on_enter(self, payload: ServerFinalResultsPayload) -> None:
         average_accuracy = round(payload.average_accuracy * 100)

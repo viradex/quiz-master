@@ -1,6 +1,8 @@
 from dataclasses import dataclass, asdict
 
 
+# Payloads should only be used for data transfer that has multiple data fields.
+# If it's 1-3 fields, it can and should just be a plain old dictionary
 class BasePayload:
     def to_dict(self) -> dict:
         return asdict(self)
@@ -32,7 +34,7 @@ class ClientResultsPayload(BasePayload):
     time_taken: float | None
     total_points: int
     gained_points: int
-    rank: int
+    rank: int | None
     nickname: str
 
 
@@ -45,7 +47,7 @@ class ServerResultsPayload(BasePayload):
     question_text: str
     answer_options: list[str]
     correct_answer: int
-    leaderboard: list[dict]
+    leaderboard: list[dict] | None
 
 
 @dataclass

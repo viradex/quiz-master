@@ -11,9 +11,19 @@ class ClientMultiResultLogic(BaseLogic):
         self.screen: ClientMultiResultScreen = screen
         self.game_client: GameClient = services.client
 
+        self.screen.leave_server.connect(self.on_leave_server)
+
         self.game_client.final_results_data.connect(self.on_final_results_data)
 
+    def on_leave_server(self) -> None:
+        self.game_client.disconnect_client()
+        self.screen.go_to(Screens.COMMON_MENU)
+
+        self.screen.reset_status()
+        self.screen.set_status("Disconnected from server", 2000)
+
     def on_final_results_data(self, data: dict) -> None:
+        self.screen.set_status("Showing final results")
         self.screen.go_to(
             Screens.CLIENT_FINAL_RESULT, ClientFinalResultsPayload.from_dict(data)
         )

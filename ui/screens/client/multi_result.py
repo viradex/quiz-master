@@ -1,17 +1,19 @@
 from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 
-from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, StatCard
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.button import LeaveButton
 from models.payloads import ClientResultsPayload
 from utils.color import darken_color
+from ui.components.dialogs import confirm_warning
 
 
 class ClientMultiResultScreen(BaseScreen):
     title_text = "Quiz Master – Results"
+
+    leave_server = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -67,7 +69,7 @@ class ClientMultiResultScreen(BaseScreen):
         self.rank_stat = StatCard("Leaderboard Rank", "")
 
         leave_btn = LeaveButton("Leave")
-        leave_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        leave_btn.clicked.connect(self.leave_game)
 
         right_card = Card()
         right_layout = QVBoxLayout(right_card)
@@ -97,6 +99,17 @@ class ClientMultiResultScreen(BaseScreen):
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
+
+    def leave_game(self) -> None:
+        """Displays a warning modal box before leaving the game."""
+        confirm = confirm_warning(
+            self,
+            "Confirm Leaving",
+            "Are you sure you want to disconnect and return to menu? You won't be able to reconnect and your progress in the game will be lost.",
+        )
+
+        if confirm:
+            self.leave_server.emit()
 
     def on_enter(self, payload: ClientResultsPayload):
         # Correct: #3DDC84
@@ -142,7 +155,11 @@ class ClientMultiResultScreen(BaseScreen):
             self.time_stat.setHidden(True)
 
         self.points_stat.set_value(str(payload.total_points))
-        self.rank_stat.set_value(f"#{payload.rank}")
+
+        if payload.rank is not None:
+            self.rank_stat.set_value(f"#{payload.rank}")
+        else:
+            self.rank_stat.setHidden(True)
 
     def on_leave(self) -> None:
         self.result_lbl.setText("")
@@ -161,4 +178,6 @@ class ClientMultiResultScreen(BaseScreen):
         self.time_stat.setHidden(False)
 
         self.points_stat.set_value("")
+
         self.rank_stat.set_value("")
+        self.rank_stat.setHidden(False)

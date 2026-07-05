@@ -16,17 +16,22 @@ class ServerMultiResultLogic(BaseLogic):
         self.quiz_repo: QuizRepository = services.quiz_repo
 
         self.screen.next_question.connect(self.on_next_question)
+        self.screen.end_game.connect(self.on_end_game)
 
         self.controller.final_results.connect(self.on_final_results)
 
     def on_next_question(self) -> None:
         self.controller.start_next_question()
 
+    def on_end_game(self) -> None:
+        self.controller.finish_quiz()
+
     def on_final_results(
         self,
         global_data: ServerFinalResultsPayload,
         individual_data: dict[str, ClientFinalResultsPayload],
     ) -> None:
+        self.screen.set_status("Showing final results")
         self.screen.go_to(Screens.SERVER_FINAL_RESULT, global_data)
 
         for player_id, data in individual_data.items():

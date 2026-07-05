@@ -27,11 +27,9 @@ class ServerLobbyLogic(BaseLogic):
 
     def on_player_joined(self, nickname: str) -> None:
         self.screen.add_player_lobby(nickname)
-        self.screen.set_status(f"{nickname} joined the game", 5000)
 
-    def on_player_left(self, nickname: str) -> None:
+    def on_player_left(self, player_id: str, nickname: str) -> None:
         self.screen.remove_player_lobby(nickname)
-        self.screen.set_status(f"{nickname} left the game", 5000)
 
     def on_get_player_info(self, nickname: str) -> None:
         player_id = self.server.registry.get_id_by_nickname(nickname)

@@ -5,7 +5,7 @@ from core.game.quiz_manager import QuizManager
 from models.player import Player
 from models.quiz import Quiz
 from models.question import Question
-from core.config.constants import COUNTDOWN_TIME
+from core.config.constants import MIN_PLAYERS_FOR_START, COUNTDOWN_TIME
 
 
 class GameController(QObject):
@@ -14,6 +14,8 @@ class GameController(QObject):
 
     question_results = pyqtSignal(object, dict)
     final_results = pyqtSignal(object, dict)
+
+    no_players = pyqtSignal()
 
     def __init__(self) -> None:
         super().__init__()
@@ -27,9 +29,13 @@ class GameController(QObject):
         self.question_start_time: float | None = None
         self.question_deadline: float | None = None
 
-        self.setup_question_timer()
+        self.setup_timers()
 
-    def setup_question_timer(self) -> None:
+    def setup_timers(self) -> None:
+        self.countdown_timer = QTimer(self)
+        self.countdown_timer.setSingleShot(True)
+        self.countdown_timer.timeout.connect(self.start_current_question)
+
         self.question_timer = QTimer(self)
         self.question_timer.setSingleShot(True)
         self.question_timer.timeout.connect(self.finish_current_question)
@@ -43,12 +49,18 @@ class GameController(QObject):
     def remove_player(self, player_id: str) -> None:
         self.quiz_manager.remove_player(player_id)
 
+        if len(self.quiz_manager.players) < MIN_PLAYERS_FOR_START and self.game_running:
+            self.reset()
+            self.no_players.emit()
+            return
+
+        if self.question_running and self.quiz_manager.all_players_answered():
+            self.question_timer.stop()
+            self.finish_current_question()
+
     def start_game(self) -> None:
         self.game_running = True
         self.start_next_question()
-
-    def end_game(self) -> None:
-        pass
 
     def start_next_question(self) -> None:
         self.current_question_index += 1
@@ -61,9 +73,12 @@ class GameController(QObject):
 
     def countdown_start(self) -> None:
         self.start_countdown.emit(COUNTDOWN_TIME)
-        QTimer.singleShot(COUNTDOWN_TIME * 1000, self.start_current_question)
+        self.countdown_timer.start(COUNTDOWN_TIME * 1000)
 
     def start_current_question(self) -> None:
+        if not self.game_running:
+            return
+
         self.quiz_manager.prepare_for_question()
 
         self.current_question = self.quiz_manager.get_question(
@@ -83,6 +98,9 @@ class GameController(QObject):
         self.start_question.emit(question_data)
 
     def finish_current_question(self) -> None:
+        if not self.game_running:
+            return
+
         self.question_running = False
         self.quiz_manager.finish_question()
 
@@ -90,7 +108,7 @@ class GameController(QObject):
             self.current_question, self.current_question_index + 1
         )
         individual_data = self.quiz_manager.generate_individual_live_stats(
-            self.current_question
+            self.current_question, self.current_question_index
         )
 
         self.question_results.emit(global_data, individual_data)
@@ -136,16 +154,17 @@ class GameController(QObject):
             return (True, "")
 
     def finish_quiz(self) -> None:
-        self.quiz_manager.force_remaining_submissions()
-
         global_data = self.quiz_manager.get_final_global_stats()
         individual_data = self.quiz_manager.generate_individual_final_stats()
 
-        self.final_results.emit(global_data, individual_data)
         self.reset()
+        self.final_results.emit(global_data, individual_data)
 
     def reset(self) -> None:
         self.quiz_manager.reset()
+
+        self.countdown_timer.stop()
+        self.question_timer.stop()
 
         self.game_running = False
         self.question_running = False

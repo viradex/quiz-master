@@ -26,16 +26,18 @@ class ServerAppController:
 
         self.controller.start_countdown.connect(self.on_start_countdown)
         self.controller.start_question.connect(self.on_start_question)
+        self.controller.no_players.connect(self.on_no_players)
 
     def on_player_joined(self, nickname: str) -> None:
         player_id = self.server.registry.get_id_by_nickname(nickname)
         player = self.server.registry.get(player_id).player
 
         self.controller.add_player(player)
+        self.screen.set_status(f"{nickname} joined the game", 5000)
 
-    def on_player_left(self, nickname: str) -> None:
-        player_id = self.server.registry.get_id_by_nickname(nickname)
+    def on_player_left(self, player_id: str, nickname: str) -> None:
         self.controller.remove_player(player_id)
+        self.screen.set_status(f"{nickname} left the game", 5000)
 
     def on_start_countdown(self, duration: int) -> None:
         self.server.send_countdown_start(duration)
@@ -48,3 +50,15 @@ class ServerAppController:
         self.window.go_to(Screens.SERVER_MULTI_QUESTION, question_info)
 
         self.window.handle_status("In question")
+
+    def on_no_players(self) -> None:
+        self.window.handle_status_reset()
+        self.window.handle_status("Game ended prematurely", 5000)
+
+        self.server.stop("Game over")
+        self.window.show_warning(
+            "Quiz Ended Early",
+            "All players who joined the quiz have left the server, so the game has ended prematurely.",
+        )
+
+        self.window.go_to(Screens.COMMON_MENU)

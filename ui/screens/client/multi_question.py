@@ -2,18 +2,19 @@ from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, pyqtSignal
 
-from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.question_timer import QuestionTimer
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.button import LeaveButton
 from models.payloads import QuestionPayload
+from ui.components.dialogs import confirm_warning
 
 
 class ClientMultiQuestionScreen(BaseScreen):
     title_text = "Quiz Master – Question"
 
     answer_submit = pyqtSignal(int)
+    leave_server = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -50,7 +51,7 @@ class ClientMultiQuestionScreen(BaseScreen):
         vbox_left.addSpacing(20)
 
         leave_btn = LeaveButton("Leave")
-        leave_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        leave_btn.clicked.connect(self.leave_game)
 
         self.question_timer = QuestionTimer()
 
@@ -71,6 +72,17 @@ class ClientMultiQuestionScreen(BaseScreen):
     def on_answer_select(self, index: int) -> None:
         self.answer_submit.emit(index)
         self.question_timer.lock()
+
+    def leave_game(self) -> None:
+        """Displays a warning modal box before leaving the game."""
+        confirm = confirm_warning(
+            self,
+            "Confirm Leaving",
+            "Are you sure you want to disconnect and return to menu? You won't be able to reconnect and your progress in the game will be lost.",
+        )
+
+        if confirm:
+            self.leave_server.emit()
 
     def on_enter(self, payload: QuestionPayload) -> None:
         question_progress = f"{payload.question_num} / {payload.total_questions}"

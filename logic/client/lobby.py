@@ -35,8 +35,8 @@ class ClientLobbyLogic(BaseLogic):
         if player != self.game_client.nickname:
             self.screen.add_player_lobby(player, is_you=False)
 
-    def on_player_left(self, player: str) -> None:
-        self.screen.remove_player_lobby(player)
+    def on_player_left(self, nickname: str) -> None:
+        self.screen.remove_player_lobby(nickname)
 
     def on_leave_server(self) -> None:
         self.game_client.disconnect_client()

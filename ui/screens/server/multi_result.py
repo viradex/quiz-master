@@ -1,10 +1,13 @@
 from PyQt6.QtWidgets import (
     QLabel,
+    QWidget,
+    QFrame,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QHBoxLayout,
+    QStackedLayout,
     QAbstractItemView,
     QHeaderView,
 )
@@ -19,12 +22,14 @@ from ui.components.card import Card
 from ui.components.button import LeaveButton
 from models.payloads import ServerResultsPayload
 from utils.color import darken_color
+from ui.components.dialogs import confirm_warning
 
 
 class ServerMultiResultScreen(BaseScreen):
     title_text = "Quiz Master – Results"
 
     next_question = pyqtSignal()
+    end_game = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -113,17 +118,33 @@ class ServerMultiResultScreen(BaseScreen):
             }
         """)
 
-        end_game_btn = LeaveButton("End Game", btn_width=80)
-        end_game_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        self.leaderboard_blur = QLabel("Leaderboard hidden until final results!")
+        self.leaderboard_blur.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.leaderboard_blur.setStyleSheet("""
+            QLabel {
+                background-color: rgba(255, 255, 255, 0.08);
+                border-radius: 12px;
+                color: #A0A0A0;
+                font-size: 18px;
+                font-weight: 600;
+            }
+        """)
 
-        return_btn = QPushButton("Next Question")
-        return_btn.setFixedSize(140, 40)
-        return_btn.clicked.connect(self.on_next_question)
-        return_btn.setStyleSheet("font-size: 14px;")
+        self.leaderboard_stack = QStackedLayout()
+        self.leaderboard_stack.addWidget(self.leaderboard_table)
+        self.leaderboard_stack.addWidget(self.leaderboard_blur)
+
+        self.end_game_btn = LeaveButton("End Game", btn_width=80)
+        self.end_game_btn.clicked.connect(self.on_end_game)
+
+        self.next_btn = QPushButton("Next Question")
+        self.next_btn.setFixedSize(140, 40)
+        self.next_btn.clicked.connect(self.on_next_question)
+        self.next_btn.setStyleSheet("font-size: 14px;")
 
         btn_footer = QHBoxLayout()
-        btn_footer.addWidget(end_game_btn, alignment=Qt.AlignmentFlag.AlignLeft)
-        btn_footer.addWidget(return_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        btn_footer.addWidget(self.end_game_btn, alignment=Qt.AlignmentFlag.AlignLeft)
+        btn_footer.addWidget(self.next_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         right_card = Card()
         right_layout = QVBoxLayout(right_card)
@@ -131,7 +152,7 @@ class ServerMultiResultScreen(BaseScreen):
 
         right_layout.addWidget(leaderboard_heading)
         right_layout.addSpacing(15)
-        right_layout.addWidget(self.leaderboard_table, stretch=3)
+        right_layout.addLayout(self.leaderboard_stack, stretch=3)
         right_layout.addSpacing(20)
         right_layout.addLayout(btn_footer)
         right_layout.addStretch(1)
@@ -148,6 +169,12 @@ class ServerMultiResultScreen(BaseScreen):
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
+
+    def set_leaderboard_hidden(self, hidden: bool) -> None:
+        if hidden:
+            self.leaderboard_stack.setCurrentWidget(self.leaderboard_blur)
+        else:
+            self.leaderboard_stack.setCurrentWidget(self.leaderboard_table)
 
     def show_leaderboard_values(self, players: list[tuple[str, str, str, str]]) -> None:
         for index, (rank, name, gained, total) in enumerate(players):
@@ -189,6 +216,17 @@ class ServerMultiResultScreen(BaseScreen):
     def on_next_question(self) -> None:
         self.next_question.emit()
 
+    def on_end_game(self) -> None:
+        """Displays a warning modal box before closing the server."""
+        confirm = confirm_warning(
+            self,
+            "Confirm Ending Quiz",
+            "Are you sure you want to skip all questions? The next questions won't be shown and the game will go directly to final results.",
+        )
+
+        if confirm:
+            self.end_game.emit()
+
     def on_enter(self, payload: ServerResultsPayload) -> None:
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
@@ -217,18 +255,25 @@ class ServerMultiResultScreen(BaseScreen):
             payload.correct_answer, payload.correct_answer
         )
 
-        leaderboard_players = []
-        for player in payload.leaderboard:
-            leaderboard_players.append(
-                (
-                    f"#{player['rank']}",
-                    player["name"],
-                    f"+{player['gained']}",
-                    str(player["total"]),
+        if payload.leaderboard is not None:
+            leaderboard_players = []
+            for player in payload.leaderboard:
+                leaderboard_players.append(
+                    (
+                        f"#{player['rank']}",
+                        player["name"],
+                        f"+{player['gained']}",
+                        str(player["total"]),
+                    )
                 )
-            )
 
-        self.show_leaderboard_values(leaderboard_players)
+            self.show_leaderboard_values(leaderboard_players)
+        else:
+            self.set_leaderboard_hidden(True)
+
+        if payload.question_num == payload.total_questions:
+            self.next_btn.setText("Final Results")
+            self.end_game_btn.setDisabled(True)
 
     def on_leave(self) -> None:
         self.heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
@@ -240,4 +285,8 @@ class ServerMultiResultScreen(BaseScreen):
 
         self.answer_button_grid.reset_buttons()
 
+        self.set_leaderboard_hidden(False)
         self.clear_leaderboard()
+
+        self.next_btn.setText("Next Question")
+        self.end_game_btn.setDisabled(False)

@@ -20,7 +20,7 @@ class GameServer(QObject):
     started = pyqtSignal()
 
     player_joined = pyqtSignal(str)
-    player_left = pyqtSignal(str)
+    player_left = pyqtSignal(str, str)
 
     answer_submitted = pyqtSignal(str, int, float)
 
@@ -63,7 +63,7 @@ class GameServer(QObject):
         """Starts the server and accepts clients."""
         threading.Thread(target=self._start_and_listen, daemon=True).start()
 
-    def stop(self) -> None:
+    def stop(self, reason: str = "Server closed") -> None:
         """Stops the server clearnly, notifying and disconnecting all clients."""
         if self.server_socket is None:
             raise ValueError("Server cannot be stopped without active socket")
@@ -76,7 +76,7 @@ class GameServer(QObject):
                 session.client.send(
                     {
                         "type": ServerMessageType.KICK,
-                        "data": {"reason": "Server closed"},
+                        "data": {"reason": reason},
                     }
                 )
 
@@ -87,6 +87,8 @@ class GameServer(QObject):
                 pass
 
         self.is_running = False
+        self.game_started = False
+
         self.server_socket.close()
         self.server_socket = None
 
@@ -123,7 +125,7 @@ class GameServer(QObject):
         self.started.emit()
 
         # Start global watchdog and accept clients
-        self.start_client_watchdog()
+        threading.Thread(target=self._client_watchdog_loop, daemon=True).start()
         self.accept_clients()
 
     def accept_clients(self) -> None:
@@ -138,12 +140,11 @@ class GameServer(QObject):
                 target=self.handle_client, args=(client, addr), daemon=True
             ).start()
 
-    def start_client_watchdog(self) -> None:
-        """Starts watchdog (disconnects client if no response from them is detected)."""
-        threading.Thread(target=self._client_watchdog_loop, daemon=True).start()
-
     def _client_watchdog_loop(self) -> None:
-        """Checks last response time from clients. If a client exceeds response timeout, disconnects them."""
+        """
+        Starts watchdog (disconnects client if no response from them is detected).
+        Checks last response time from clients. If a client exceeds response timeout, disconnects them.
+        """
         while self.is_running:
             time.sleep(1)
 
@@ -178,8 +179,8 @@ class GameServer(QObject):
         if session is None:
             return
 
+        self.player_left.emit(session.player.player_id, session.player.nickname)
         self.registry.remove(player_id)
-        self.player_left.emit(session.player.nickname)
 
         # Inform all clients other than the one that left
         self.broadcast(

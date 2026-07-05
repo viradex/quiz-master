@@ -19,22 +19,28 @@ class LeaveButton(QPushButton):
         self.setFixedWidth(self.btn_width)
 
         self.setObjectName("leave")
-        self.setStyleSheet(f"""
-            QPushButton#leave {{
+        self.setStyleSheet("""
+            QPushButton#leave {
                 background-color: transparent;
                 color: #bbb;
                 border: 1px solid #444;
                 border-radius: 8px;
                 padding: 6px;
                 font-size: 12px;
-            }}
+            }
 
-            QPushButton#leave:hover {{
+            QPushButton#leave:hover {
                 background-color: #333;
                 color: white;
-            }}
+            }
 
-            QPushButton#leave:pressed {{
+            QPushButton#leave:pressed {
                 background-color: #222;
-            }}
+            }
+                           
+            QPushButton#leave:disabled {
+                background-color: transparent;
+                color: #666;
+                border: 1px solid #2f2f2f;
+            }
         """)

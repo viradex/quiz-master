@@ -22,6 +22,7 @@ class ServerMultiQuestionLogic(BaseLogic):
         self.controller.question_results.connect(self.on_question_results)
 
     def on_question_skipped(self) -> None:
+        self.screen.set_status("Skipped question", 5000)
         self.controller.skip_question()
 
     def on_answer_submitted(
@@ -51,6 +52,7 @@ class ServerMultiQuestionLogic(BaseLogic):
         global_data: ServerResultsPayload,
         individual_data: dict[str, ClientResultsPayload],
     ) -> None:
+        self.screen.set_status("Showing results")
         self.screen.go_to(Screens.SERVER_MULTI_RESULT, global_data)
 
         for player_id, data in individual_data.items():
