@@ -53,7 +53,7 @@ class CommonLoadingScreen(BaseScreen):
         self.loading_lbl.setText(loading)
         self.status_lbl.setText(status)
 
-    def on_enter(self, payload: dict | None = None) -> None:
+    def on_enter(self, payload=None) -> None:
         self.spinner.start()
 
         if payload:

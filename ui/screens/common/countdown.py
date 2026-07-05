@@ -61,7 +61,7 @@ class CommonCountdownScreen(BaseScreen):
         if remaining <= 0:
             self.timer.stop()
 
-    def on_enter(self, payload: dict | None = None):
+    def on_enter(self, payload=None):
         duration = payload["duration"]
 
         self.total_ms = duration
@@ -72,5 +72,5 @@ class CommonCountdownScreen(BaseScreen):
 
         self.timer.start()
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.timer.stop()

@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
 
         return self.screen_widgets[screen]
 
-    def go_to(self, screen: Screens, payload: dict | None = None) -> None:
+    def go_to(self, screen: Screens, payload=None) -> None:
         # Call lifecycle functions if screen is shown
         if self.current_screen is not None:
             self.current_screen.on_leave()

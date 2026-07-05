@@ -298,7 +298,7 @@ class ServerLobbyScreen(BaseScreen):
     def on_start_game(self) -> None:
         self.start_game.emit(self.quiz_combo.currentText())
 
-    def on_enter(self, payload: dict | None = None) -> None:
+    def on_enter(self, payload=None) -> None:
         self.spinner.start()
 
     def on_leave(self) -> None:

@@ -4,6 +4,7 @@ from core.services.game_server import GameServer
 from core.app.screen_ids import Screens
 from core.game.game_controller import GameController
 from data.quiz_repo import QuizRepository
+from models.payloads import ClientResultsPayload, ServerResultsPayload
 
 
 class ServerMultiQuestionLogic(BaseLogic):
@@ -45,8 +46,12 @@ class ServerMultiQuestionLogic(BaseLogic):
         nickname = self.server.registry.get(player_id).player.nickname
         self.screen.set_status(f"{nickname} submitted an answer", 2000)
 
-    def on_question_results(self, global_data: dict, individual_data: dict) -> None:
+    def on_question_results(
+        self,
+        global_data: ServerResultsPayload,
+        individual_data: dict[str, ClientResultsPayload],
+    ) -> None:
         self.screen.go_to(Screens.SERVER_MULTI_RESULT, global_data)
 
         for player_id, data in individual_data.items():
-            self.server.send_question_results(player_id, data)
+            self.server.send_question_results(player_id, data.to_dict())

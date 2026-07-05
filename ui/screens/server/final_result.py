@@ -17,6 +17,7 @@ from PyQt6.QtGui import QFont, QColor
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, StatCard
+from models.payloads import ServerFinalResultsPayload
 from utils.color import darken_color
 
 
@@ -197,8 +198,8 @@ class ServerFinalResultScreen(BaseScreen):
     def clear_leaderboard(self) -> None:
         self.leaderboard_table.setRowCount(0)
 
-    def on_enter(self, payload: dict) -> None:
-        average_accuracy = round(payload["average_accuracy"] * 100)
+    def on_enter(self, payload: ServerFinalResultsPayload) -> None:
+        average_accuracy = round(payload.average_accuracy * 100)
 
         message_choices = [
             "{player} takes 1st place!",
@@ -208,18 +209,18 @@ class ServerFinalResultScreen(BaseScreen):
             "{player} tops the leaderboard!",
         ]
 
-        winner_text = random.choice(message_choices).format(player=payload["winner"])
+        winner_text = random.choice(message_choices).format(player=payload.winner)
         self.winner.setText(winner_text)
 
-        self.winner_stat.set_value(payload["winner"])
-        self.highest_points_stat.set_value(str(payload["highest_points"]))
-        self.fastest_answer_stat.set_value(f"{payload['fastest_answer']:.2f}s")
+        self.winner_stat.set_value(payload.winner)
+        self.highest_points_stat.set_value(str(payload.highest_points))
+        self.fastest_answer_stat.set_value(f"{payload.fastest_answer:.2f}s")
         self.average_accuracy_stat.set_value(f"{average_accuracy}%")
-        self.players_stat.set_value(str(payload["total_players"]))
-        self.questions_stat.set_value(str(payload["total_questions"]))
+        self.players_stat.set_value(str(payload.total_players))
+        self.questions_stat.set_value(str(payload.total_questions))
 
         leaderboard_players = []
-        for player in payload["leaderboard"]:
+        for player in payload.leaderboard:
             leaderboard_players.append(
                 (
                     f"#{player['rank']}",
@@ -230,7 +231,7 @@ class ServerFinalResultScreen(BaseScreen):
 
         self.show_leaderboard_values(leaderboard_players)
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.winner_stat.set_value("")
         self.highest_points_stat.set_value("")
         self.fastest_answer_stat.set_value("")

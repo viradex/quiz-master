@@ -17,6 +17,8 @@ from PyQt6.QtGui import QFont
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, StatCard
+from models.payloads import ClientFinalResultsPayload
+
 from utils.color import darken_color
 from utils.formatting import to_ordinal
 from utils.feedback_generator import feedback_generator
@@ -216,16 +218,16 @@ class ClientFinalResultScreen(BaseScreen):
     def clear_leaderboard(self) -> None:
         self.leaderboard_table.setRowCount(0)
 
-    def on_enter(self, payload: dict) -> None:
+    def on_enter(self, payload: ClientFinalResultsPayload) -> None:
         # Gold: #F5C542
         # Silver: #C9CED6
         # Bronze: #CD7F32
         # Purple: #8A5CFF
-        if payload["rank"] == 1:
+        if payload.rank == 1:
             theme_color = "#F5C542"
-        elif payload["rank"] == 2:
+        elif payload.rank == 2:
             theme_color = "#C9CED6"
-        elif payload["rank"] == 3:
+        elif payload.rank == 3:
             theme_color = "#CD7F32"
         else:
             theme_color = "#8A5CFF"
@@ -238,41 +240,41 @@ class ClientFinalResultScreen(BaseScreen):
             "Great participation!",
         ]
 
-        accuracy = round(payload["accuracy"] * 100)
+        accuracy = round(payload.accuracy * 100)
 
-        self.ordinal_position.setText(f"{to_ordinal(payload['rank'])} Place!")
-        if payload["on_podium"]:
+        self.ordinal_position.setText(f"{to_ordinal(payload.rank)} Place!")
+        if payload.on_podium:
             self.ordinal_position.setStyleSheet(
                 f"font-size: 42px; font-weight: 600; color: {theme_color};"
             )
 
-        if payload["on_podium"]:
+        if payload.on_podium:
             self.position_feedback.setText("You finished on the podium!")
         else:
             self.position_feedback.setText(random.choice(message_choices))
 
         self.left_card.set_accent(darken_color(theme_color, factor=0.6))
-        self.nickname.setText(f"Nickname: {payload['nickname']}")
+        self.nickname.setText(f"Nickname: {payload.nickname}")
 
-        self.rank_stat.set_value(f"#{payload['rank']}")
-        self.points_stat.set_value(f"{payload['total_points']}")
+        self.rank_stat.set_value(f"#{payload.rank}")
+        self.points_stat.set_value(f"{payload.total_points}")
         self.correct_stat.set_value(
-            f"{payload['total_correct']} / {payload['total_questions']}"
+            f"{payload.total_correct} / {payload.total_questions}"
         )
         self.accuracy_stat.set_value(f"{accuracy}%")
 
         self.feedback.setText(
             feedback_generator(
-                payload["on_podium"],
-                payload["is_first"],
-                payload["is_last"],
-                payload["behind_nickname"],
-                payload["points_behind"],
+                payload.on_podium,
+                payload.is_first,
+                payload.is_last,
+                payload.behind_nickname,
+                payload.points_behind,
             )
         )
 
         leaderboard_players = []
-        for player in payload["leaderboard"]:
+        for player in payload.leaderboard:
             leaderboard_players.append(
                 (
                     f"#{player['rank']}",
@@ -281,9 +283,9 @@ class ClientFinalResultScreen(BaseScreen):
                 )
             )
 
-        self.show_leaderboard_values(leaderboard_players, payload["nickname"])
+        self.show_leaderboard_values(leaderboard_players, payload.nickname)
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.ordinal_position.setText("")
         self.ordinal_position.setStyleSheet("font-size: 42px;" "font-weight: 600;")
 

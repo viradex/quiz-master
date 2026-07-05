@@ -7,6 +7,7 @@ from ui.screens.base_screen import BaseScreen
 from ui.components.question_timer import QuestionTimer
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.button import LeaveButton
+from models.payloads import QuestionPayload
 
 
 class ClientMultiQuestionScreen(BaseScreen):
@@ -71,15 +72,15 @@ class ClientMultiQuestionScreen(BaseScreen):
         self.answer_submit.emit(index)
         self.question_timer.lock()
 
-    def on_enter(self, payload: dict | None = None) -> None:
-        question_progress = f"{payload['question_num']} / {payload['total_questions']}"
+    def on_enter(self, payload: QuestionPayload) -> None:
+        question_progress = f"{payload.question_num} / {payload.total_questions}"
         self.set_title(f"Quiz Master – Question {question_progress}")
 
         self.question_num.setText(f"Question {question_progress}")
-        self.question_lbl.setText(payload["question_text"])
+        self.question_lbl.setText(payload.question_text)
 
-        self.answer_button_grid.set_answers(payload["answer_options"])
-        self.question_timer.set_duration(payload["time_limit"] * 1000)
+        self.answer_button_grid.set_answers(payload.answer_options)
+        self.question_timer.set_duration(payload.time_limit * 1000)
 
         self.question_timer.start()
 

@@ -167,7 +167,7 @@ class ClientLobbyScreen(BaseScreen):
         if confirm:
             self.leave_server.emit()
 
-    def on_enter(self, payload: dict | None = None) -> None:
+    def on_enter(self, payload=None) -> None:
         self.spinner.start()
 
     def on_leave(self) -> None:

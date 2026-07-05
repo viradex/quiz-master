@@ -27,7 +27,7 @@ class GameClient(QObject):
     player_joined = pyqtSignal(str)
     player_left = pyqtSignal(str)
 
-    countdown_started = pyqtSignal(dict)
+    countdown_started = pyqtSignal(int)
     question_data = pyqtSignal(dict)
     results_data = pyqtSignal(dict)
     final_results_data = pyqtSignal(dict)
@@ -261,7 +261,8 @@ class GameClient(QObject):
         self.player_left.emit(nickname)
 
     def handle_countdown_started(self, msg: dict) -> None:
-        self.countdown_started.emit(msg["data"])
+        duration = msg["data"]["duration"]
+        self.countdown_started.emit(duration)
 
     def handle_question_data(self, msg: dict) -> None:
         self.question_data.emit(msg["data"])

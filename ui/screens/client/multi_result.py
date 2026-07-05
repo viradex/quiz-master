@@ -6,6 +6,7 @@ from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, StatCard
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.button import LeaveButton
+from models.payloads import ClientResultsPayload
 from utils.color import darken_color
 
 
@@ -97,20 +98,20 @@ class ClientMultiResultScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def on_enter(self, payload: dict):
+    def on_enter(self, payload: ClientResultsPayload):
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
-        theme_color = "#3DDC84" if payload["is_correct"] else "#FF5C5C"
+        theme_color = "#3DDC84" if payload.is_correct else "#FF5C5C"
 
-        if payload["selected_answer"] is not None:
-            selected_answer = payload["answer_options"][payload["selected_answer"]]
+        if payload.selected_answer is not None:
+            selected_answer = payload.answer_options[payload.selected_answer]
         else:
             selected_answer = "No answer"
 
-        correct_answer = payload["answer_options"][payload["correct_answer"]]
+        correct_answer = payload.answer_options[payload.correct_answer]
 
         self.result_lbl.setText(
-            f"{'Correct!' if payload['is_correct'] else 'Incorrect!'} +{payload['gained_points']}"
+            f"{'Correct!' if payload.is_correct else 'Incorrect!'} +{payload.gained_points}"
         )
         self.result_lbl.setStyleSheet(
             f"font-size: 42px; font-weight: 600; color: {theme_color};"
@@ -119,31 +120,31 @@ class ClientMultiResultScreen(BaseScreen):
         self.your_answer.setText(f"Your answer: {selected_answer}")
 
         self.left_card.set_accent(darken_color(theme_color, factor=0.6))
-        self.question_lbl.setText(payload["question_text"])
+        self.question_lbl.setText(payload.question_text)
         self.correct_answer.setText(f"Correct answer: {correct_answer}")
 
         # If no selected answer due to running out of time, mimic a correct answer by only showing tick
         selected_answer_index = (
-            payload["selected_answer"]
-            if payload["selected_answer"] is not None
-            else payload["correct_answer"]
+            payload.selected_answer
+            if payload.selected_answer is not None
+            else payload.correct_answer
         )
-        self.answer_button_grid.set_answers(payload["answer_options"])
+        self.answer_button_grid.set_answers(payload.answer_options)
         self.answer_button_grid.set_result(
-            payload["correct_answer"], selected_answer_index
+            payload.correct_answer, selected_answer_index
         )
 
-        self.nickname.setText(f"Nickname: {payload['nickname']}")
+        self.nickname.setText(f"Nickname: {payload.nickname}")
 
-        if payload["time_taken"] is not None:
-            self.time_stat.set_value(f"{payload['time_taken']:.2f}s")
+        if payload.time_taken is not None:
+            self.time_stat.set_value(f"{payload.time_taken:.2f}s")
         else:
             self.time_stat.setHidden(True)
 
-        self.points_stat.set_value(str(payload["total_points"]))
-        self.rank_stat.set_value(f"#{payload['rank']}")
+        self.points_stat.set_value(str(payload.total_points))
+        self.rank_stat.set_value(f"#{payload.rank}")
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.result_lbl.setText("")
         self.result_lbl.setStyleSheet("font-size: 42px;" "font-weight: 600;")
 

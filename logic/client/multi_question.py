@@ -2,6 +2,7 @@ from ui.screens.client.multi_question import ClientMultiQuestionScreen
 from logic.base_logic import BaseLogic
 from core.services.app_context import GameClient
 from core.app.screen_ids import Screens
+from models.payloads import ClientResultsPayload
 
 
 class ClientMultiQuestionLogic(BaseLogic):
@@ -19,5 +20,6 @@ class ClientMultiQuestionLogic(BaseLogic):
         self.screen.set_status("Answer submitted")
 
     def on_results_data(self, data: dict) -> None:
-        results_data = {**data, "nickname": self.game_client.nickname}
-        self.screen.go_to(Screens.CLIENT_MULTI_RESULT, results_data)
+        self.screen.go_to(
+            Screens.CLIENT_MULTI_RESULT, ClientResultsPayload.from_dict(data)
+        )

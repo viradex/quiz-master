@@ -17,6 +17,7 @@ from ui.components.answer_bar_chart import AnswerBarChart
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.card import Card
 from ui.components.button import LeaveButton
+from models.payloads import ServerResultsPayload
 from utils.color import darken_color
 
 
@@ -188,36 +189,36 @@ class ServerMultiResultScreen(BaseScreen):
     def on_next_question(self) -> None:
         self.next_question.emit()
 
-    def on_enter(self, payload: dict) -> None:
+    def on_enter(self, payload: ServerResultsPayload) -> None:
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
-        accuracy = round(payload["accuracy"] * 100)
+        accuracy = round(payload.accuracy * 100)
         theme_color = "#3DDC84" if accuracy >= 50 else "#FF5C5C"
 
         self.heading.setStyleSheet(
             f"font-size: 36px; font-weight: 600; color: {theme_color};"
         )
         self.accuracy.setText(
-            f"Question {payload['question_num']} / {payload['total_questions']} • {accuracy}% answered correctly"
+            f"Question {payload.question_num} / {payload.total_questions} • {accuracy}% answered correctly"
         )
 
-        correct_answer = payload["answer_options"][payload["correct_answer"]]
+        correct_answer = payload.answer_options[payload.correct_answer]
 
         self.left_card.set_accent(darken_color(theme_color, factor=0.6))
-        self.question_lbl.setText(payload["question_text"])
+        self.question_lbl.setText(payload.question_text)
         self.correct_answer.setText(f"Correct answer: {correct_answer}")
 
         self.answer_bar_chart.set_values(
-            payload["answer_frequency"], payload["correct_answer"]
+            payload.answer_frequency, payload.correct_answer
         )
 
-        self.answer_button_grid.set_answers(payload["answer_options"])
+        self.answer_button_grid.set_answers(payload.answer_options)
         self.answer_button_grid.set_result(
-            payload["correct_answer"], payload["correct_answer"]
+            payload.correct_answer, payload.correct_answer
         )
 
         leaderboard_players = []
-        for player in payload["leaderboard"]:
+        for player in payload.leaderboard:
             leaderboard_players.append(
                 (
                     f"#{player['rank']}",
@@ -229,7 +230,7 @@ class ServerMultiResultScreen(BaseScreen):
 
         self.show_leaderboard_values(leaderboard_players)
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
         self.accuracy.setText("")
 

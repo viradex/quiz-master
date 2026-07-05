@@ -4,6 +4,13 @@ from models.player import Player
 from models.leaderboard import Leaderboard
 from models.quiz import Quiz
 from models.question import Question
+from models.payloads import (
+    QuestionPayload,
+    ClientResultsPayload,
+    ClientFinalResultsPayload,
+    ServerResultsPayload,
+    ServerFinalResultsPayload,
+)
 
 
 class QuizManager:
@@ -54,6 +61,8 @@ class QuizManager:
 
     def finish_question(self) -> None:
         self.force_remaining_submissions()
+        self.leaderboard.sort_players()
+
         self.all_accuracies.append(self.calculate_global_question_accuracy())
 
     def force_remaining_submissions(self) -> None:
@@ -111,7 +120,25 @@ class QuizManager:
 
         return answers_frequency
 
-    def get_live_global_stats(self, question: Question, question_num: int) -> dict:
+    def get_question_data(
+        self, question: Question, question_num: int
+    ) -> QuestionPayload:
+        total_questions = self.get_total_questions()
+        question_text = question.question_text
+        answer_options = question.answer_options
+        time_limit = question.time_limit
+
+        return QuestionPayload(
+            question_num=question_num,
+            total_questions=total_questions,
+            question_text=question_text,
+            answer_options=answer_options,
+            time_limit=time_limit,
+        )
+
+    def get_live_global_stats(
+        self, question: Question, question_num: int
+    ) -> ServerResultsPayload:
         total_questions = self.get_total_questions()
 
         accuracy = self.calculate_global_question_accuracy()
@@ -121,17 +148,30 @@ class QuizManager:
         answer_options = question.answer_options
         correct_answer = question.correct_answer_index
 
-        return {
-            "question_num": question_num,
-            "total_questions": total_questions,
-            "accuracy": accuracy,
-            "answer_frequency": answer_frequency,
-            "question_text": question_text,
-            "answer_options": answer_options,
-            "correct_answer": correct_answer,
-        }
+        leaderboard = self.leaderboard.get_global_leaderboard(include_delta=True)
 
-    def get_final_global_stats(self) -> dict:
+        # return {
+        #     "question_num": question_num,
+        #     "total_questions": total_questions,
+        #     "accuracy": accuracy,
+        #     "answer_frequency": answer_frequency,
+        #     "question_text": question_text,
+        #     "answer_options": answer_options,
+        #     "correct_answer": correct_answer,
+        # }
+
+        return ServerResultsPayload(
+            question_num=question_num,
+            total_questions=total_questions,
+            accuracy=accuracy,
+            answer_frequency=answer_frequency,
+            question_text=question_text,
+            answer_options=answer_options,
+            correct_answer=correct_answer,
+            leaderboard=leaderboard,
+        )
+
+    def get_final_global_stats(self) -> ServerFinalResultsPayload:
         winner = self.leaderboard.sorted_players[0].nickname
         highest_points = self.leaderboard.sorted_players[0].total_points
 
@@ -145,17 +185,32 @@ class QuizManager:
         total_players = len(self.players)
         total_questions = self.get_total_questions()
 
-        return {
-            "winner": winner,
-            "highest_points": highest_points,
-            "fastest_answer": fastest_answer,
-            "average_accuracy": average_accuracy,
-            "total_players": total_players,
-            "total_questions": total_questions,
-        }
+        leaderboard = self.leaderboard.get_global_leaderboard()
 
-    def get_live_player_stats(self, player_id: str, question: Question) -> dict:
+        # return {
+        #     "winner": winner,
+        #     "highest_points": highest_points,
+        #     "fastest_answer": fastest_answer,
+        #     "average_accuracy": average_accuracy,
+        #     "total_players": total_players,
+        #     "total_questions": total_questions,
+        # }
+
+        return ServerFinalResultsPayload(
+            winner=winner,
+            highest_points=highest_points,
+            fastest_answer=fastest_answer,
+            average_accuracy=average_accuracy,
+            total_players=total_players,
+            total_questions=total_questions,
+            leaderboard=leaderboard,
+        )
+
+    def get_live_player_stats(
+        self, player_id: str, question: Question
+    ) -> ClientResultsPayload:
         player = self.players[player_id]
+        nickname = player.nickname
 
         question_text = question.question_text
         answer_options = question.answer_options
@@ -169,20 +224,34 @@ class QuizManager:
         gained_points = player.question_points
         rank = self.leaderboard.get_player_rank(player_id)
 
-        return {
-            "question_text": question_text,
-            "answer_options": answer_options,
-            "correct_answer": correct_answer,
-            "selected_answer": selected_answer,
-            "is_correct": is_correct,
-            "time_taken": time_taken,
-            "total_points": total_points,
-            "gained_points": gained_points,
-            "rank": rank,
-        }
+        # return {
+        #     "question_text": question_text,
+        #     "answer_options": answer_options,
+        #     "correct_answer": correct_answer,
+        #     "selected_answer": selected_answer,
+        #     "is_correct": is_correct,
+        #     "time_taken": time_taken,
+        #     "total_points": total_points,
+        #     "gained_points": gained_points,
+        #     "rank": rank,
+        # }
 
-    def get_final_player_stats(self, player_id: str) -> dict:
+        return ClientResultsPayload(
+            question_text=question_text,
+            answer_options=answer_options,
+            correct_answer=correct_answer,
+            selected_answer=selected_answer,
+            is_correct=is_correct,
+            time_taken=time_taken,
+            total_points=total_points,
+            gained_points=gained_points,
+            rank=rank,
+            nickname=nickname,
+        )
+
+    def get_final_player_stats(self, player_id: str) -> ClientFinalResultsPayload:
         player = self.players[player_id]
+        nickname = player.nickname
 
         rank = self.leaderboard.get_player_rank(player_id)
         total_points = player.total_points
@@ -195,43 +264,40 @@ class QuizManager:
         is_last = self.leaderboard.is_last(player_id)
         behind_nickname, points_behind = self.leaderboard.get_points_behind(player_id)
 
-        return {
-            "rank": rank,
-            "total_points": total_points,
-            "total_correct": total_correct,
-            "total_questions": total_questions,
-            "accuracy": accuracy,
-            "on_podium": on_podium,
-            "is_first": is_first,
-            "is_last": is_last,
-            "behind_nickname": behind_nickname,
-            "points_behind": points_behind,
-        }
+        adjacent = self.leaderboard.get_adjacent_players(player_id, radius=1)
+        leaderboard = self.leaderboard.get_leaderboard(adjacent)
 
-    def generate_global_leaderboard(self, include_delta: bool) -> list[dict]:
-        self.leaderboard.sort_players()
+        # return {
+        #     "rank": rank,
+        #     "total_points": total_points,
+        #     "total_correct": total_correct,
+        #     "total_questions": total_questions,
+        #     "accuracy": accuracy,
+        #     "on_podium": on_podium,
+        #     "is_first": is_first,
+        #     "is_last": is_last,
+        #     "behind_nickname": behind_nickname,
+        #     "points_behind": points_behind,
+        # }
 
-        delta = self.leaderboard.get_points_delta() if include_delta else None
-        leaderboard_players = self.leaderboard.get_players()
+        return ClientFinalResultsPayload(
+            rank=rank,
+            total_points=total_points,
+            total_correct=total_correct,
+            total_questions=total_questions,
+            accuracy=accuracy,
+            on_podium=on_podium,
+            is_first=is_first,
+            is_last=is_last,
+            behind_nickname=behind_nickname,
+            points_behind=points_behind,
+            nickname=nickname,
+            leaderboard=leaderboard,
+        )
 
-        return self.leaderboard.get_leaderboard(leaderboard_players, delta)
-
-    def generate_individual_leaderboards(
-        self, include_delta: bool
-    ) -> dict[str, list[dict]]:
-        self.leaderboard.sort_players()
-        delta = self.leaderboard.get_points_delta() if include_delta else None
-
-        individual_leaderboards = {}
-        for player_id in self.players.keys():
-            adjacent = self.leaderboard.get_adjacent_players(player_id, radius=1)
-
-            leaderboard = self.leaderboard.get_leaderboard(adjacent, delta)
-            individual_leaderboards[player_id] = leaderboard
-
-        return individual_leaderboards
-
-    def generate_individual_live_stats(self, question: Question) -> dict[str, dict]:
+    def generate_individual_live_stats(
+        self, question: Question
+    ) -> dict[str, ClientResultsPayload]:
         individual_stats = {}
 
         for player_id in self.players.keys():
@@ -240,7 +306,7 @@ class QuizManager:
 
         return individual_stats
 
-    def generate_individual_final_stats(self) -> dict[str, dict]:
+    def generate_individual_final_stats(self) -> dict[str, ClientFinalResultsPayload]:
         individual_stats = {}
 
         for player_id in self.players.keys():

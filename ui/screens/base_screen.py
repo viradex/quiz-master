@@ -7,7 +7,7 @@ from core.app.screen_ids import Screens
 class BaseScreen(QWidget):
     """Base screen for all screens of the app."""
 
-    navigate = pyqtSignal(Screens, dict)
+    navigate = pyqtSignal(Screens, object)
     title_change = pyqtSignal(str)
     status = pyqtSignal(str, int)
     status_reset = pyqtSignal()
@@ -17,7 +17,7 @@ class BaseScreen(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         super().__init__(parent)
 
-    def go_to(self, screen: Screens, payload: dict | None = None) -> None:
+    def go_to(self, screen: Screens, payload=None) -> None:
         """Navigate to another screen of the app with an optional data payload."""
         if payload is None:
             payload = {}
@@ -50,7 +50,7 @@ class BaseScreen(QWidget):
         """Show an informational modal window. Should preferably only be used by logic."""
         QMessageBox.information(self, title, desc)
 
-    def on_enter(self, payload: dict | None = None) -> None:
+    def on_enter(self, payload=None) -> None:
         pass
 
     def on_leave(self) -> None:

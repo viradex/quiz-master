@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING
-import time
 
 from core.services.app_context import Services
 from core.app.screen_ids import Screens
 from core.services.game_client import GameClient
+from models.payloads import QuestionPayload
 
 if TYPE_CHECKING:
     from ui.main_window import MainWindow
@@ -47,12 +47,12 @@ class ClientAppController:
             f"The server rejected the request because it is not valid in the current state.\n\nReason: {reason}",
         )
 
-    def on_countdown_started(self, countdown_info: dict) -> None:
-        duration = countdown_info["duration"]
-
+    def on_countdown_started(self, duration: int) -> None:
         self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": duration * 1000})
         self.window.handle_status("Counting down...")
 
-    def on_question_data(self, question_info: dict) -> None:
-        self.window.go_to(Screens.CLIENT_MULTI_QUESTION, question_info)
+    def on_question_data(self, data: dict) -> None:
+        self.window.go_to(
+            Screens.CLIENT_MULTI_QUESTION, QuestionPayload.from_dict(data)
+        )
         self.window.handle_status("Waiting for answer")

@@ -207,3 +207,9 @@ class Leaderboard:
             score_changes[player_id] = score_delta
 
         return score_changes
+
+    def get_global_leaderboard(self, include_delta: bool = False) -> list[dict]:
+        players = self.get_players()
+        delta = self.get_points_delta() if include_delta else None
+
+        return self.get_leaderboard(players, delta)

@@ -5,6 +5,7 @@ from core.app.screen_ids import Screens
 from core.services.game_server import GameServer
 from core.game.game_controller import GameController
 from data.quiz_repo import QuizRepository
+from models.payloads import QuestionPayload
 
 if TYPE_CHECKING:
     from ui.main_window import MainWindow
@@ -36,16 +37,14 @@ class ServerAppController:
         player_id = self.server.registry.get_id_by_nickname(nickname)
         self.controller.remove_player(player_id)
 
-    def on_start_countdown(self, countdown_info: dict) -> None:
-        duration = countdown_info["duration"]
-
-        self.server.send_countdown_start(countdown_info)
+    def on_start_countdown(self, duration: int) -> None:
+        self.server.send_countdown_start(duration)
         self.window.go_to(Screens.COMMON_COUNTDOWN, {"duration": duration * 1000})
 
         self.window.handle_status("Counting down...")
 
-    def on_start_question(self, question_info: dict) -> None:
-        self.server.send_question_data(question_info)
+    def on_start_question(self, question_info: QuestionPayload) -> None:
+        self.server.send_question_data(question_info.to_dict())
         self.window.go_to(Screens.SERVER_MULTI_QUESTION, question_info)
 
         self.window.handle_status("In question")

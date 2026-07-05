@@ -335,9 +335,12 @@ class GameServer(QObject):
         received_time = time.monotonic()
         self.answer_submitted.emit(client.player_id, selected_index, received_time)
 
-    def send_countdown_start(self, countdown_info: dict) -> None:
+    def send_countdown_start(self, duration: int) -> None:
         self.broadcast(
-            {"type": ServerMessageType.COUNTDOWN_STARTED, "data": countdown_info}
+            {
+                "type": ServerMessageType.COUNTDOWN_STARTED,
+                "data": {"duration": duration},
+            }
         )
 
     def send_question_data(self, question_info: dict) -> None:
