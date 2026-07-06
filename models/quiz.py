@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import random
 
+from core.app.enums import QuizValidationResult
 from models.question import Question
 
 
@@ -20,8 +21,6 @@ class Quiz:
 
     def remove_question(self, question_id: str) -> None:
         """Removes a question from the quiz, based on the question ID."""
-        # TODO this removes all matching IDs, it shouldn't matter
-        # but maybe make it only remove the first occurrence?
         self.questions = [q for q in self.questions if q.question_id != question_id]
 
     def get_question(self, index: int) -> Question:
@@ -33,10 +32,10 @@ class Quiz:
         return self.questions
 
     def shuffle_questions(self) -> None:
-        """Randomly shuffles and moves questions."""
+        """Randomly shuffles questions."""
         random.shuffle(self.questions)
 
-    def validate_quiz(self) -> tuple[bool, str, int | None]:
+    def validate_quiz(self) -> tuple[bool, QuizValidationResult, int | None]:
         """
         Validates the quiz and its questions.
 
@@ -71,7 +70,7 @@ class Quiz:
             `(False, "invalid_time", index)`
                 The time is not a positive integer.
 
-            `(True, "", None)`
+            `(True, "ok", None)`
                 All validation checks passed.
 
         Returns:
@@ -80,19 +79,19 @@ class Quiz:
 
         # General quiz metadata information validation
         if not self.quiz_id or not isinstance(self.quiz_id, str):
-            return (False, "empty_id", None)
+            return False, QuizValidationResult.EMPTY_ID, None
 
         if not self.quiz_title or not isinstance(self.quiz_title, str):
-            return (False, "empty_title", None)
+            return False, QuizValidationResult.EMPTY_TITLE, None
 
         if not self.questions:
-            return (False, "empty_questions", None)
+            return False, QuizValidationResult.EMPTY_QUESTIONS, None
 
         if not isinstance(self.do_shuffle, bool):
-            return (False, "no_shuffle_info", None)
+            return False, QuizValidationResult.NO_SHUFFLE_INFO, None
 
         if not isinstance(self.is_premade, bool):
-            return (False, "no_premade_info", None)
+            return False, QuizValidationResult.NO_PREMADE_INFO, None
 
         # Store all IDs that were currently used
         # Set used to increase lookup speed
@@ -101,41 +100,35 @@ class Quiz:
         # Individual question validation
         for index, question in enumerate(self.questions):
             if question.question_id in seen_ids:
-                return (False, "id_used", index)
+                return False, QuizValidationResult.ID_USED, index
 
             seen_ids.add(question.question_id)
 
             if not question.question_text.strip():
-                return (False, "empty_question", index)
+                return False, QuizValidationResult.EMPTY_QUESTION, index
 
             if (
                 not isinstance(question.answer_options, list)
                 or not 2 <= len(question.answer_options) <= 4
             ):
-                return (False, "invalid_answers", index)
+                return False, QuizValidationResult.INVALID_ANSWERS, index
 
-            if question.correct_answer_index not in range(len(question.answer_options)):
-                return (False, "invalid_correct_answer", index)
+            if 0 <= question.correct_answer_index < len(question.answer_options):
+                return False, QuizValidationResult.INVALID_CORRECT_ANSWER, index
 
             if question.time_limit <= 0:
-                return (False, "invalid_time", index)
+                return False, QuizValidationResult.INVALID_TIME, index
 
-        return (True, "", None)
+        return True, QuizValidationResult.OK, None
 
     def to_dict(self) -> dict:
         """Convert to a dictionary for serialization."""
-        return {
-            "quiz_id": self.quiz_id,
-            "quiz_title": self.quiz_title,
-            "questions": [q.to_dict() for q in self.questions],
-            "do_shuffle": self.do_shuffle,
-            "is_premade": self.is_premade,
-        }
+        return asdict(self)
 
-    @staticmethod
-    def from_dict(data: dict) -> "Quiz":
+    @classmethod
+    def from_dict(cls, data: dict) -> "Quiz":
         """Convert from a dictionary for deserialization."""
-        return Quiz(
+        return cls(
             quiz_id=data["quiz_id"],
             quiz_title=data["quiz_title"],
             questions=[Question.from_dict(q) for q in data["questions"]],

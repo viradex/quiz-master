@@ -72,7 +72,7 @@ SCREEN_INFO: dict[Screens, tuple[BaseScreen, BaseLogic]] = {
 def create_screen_bundle(
     screen: Screens, services: Services, parent: QWidget | None = None
 ) -> tuple[BaseScreen, BaseLogic]:
-    """Creates a screen bundle, containing a screen and respective logic."""
+    """Creates a screen bundle, containing a screen and its respective logic."""
     try:
         screen_cls, logic_cls = SCREEN_INFO[screen]
 

@@ -12,7 +12,7 @@ INTERVAL = 1000 // FPS
 class CommonCountdownScreen(BaseScreen):
     title_text = "Quiz Master – Starting..."
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.total_ms = None
@@ -25,20 +25,24 @@ class CommonCountdownScreen(BaseScreen):
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        ## FONTS SETUP ##
         loading_font = QFont()
         loading_font.setPointSize(72)
 
+        ## WIDGETS SETUP ##
         self.countdown_lbl = QLabel()
         self.countdown_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.countdown_lbl.setFont(loading_font)
 
+        # Use 10000 rather than 100 for smoother progress bar movement
         self.progress_bar = QProgressBar()
         self.progress_bar.setRange(0, 10000)
         self.progress_bar.setTextVisible(False)
         self.progress_bar.setFixedWidth(200)
         self.progress_bar.setValue(10000)
 
+        ## LAYOUTS SETUP ##
         vbox = QVBoxLayout()
         vbox.addStretch()
         vbox.addWidget(self.countdown_lbl)
@@ -49,12 +53,16 @@ class CommonCountdownScreen(BaseScreen):
         self.setLayout(vbox)
 
     def on_timeout(self):
+        """Decreases the elapsed time and decreases visual timer, and the visual seconds counter if needed.
+        The timer always stops at 1, not 0 (visually)."""
         self.elapsed_ms += INTERVAL
 
+        # Calculate remaining percentage for progress bar
         remaining = max(0, self.total_ms - self.elapsed_ms)
         percent = (remaining / self.total_ms) * 100
         self.progress_bar.setValue(int(percent * 100))
 
+        # Calculate remaining seconds for visual counter
         seconds = math.ceil((self.total_ms - self.elapsed_ms) / 1000)
         self.countdown_lbl.setText(str(max(1, seconds)))
 

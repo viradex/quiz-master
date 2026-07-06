@@ -1,5 +1,8 @@
 import random
 
+# Feedback messages definition, with weighting
+# {nickname} is the name of the player in front
+# {points} is the amount of points the player is behind the player in front
 MESSAGES: dict[str, tuple[list[str], list[int]]] = {
     "first": (
         [
@@ -52,14 +55,6 @@ MESSAGES: dict[str, tuple[list[str], list[int]]] = {
 }
 
 
-def get_random_message(message_type: str, nickname: str, points: str | int) -> str:
-    messages, weights = MESSAGES[message_type]
-
-    return random.choices(messages, weights=weights)[0].format(
-        nickname=nickname, points=points
-    )
-
-
 def feedback_generator(
     is_podium: bool,
     is_first: bool,
@@ -67,19 +62,30 @@ def feedback_generator(
     behind_nickname: str | None,
     behind_points: int | None,
 ) -> str:
+    """Generate a personalized random feedback message based on certain cases."""
     is_close = behind_points is not None and behind_points < 50
 
     if is_first:
-        text = get_random_message("first", behind_nickname, behind_points)
+        text = _get_random_message("first", behind_nickname, behind_points)
     elif is_podium and is_close:
-        text = get_random_message("close_podium", behind_nickname, behind_points)
+        text = _get_random_message("close_podium", behind_nickname, behind_points)
     elif is_podium:
-        text = get_random_message("podium", behind_nickname, behind_points)
+        text = _get_random_message("podium", behind_nickname, behind_points)
     elif is_last:
-        text = get_random_message("last", behind_nickname, behind_points)
+        text = _get_random_message("last", behind_nickname, behind_points)
     elif is_close:
-        text = get_random_message("close_regular", behind_nickname, behind_points)
+        text = _get_random_message("close_regular", behind_nickname, behind_points)
     else:
-        text = get_random_message("regular", behind_nickname, behind_points)
+        text = _get_random_message("regular", behind_nickname, behind_points)
 
     return text
+
+
+def _get_random_message(message_type: str, nickname: str, points: str | int) -> str:
+    """Get a random message from the MESSAGES constant based on the message type, and format it."""
+    messages, weights = MESSAGES[message_type]
+
+    # choices() always returns a list, even if k=1, therefore get first element
+    return random.choices(messages, weights=weights)[0].format(
+        nickname=nickname, points=points
+    )

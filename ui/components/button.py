@@ -1,46 +1,40 @@
 from PyQt6.QtWidgets import QPushButton
 
 
-# TODO this class was only really good for the prototype.
-# Now, it's only really used for the styling. It should either
-# have its extra features removed or be ported to a function.
-class LeaveButton(QPushButton):
-    """Configure a button that is styled to denote leaving the current screen for UI consistency."""
+def create_return_button(
+    btn_text: str, btn_width: int = 60, btn_font_size: int = 12
+) -> QPushButton:
+    """Configure a button that is styled to denote returning or ending the current process for UI consistency."""
+    button = QPushButton()
 
-    def __init__(self, btn_text: str, btn_width: int = 60) -> None:
-        super().__init__()
-        self.btn_text = btn_text
-        self.btn_width = btn_width
+    button.setText(btn_text)
+    button.setFixedWidth(btn_width)
 
-        self.setup_component()
+    button.setObjectName("return")
+    button.setStyleSheet(f"""
+        QPushButton#return {{
+            background-color: transparent;
+            color: #bbb;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 6px;
+            font-size: {btn_font_size}px;
+        }}
 
-    def setup_component(self) -> None:
-        self.setText(self.btn_text)
-        self.setFixedWidth(self.btn_width)
+        QPushButton#return:hover {{
+            background-color: #333;
+            color: white;
+        }}
 
-        self.setObjectName("leave")
-        self.setStyleSheet("""
-            QPushButton#leave {
-                background-color: transparent;
-                color: #bbb;
-                border: 1px solid #444;
-                border-radius: 8px;
-                padding: 6px;
-                font-size: 12px;
-            }
+        QPushButton#return:pressed {{
+            background-color: #222;
+        }}
 
-            QPushButton#leave:hover {
-                background-color: #333;
-                color: white;
-            }
+        QPushButton#return:disabled {{
+            background-color: transparent;
+            color: #666;
+            border: 1px solid #2f2f2f;
+        }}
+    """)
 
-            QPushButton#leave:pressed {
-                background-color: #222;
-            }
-                           
-            QPushButton#leave:disabled {
-                background-color: transparent;
-                color: #666;
-                border: 1px solid #2f2f2f;
-            }
-        """)
+    return button

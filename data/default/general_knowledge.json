@@ -14,9 +14,9 @@
     {
       "question_id": "7b2e4f18",
       "question_text": "Which planet is known as the Red Planet?",
-      "answer_options": ["Venus", "Mars", "Jupiter", "Mercury"],
-      "correct_answer_index": 1,
-      "time_limit": 20
+      "answer_options": ["Mars", "Jupiter", "Venus"],
+      "correct_answer_index": 0,
+      "time_limit": 10
     },
     {
       "question_id": "c84d9a21",
@@ -35,9 +35,9 @@
     {
       "question_id": "d7a42c5f",
       "question_text": "Who painted the Mona Lisa?",
-      "answer_options": ["Vincent van Gogh", "Pablo Picasso", "Leonardo da Vinci", "Michelangelo"],
-      "correct_answer_index": 2,
-      "time_limit": 20
+      "answer_options": ["Leonardo da Vinci", "Vincent van Gogh"],
+      "correct_answer_index": 0,
+      "time_limit": 10
     },
     {
       "question_id": "8e19b6c3",
@@ -55,9 +55,9 @@
     },
     {
       "question_id": "b91e5f34",
-      "question_text": "How many sides does a hexagon have?",
-      "answer_options": ["5", "6", "7", "8"],
-      "correct_answer_index": 1,
+      "question_text": "How many sides does an octagon have?",
+      "answer_options": ["6", "7", "8", "9"],
+      "correct_answer_index": 2,
       "time_limit": 20
     },
     {

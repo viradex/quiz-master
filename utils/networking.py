@@ -21,9 +21,12 @@ def get_ip_address() -> str:
 def get_hostname(ip: str | None = None) -> str:
     """Gets hostname from external IP. If IP is None, retrieves own device hostname."""
     if ip is None:
+        # Return own hostname
         return socket.gethostname()
 
+    # Return IP's hostname
     try:
+        # Perform reverse DNS lookup
         client_host = socket.gethostbyaddr(ip)
         hostname = client_host[0]
     except socket.herror:

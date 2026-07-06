@@ -21,9 +21,9 @@
     {
       "question_id": "c4d8f2a1",
       "question_text": "What is 15 + 27?",
-      "answer_options": ["42", "41", "43", "44"],
+      "answer_options": ["42", "41"],
       "correct_answer_index": 0,
-      "time_limit": 20
+      "time_limit": 10
     },
     {
       "question_id": "d9a1c6f8",
@@ -34,10 +34,10 @@
     },
     {
       "question_id": "e3b7d91a",
-      "question_text": "What is 7^2?",
-      "answer_options": ["14", "49", "56", "42"],
+      "question_text": "What is 8 * 7?",
+      "answer_options": ["54", "56", "64"],
       "correct_answer_index": 1,
-      "time_limit": 20
+      "time_limit": 10
     },
     {
       "question_id": "f2c8a4d9",
@@ -69,9 +69,9 @@
     },
     {
       "question_id": "4c6e9a1b",
-      "question_text": "What is 50% of 200?",
-      "answer_options": ["100", "150", "75", "120"],
-      "correct_answer_index": 0,
+      "question_text": "What is 25% of 200?",
+      "answer_options": ["25", "50", "75", "100"],
+      "correct_answer_index": 1,
       "time_limit": 20
     }
   ]

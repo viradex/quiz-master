@@ -10,11 +10,6 @@ class JSONSocket:
         self.sock = sock
         self.buffer = b""
 
-    def _validate_socket(self) -> None:
-        """Ensures socket is set."""
-        if self.sock is None:
-            raise ValueError("Socket must be set before sending/receiving")
-
     def send(self, data: dict) -> None:
         """Sends a dictionary to the receiving end. The dictionary is serialized before sending."""
         self._validate_socket()
@@ -68,3 +63,8 @@ class JSONSocket:
     def set_socket(self, sock: socket.socket) -> None:
         """Set the socket to be used."""
         self.sock = sock
+
+    def _validate_socket(self) -> None:
+        """Ensures socket is set."""
+        if self.sock is None:
+            raise ValueError("Socket must be set before sending/receiving")

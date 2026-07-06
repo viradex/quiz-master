@@ -10,5 +10,3 @@ class Session:
 
     player: Player
     client: ConnectedClient
-
-    disconnected: bool = False

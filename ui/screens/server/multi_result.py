@@ -1,7 +1,5 @@
 from PyQt6.QtWidgets import (
     QLabel,
-    QWidget,
-    QFrame,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
@@ -14,29 +12,39 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QColor
 
-from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.answer_bar_chart import AnswerBarChart
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.card import Card
-from ui.components.button import LeaveButton
 from models.payloads import ServerResultsPayload
-from utils.color import darken_color
+
 from ui.components.dialogs import confirm_warning
+from ui.components.button import create_return_button
+from utils.color import darken_color
 
 
 class ServerMultiResultScreen(BaseScreen):
     title_text = "Quiz Master – Results"
 
-    next_question = pyqtSignal()
-    end_game = pyqtSignal()
+    next_question_requested = pyqtSignal()
+    end_game_requested = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        ## FONTS SETUP ##
+        table_font = QFont()
+        table_font.setPointSize(12)
+
+        table_bold_font = QFont()
+        table_bold_font.setPointSize(12)
+        table_bold_font.setBold(True)
+
+        ## WIDGETS SETUP ##
+        # Header
         self.heading = QLabel("Question Results")
         self.heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
@@ -45,11 +53,8 @@ class ServerMultiResultScreen(BaseScreen):
         self.accuracy.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.accuracy.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
-        header_layout = QVBoxLayout()
-        header_layout.addWidget(self.heading)
-        header_layout.addSpacing(2)
-        header_layout.addWidget(self.accuracy)
-        header_layout.addSpacing(20)
+        # Left side
+        self.left_card = Card()
 
         self.question_lbl = QLabel()
         self.question_lbl.setWordWrap(True)
@@ -63,26 +68,11 @@ class ServerMultiResultScreen(BaseScreen):
         self.answer_button_grid = AnswerButtonGrid("result")
         self.answer_button_grid.setMaximumHeight(500)
 
-        self.left_card = Card()
-        left_layout = QVBoxLayout(self.left_card)
-        left_layout.setContentsMargins(20, 20, 20, 20)
-
-        left_layout.addWidget(self.question_lbl)
-        left_layout.addSpacing(2)
-        left_layout.addWidget(self.correct_answer)
-        left_layout.addWidget(self.answer_bar_chart, stretch=1)
-        left_layout.addSpacing(15)
-        left_layout.addWidget(self.answer_button_grid, stretch=1)
+        # Right side
+        right_card = Card()
 
         leaderboard_heading = QLabel("Leaderboard")
         leaderboard_heading.setStyleSheet("font-size: 24px;" "font-weight: 600;")
-
-        table_font = QFont()
-        table_font.setPointSize(12)
-
-        table_bold_font = QFont()
-        table_bold_font.setPointSize(12)
-        table_bold_font.setBold(True)
 
         self.leaderboard_table = QTableWidget()
         self.leaderboard_table.setFont(table_font)
@@ -111,7 +101,6 @@ class ServerMultiResultScreen(BaseScreen):
         self.leaderboard_table.setColumnWidth(0, 80)
         self.leaderboard_table.setColumnWidth(2, 80)
         self.leaderboard_table.setColumnWidth(3, 80)
-
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {
                 padding: 6px;
@@ -134,7 +123,7 @@ class ServerMultiResultScreen(BaseScreen):
         self.leaderboard_stack.addWidget(self.leaderboard_table)
         self.leaderboard_stack.addWidget(self.leaderboard_blur)
 
-        self.end_game_btn = LeaveButton("End Game", btn_width=80)
+        self.end_game_btn = create_return_button("End Game", btn_width=80)
         self.end_game_btn.clicked.connect(self.on_end_game)
 
         self.next_btn = QPushButton("Next Question")
@@ -142,20 +131,34 @@ class ServerMultiResultScreen(BaseScreen):
         self.next_btn.clicked.connect(self.on_next_question)
         self.next_btn.setStyleSheet("font-size: 14px;")
 
+        ## LAYOUTS SETUP ##
+        vbox_header = QVBoxLayout()
+        vbox_header.addWidget(self.heading)
+        vbox_header.addSpacing(2)
+        vbox_header.addWidget(self.accuracy)
+        vbox_header.addSpacing(20)
+
+        vbox_left = QVBoxLayout(self.left_card)
+        vbox_left.setContentsMargins(20, 20, 20, 20)
+        vbox_left.addWidget(self.question_lbl)
+        vbox_left.addSpacing(2)
+        vbox_left.addWidget(self.correct_answer)
+        vbox_left.addWidget(self.answer_bar_chart, stretch=1)
+        vbox_left.addSpacing(15)
+        vbox_left.addWidget(self.answer_button_grid, stretch=1)
+
         btn_footer = QHBoxLayout()
         btn_footer.addWidget(self.end_game_btn, alignment=Qt.AlignmentFlag.AlignLeft)
         btn_footer.addWidget(self.next_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
-        right_card = Card()
-        right_layout = QVBoxLayout(right_card)
-        right_layout.setContentsMargins(20, 20, 20, 20)
-
-        right_layout.addWidget(leaderboard_heading)
-        right_layout.addSpacing(15)
-        right_layout.addLayout(self.leaderboard_stack, stretch=3)
-        right_layout.addSpacing(20)
-        right_layout.addLayout(btn_footer)
-        right_layout.addStretch(1)
+        vbox_right = QVBoxLayout(right_card)
+        vbox_right.setContentsMargins(20, 20, 20, 20)
+        vbox_right.addWidget(leaderboard_heading)
+        vbox_right.addSpacing(15)
+        vbox_right.addLayout(self.leaderboard_stack, stretch=3)
+        vbox_right.addSpacing(20)
+        vbox_right.addLayout(btn_footer)
+        vbox_right.addStretch(1)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.left_card, 5)
@@ -164,19 +167,20 @@ class ServerMultiResultScreen(BaseScreen):
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(40, 20, 40, 20)
-
-        vbox.addLayout(header_layout)
+        vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
 
     def set_leaderboard_hidden(self, hidden: bool) -> None:
+        """Whether to show the leaderboard table or the leaderboard blur overlay to hide the table."""
         if hidden:
             self.leaderboard_stack.setCurrentWidget(self.leaderboard_blur)
         else:
             self.leaderboard_stack.setCurrentWidget(self.leaderboard_table)
 
     def show_leaderboard_values(self, players: list[tuple[str, str, str, str]]) -> None:
+        """Show the entries in the leaderboard table, and color ranks accordingly to the podium."""
         for index, (rank, name, gained, total) in enumerate(players):
             row = self.leaderboard_table.rowCount()
             self.leaderboard_table.insertRow(row)
@@ -186,6 +190,7 @@ class ServerMultiResultScreen(BaseScreen):
             gained_item = QTableWidgetItem(gained)
             total_item = QTableWidgetItem(total)
 
+            # Color according to podium
             if index == 0:
                 color = QColor("#F5C542")
             elif index == 1:
@@ -211,10 +216,11 @@ class ServerMultiResultScreen(BaseScreen):
             self.leaderboard_table.setItem(row, 3, total_item)
 
     def clear_leaderboard(self) -> None:
+        """Remove all rows in the leaderboard table."""
         self.leaderboard_table.setRowCount(0)
 
     def on_next_question(self) -> None:
-        self.next_question.emit()
+        self.next_question_requested.emit()
 
     def on_end_game(self) -> None:
         """Displays a warning modal box before closing the server."""
@@ -225,11 +231,13 @@ class ServerMultiResultScreen(BaseScreen):
         )
 
         if confirm:
-            self.end_game.emit()
+            self.end_game_requested.emit()
 
     def on_enter(self, payload: ServerResultsPayload) -> None:
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
+
+        # Convert accuracy to percentage, and change theme color depending on global accuracy
         accuracy = round(payload.accuracy * 100)
         theme_color = "#3DDC84" if accuracy >= 50 else "#FF5C5C"
 
@@ -255,6 +263,7 @@ class ServerMultiResultScreen(BaseScreen):
             payload.correct_answer, payload.correct_answer
         )
 
+        # Show players in leaderboard, if it isn't the last question, else, show overlay
         if payload.leaderboard is not None:
             leaderboard_players = []
             for player in payload.leaderboard:
@@ -271,6 +280,7 @@ class ServerMultiResultScreen(BaseScreen):
         else:
             self.set_leaderboard_hidden(True)
 
+        # If the question is the last question, change button text
         if payload.question_num == payload.total_questions:
             self.next_btn.setText("Final Results")
             self.end_game_btn.setDisabled(True)

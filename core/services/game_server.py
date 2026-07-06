@@ -3,12 +3,13 @@ import threading
 import secrets
 import time
 import errno
-from collections.abc import Callable  # for type checking
+from collections.abc import Callable  # For type checking
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.services.network.connected_client import ConnectedClient
 from core.services.network.player_registry import PlayerRegistry
 from core.services.network.types import ClientMessageType, ServerMessageType
+from core.app.enums import ServerStartingError, AddPlayerResult
 from core.config.constants import PORT, RESPONSE_TIMEOUT
 
 
@@ -16,7 +17,7 @@ class GameServer(QObject):
     """Manages the networking relating to the game server."""
 
     # Define signals for communicating from service to logic
-    start_failed = pyqtSignal(str)
+    start_failed = pyqtSignal(object)
     started = pyqtSignal()
 
     player_joined = pyqtSignal(str)
@@ -28,7 +29,7 @@ class GameServer(QObject):
         """Initialize server attributes and handlers for client messages."""
         super().__init__()
 
-        self.host_ip = "0.0.0.0"  # listens to all network interfaces
+        self.host_ip = "0.0.0.0"  # Listens to all network interfaces
         self.port = PORT
         self.is_running = False
         self.game_started = False
@@ -36,6 +37,7 @@ class GameServer(QObject):
         self.server_socket: socket.socket = None
         self.registry = PlayerRegistry()
 
+        # Handlers for incoming client messages
         self.handlers: dict[
             ClientMessageType, Callable[[ConnectedClient, dict], None]
         ] = {
@@ -61,6 +63,8 @@ class GameServer(QObject):
 
     def start(self) -> None:
         """Starts the server and accepts clients."""
+        # Usually this wouldn't be in it's own function due to only running a thread,
+        # but it provides a cleaner API
         threading.Thread(target=self._start_and_listen, daemon=True).start()
 
     def stop(self, reason: str = "Server closed") -> None:
@@ -68,9 +72,13 @@ class GameServer(QObject):
         if self.server_socket is None:
             raise ValueError("Server cannot be stopped without active socket")
 
+        # Get all sessions and store them in memory, then clear the sessions
         sessions = self.registry.get_all().values()
         self.registry.clear()
 
+        # NOTE You can't use self.broadcast() here since it tries to get the
+        # old sessions which have been cleared. Putting this logic above the registry deletion
+        # code will cause some clients to not be disconnected due to threading
         for session in sessions:
             try:
                 session.client.send(
@@ -100,24 +108,24 @@ class GameServer(QObject):
         except OSError as e:
             if e.errno == errno.EADDRINUSE:
                 # Port in use
-                self.start_failed.emit("in_use")
+                self.start_failed.emit(ServerStartingError.IN_USE)
 
             elif e.errno == errno.EACCES:
-                # Port in use
-                self.start_failed.emit("permission")
+                # Permission denied (e.g. reserved ports)
+                self.start_failed.emit(ServerStartingError.PERMISSION)
 
             elif e.errno == errno.EADDRNOTAVAIL:
-                # Port in use
-                self.start_failed.emit("invalid_ip")
+                # Invalid IP (e.g. non-local IP)
+                self.start_failed.emit(ServerStartingError.INVALID_IP)
 
             elif e.errno == errno.EINVAL:
-                # Port in use
-                self.start_failed.emit("invalid")
+                # Invalid arguments
+                self.start_failed.emit(ServerStartingError.INVALID)
 
             else:
                 # Unknown error
                 print(f"Error starting server: {e}")
-                self.start_failed.emit("unknown")
+                self.start_failed.emit(ServerStartingError.UNKNOWN)
 
             return
 
@@ -128,6 +136,23 @@ class GameServer(QObject):
         threading.Thread(target=self._client_watchdog_loop, daemon=True).start()
         self.accept_clients()
 
+    def _client_watchdog_loop(self) -> None:
+        """
+        Starts watchdog (disconnects client if no response from them is detected).
+        Checks last response time from clients. If a client exceeds response timeout, disconnects them.
+        """
+        while self.is_running:
+            # Prevent constant checking
+            time.sleep(1)
+
+            sessions = self.registry.get_all().values()
+
+            for session in sessions:
+                # If difference between now and last ping time exceeds response timeout, disconnect client
+                if time.monotonic() - session.client.last_seen > RESPONSE_TIMEOUT:
+                    # If the client is somehow still connected, send kick request
+                    self._kick_client(session.client, "Client timeout")
+
     def accept_clients(self) -> None:
         """Accept incoming clients and delegate them to an individual threaded handler."""
         while self.is_running:
@@ -136,24 +161,10 @@ class GameServer(QObject):
             except OSError:
                 break
 
+            # Handle each client concurrently in their own thread
             threading.Thread(
                 target=self.handle_client, args=(client, addr), daemon=True
             ).start()
-
-    def _client_watchdog_loop(self) -> None:
-        """
-        Starts watchdog (disconnects client if no response from them is detected).
-        Checks last response time from clients. If a client exceeds response timeout, disconnects them.
-        """
-        while self.is_running:
-            time.sleep(1)
-
-            sessions = self.registry.get_all().values()
-
-            # If the client is somehow still connected, send kick request
-            for session in sessions:
-                if time.monotonic() - session.client.last_seen > RESPONSE_TIMEOUT:
-                    self._kick_client(session.client, "Client timeout")
 
     def broadcast(self, msg: dict) -> None:
         """Broadcast message to all connected players."""
@@ -168,7 +179,6 @@ class GameServer(QObject):
     def kick_player(self, player_id: str, reason: str) -> None:
         """Kicks a player from the server, and sends a `KICK` message if they are in the registry."""
         session = self.registry.get(player_id)
-
         if session:
             self._kick_client(session.client, reason)
 
@@ -220,7 +230,6 @@ class GameServer(QObject):
 
         # No message type; server cannot delegate it
         if msg_type is None:
-            print(f"'type' key was not present in message, received: {msg}")
             self._fail_and_disconnect(client, "Message type missing")
             return
 
@@ -228,7 +237,7 @@ class GameServer(QObject):
 
         # Message type does not have a respective handler
         if handler is None:
-            print(f"The msg_type {msg_type} did not match any types")
+            print(f"Unknown message type: {msg_type}")
             self._fail_and_disconnect(client, "Unknown message type")
             return
 
@@ -243,15 +252,15 @@ class GameServer(QObject):
         try:
             nickname = msg["data"]["nickname"]
         except KeyError:
-            print(f"Invalid data in message, received: {msg}")
             self._fail_and_disconnect(client, "Missing player nickname")
             return
 
+        # Client sent join request twice
         if self.registry.has_id(client.player_id):
             client.send(
                 {
                     "type": ServerMessageType.INVALID_ACTION,
-                    "data": {"reason": "Cannot join twice"},
+                    "data": {"reason": "Cannot join again"},
                 }
             )
             return
@@ -265,15 +274,15 @@ class GameServer(QObject):
         # Validation checks before adding new player
         # Provided by registry; registry does not add player if any of these conditions are True
         if not success:
-            if reason == "lobby_full":
+            if reason == AddPlayerResult.LOBBY_FULL:
                 self._kick_client(client, "Server is full")
                 return
-            elif reason == "dupe_nickname":
+            elif reason == AddPlayerResult.DUPLICATE_NICKNAME:
                 self._kick_client(
                     client, f'The nickname "{nickname}" is already in use'
                 )
                 return
-            elif reason == "long_nickname":
+            elif reason == AddPlayerResult.LONG_NICKNAME:
                 self._kick_client(client, "The nickname is too long")
                 return
             else:
@@ -318,7 +327,6 @@ class GameServer(QObject):
         try:
             selected_index = msg["data"]["selected_index"]
         except KeyError:
-            print(f"Invalid data in message, received: {msg}")
             self._fail_and_disconnect(client, "Missing answer index")
             return
 
@@ -333,10 +341,12 @@ class GameServer(QObject):
             )
             return
 
+        # Record the time the message was received for points calculations
         received_time = time.monotonic()
         self.answer_submitted.emit(client.player_id, selected_index, received_time)
 
     def send_countdown_start(self, duration: int) -> None:
+        """Sends a `COUNTDOWN_STARTED` message to all clients."""
         self.broadcast(
             {
                 "type": ServerMessageType.COUNTDOWN_STARTED,
@@ -345,17 +355,11 @@ class GameServer(QObject):
         )
 
     def send_question_data(self, question_info: dict) -> None:
+        """Sends a `QUESTION_DATA` message to all clients."""
         self.broadcast({"type": ServerMessageType.QUESTION_DATA, "data": question_info})
 
-    def send_invalid_answer(self, player_id: str, reason: str) -> None:
-        session = self.registry.get(player_id)
-
-        if session:
-            session.client.send(
-                {"type": ServerMessageType.INVALID_ACTION, "data": {"reason": reason}}
-            )
-
     def send_question_results(self, player_id: str, results_data: dict) -> None:
+        """Sends a `RESULTS` message to an individual client."""
         session = self.registry.get(player_id)
 
         if session:
@@ -364,6 +368,7 @@ class GameServer(QObject):
             )
 
     def send_final_results(self, player_id: str, results_data: dict) -> None:
+        """Sends a `FINAL_RESULTS` message to an individual client."""
         session = self.registry.get(player_id)
 
         if session:
@@ -373,6 +378,15 @@ class GameServer(QObject):
 
         self.remove_client(player_id)
         self.game_started = False
+
+    def send_invalid_action(self, player_id: str, reason: str) -> None:
+        """Sends a `INVALID_ACTION` message to certain clients."""
+        session = self.registry.get(player_id)
+
+        if session:
+            session.client.send(
+                {"type": ServerMessageType.INVALID_ACTION, "data": {"reason": reason}}
+            )
 
     def _send_and_disconnect(self, client: ConnectedClient, msg: dict) -> None:
         """Sends a message to a client and disconnects them immediately afterwards."""

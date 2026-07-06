@@ -7,13 +7,14 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QFormLayout,
     QSizePolicy,
-    QMessageBox,
 )
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
+
+from ui.components.button import create_return_button
 from utils.networking import is_valid_ipv4
 from core.config.constants import DEFAULT_IP_ADDRESS, PORT, MAX_NICKNAME_LENGTH
 
@@ -29,14 +30,17 @@ class ClientSetupScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self) -> None:
+        ## FONTS SETUP ##
         title_font = QFont()
         title_font.setPointSize(20)
 
-        title = QLabel("Enter connection details:")
-        title.setFont(title_font)
-
         form_font = QFont()
         form_font.setPointSize(14)
+
+        ## WIDGETS SETUP ##
+        # Connection form
+        title = QLabel("Enter connection details:")
+        title.setFont(title_font)
 
         ip_lbl = QLabel("Server IP:")
         ip_lbl.setFont(form_font)
@@ -61,23 +65,27 @@ class ClientSetupScreen(BaseScreen):
         self.nickname_input.setFont(form_font)
         self.nickname_input.returnPressed.connect(self.on_submit)
 
-        form_layout = QFormLayout()
-        form_layout.setHorizontalSpacing(25)
-
-        form_layout.addRow(ip_lbl, self.ip_input)
-        form_layout.addRow(self.port_lbl)
-        form_layout.addItem(QSpacerItem(0, 10))
-        form_layout.addRow(nickname_lbl, self.nickname_input)
-
-        self.menu_btn = QPushButton("Return to Menu")
-        self.menu_btn.setFixedSize(200, 45)
-        self.menu_btn.setStyleSheet("font-size: 16px;")
+        # Action buttons
+        self.menu_btn = create_return_button(
+            "Return to Menu", btn_width=200, btn_font_size=16
+        )
+        self.menu_btn.setFixedHeight(45)
         self.menu_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         self.join_btn = QPushButton("Join")
         self.join_btn.setFixedSize(240, 50)
         self.join_btn.setStyleSheet("font-size: 22px;")
         self.join_btn.clicked.connect(self.on_submit)
+
+        ## LAYOUTS SETUP ##
+        form_layout = QFormLayout()
+        form_layout.setHorizontalSpacing(25)
+
+        # QFormLayout doesn't support .addSpacing(), hence the QSpacerItem
+        form_layout.addRow(ip_lbl, self.ip_input)
+        form_layout.addRow(self.port_lbl)
+        form_layout.addItem(QSpacerItem(0, 10))
+        form_layout.addRow(nickname_lbl, self.nickname_input)
 
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(self.menu_btn, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -120,22 +128,19 @@ class ClientSetupScreen(BaseScreen):
         nickname = self.nickname_input.text().strip()
 
         if not ip_address or not nickname:
-            QMessageBox.critical(
-                self,
+            self.show_error(
                 "Empty Fields",
                 "Please ensure all fields are filled in and try again.",
             )
             return False
         elif not is_valid_ipv4(ip_address):
-            QMessageBox.critical(
-                self,
+            self.show_error(
                 "Invalid IP Address",
                 "The IP address is not valid. Please ensure it is in the format of X.X.X.X and try again.",
             )
             return False
         elif len(nickname) > MAX_NICKNAME_LENGTH:
-            QMessageBox.critical(
-                self,
+            self.show_error(
                 "Nickname Too Long",
                 f"The nickname exceeds the maximum length of {MAX_NICKNAME_LENGTH} characters. Please shorten it and try again.",
             )

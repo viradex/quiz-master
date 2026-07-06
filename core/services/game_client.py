@@ -2,11 +2,13 @@ import socket
 import threading
 import time
 import errno
-from collections.abc import Callable  # for type checking
+from collections.abc import Callable  # For type checking
 from PyQt6.QtCore import QObject, pyqtSignal
 
+from core.app.enums import ClientConnectionError
 from core.services.network.transport import JSONSocket
 from core.services.network.types import ClientMessageType, ServerMessageType
+
 from utils.networking import is_valid_ipv4
 from core.config.constants import (
     PORT,
@@ -21,20 +23,20 @@ class GameClient(QObject):
     """Manages the networking relating to the game client."""
 
     # Define signals for communicating from service to logic
-    connection_failed = pyqtSignal(str)
     connected = pyqtSignal(list)
+    connection_failed = pyqtSignal(object)
 
     player_joined = pyqtSignal(str)
     player_left = pyqtSignal(str)
 
     countdown_started = pyqtSignal(int)
-    question_data = pyqtSignal(dict)
-    results_data = pyqtSignal(dict)
-    final_results_data = pyqtSignal(dict)
+    question_received = pyqtSignal(dict)
+    results_received = pyqtSignal(dict)
+    final_results_received = pyqtSignal(dict)
 
-    kick = pyqtSignal(str)
-    error = pyqtSignal(str)
-    invalid_action = pyqtSignal(str)
+    kicked = pyqtSignal(str)
+    error_occurred = pyqtSignal(str)
+    invalid_action_occurred = pyqtSignal(str)
 
     def __init__(self) -> None:
         """Initialize client attributes and handlers for server messages."""
@@ -50,6 +52,7 @@ class GameClient(QObject):
         self.nickname: str | None = None
         self.last_ping_time: float | None = None
 
+        # Handlers for incoming server messages
         self.handlers: dict[ServerMessageType, Callable[[dict], None]] = {
             ServerMessageType.PONG: lambda *args: None,
             ServerMessageType.CONNECTION_SUCCESSFUL: self.handle_connection_successful,
@@ -80,9 +83,12 @@ class GameClient(QObject):
 
         self.nickname = nickname
 
-    def get_server_address(self) -> tuple[str, int]:
+    def get_server_address(self) -> tuple[str | None, int | None]:
         """Gets server IP and port that the client is connected to."""
-        return self.client_socket.getpeername()
+        if self.client_socket is not None:
+            return self.client_socket.getpeername()
+        else:
+            return None, None
 
     def connect(self) -> None:
         """Connects to the server set in `server_ip`."""
@@ -103,15 +109,20 @@ class GameClient(QObject):
             pass
 
         self.is_connected = False
+
         self.client_socket.close()
+        self.client_socket = None
 
-    def start_ping_loop(self) -> None:
-        """Starts regular ping heartbeat loop."""
-        threading.Thread(target=self._ping_loop, daemon=True).start()
+    def time_out(self) -> None:
+        """Disconnect the client due to a timeout from the watchdog."""
+        self.is_connected = False
 
-    def start_watchdog(self) -> None:
-        """Starts watchdog (disconnects client if no response from the server is detected)."""
-        threading.Thread(target=self._watchdog_loop, daemon=True).start()
+        try:
+            self.client_socket.close()
+        except OSError:
+            pass
+
+        self.kicked.emit("Connection timed out")
 
     def listen(self) -> None:
         """Listens for messages from the server."""
@@ -147,37 +158,37 @@ class GameClient(QObject):
             self.jsock.set_socket(self.client_socket)
         except ConnectionRefusedError:
             # Server refused connction
-            self.connection_failed.emit("refused")
+            self.connection_failed.emit(ClientConnectionError.CONNECTION_REFUSED)
             return
         except TimeoutError:
             # Could not connect to server within timeout
-            self.connection_failed.emit("timeout")
+            self.connection_failed.emit(ClientConnectionError.TIMEOUT)
             return
         except OSError as e:
             if e.errno in (errno.EHOSTUNREACH, errno.ENETUNREACH):
                 # Server is unreachable
-                self.connection_failed.emit("unreachable")
+                self.connection_failed.emit(ClientConnectionError.UNREACHABLE)
 
             elif e.errno == errno.EADDRNOTAVAIL:
                 # Invalid IP (e.g. 0.0.0.0)
-                self.connection_failed.emit("invalid")
+                self.connection_failed.emit(ClientConnectionError.INVALID)
 
             elif e.errno == errno.ECONNRESET:
                 # Connection closed by server
-                self.connection_failed.emit("reset")
+                self.connection_failed.emit(ClientConnectionError.CONNECTION_RESET)
 
             elif e.errno == errno.ECONNABORTED:
                 # Connection aborted
-                self.connection_failed.emit("aborted")
+                self.connection_failed.emit(ClientConnectionError.CONNECTION_ABORTED)
 
             elif e.errno == errno.EACCES:
                 # Permission denied
-                self.connection_failed.emit("permission")
+                self.connection_failed.emit(ClientConnectionError.PERMISSION)
 
             else:
                 # Unknown error
                 print(f"Error connecting client: {e}")
-                self.connection_failed.emit("unknown")
+                self.connection_failed.emit(ClientConnectionError.UNKNOWN)
 
             return
 
@@ -190,8 +201,8 @@ class GameClient(QObject):
         self.send_join()
         self.last_ping_time = time.monotonic()
 
-        self.start_ping_loop()
-        self.start_watchdog()
+        threading.Thread(target=self._ping_loop, daemon=True).start()
+        threading.Thread(target=self._watchdog_loop, daemon=True).start()
 
     def _ping_loop(self) -> None:
         """Pings the server at a certain interval, to request a `PONG` and inform the server that the client is alive."""
@@ -207,22 +218,13 @@ class GameClient(QObject):
     def _watchdog_loop(self) -> None:
         """Checks last response time from server. If it exceeds response timeout, disconnect server."""
         while self.is_connected:
+            # Prevent constant checking
             time.sleep(1)
 
+            # If difference between now and last ping time exceeds response timeout, disconnect client
             if time.monotonic() - self.last_ping_time > RESPONSE_TIMEOUT:
                 self.time_out()
                 break
-
-    def time_out(self) -> None:
-        """Disconnect the client due to a timeout from the watchdog."""
-        self.is_connected = False
-
-        try:
-            self.client_socket.close()
-        except OSError:
-            pass
-
-        self.kick.emit("Connection timed out")
 
     def handle_message(self, msg: dict) -> None:
         """Handles a message from the server by delegating it to a respective handler."""
@@ -230,17 +232,28 @@ class GameClient(QObject):
 
         # No message type; client cannot delegate it
         if msg_type is None:
-            print(f"'type' key was not present in message, received: {msg}")
+            # TODO maybe different signal for if the client raised the error?
+            self.error_occurred.emit("Protocol violation: missing message type")
+            self.disconnect_client()
             return
 
         handler = self.handlers.get(msg_type)
 
         # Message type does not have a respective handler
         if handler is None:
-            print(f"The msg_type {msg_type} did not match any types")
+            print(f"Unknown message type: {msg_type}")
             return
 
-        handler(msg)
+        try:
+            handler(msg)
+        except KeyError as e:
+            # If the handler tries accessing data that does not exist, assume server sent invalid data
+            # TODO maybe different signal for if the client raised the error?
+            self.error_occurred.emit("Protocol violation: missing fields")
+            self.disconnect_client()
+
+            print(f"Missing field: {e}")
+            return
 
     def handle_connection_successful(self, msg: dict) -> None:
         """Handles the `CONNECTION_SUCCESSFUL` message type. Sets player ID."""
@@ -261,37 +274,41 @@ class GameClient(QObject):
         self.player_left.emit(nickname)
 
     def handle_countdown_started(self, msg: dict) -> None:
+        """Handles the `COUNTDOWN_STARTED` message type."""
         duration = msg["data"]["duration"]
         self.countdown_started.emit(duration)
 
     def handle_question_data(self, msg: dict) -> None:
-        self.question_data.emit(msg["data"])
+        """Handles the `QUESTION_DATA` message type."""
+        self.question_received.emit(msg["data"])
 
     def handle_results(self, msg: dict) -> None:
-        self.results_data.emit(msg["data"])
+        """Handles the `RESULTS` message type."""
+        self.results_received.emit(msg["data"])
 
     def handle_final_results(self, msg: dict) -> None:
-        self.final_results_data.emit(msg["data"])
+        """Handles the `FINAL_RESULTS` message type. Disconnects the client from the server."""
+        self.final_results_received.emit(msg["data"])
         self.disconnect_client()
 
     def handle_kick(self, msg: dict) -> None:
         """Handles the `KICK` message type. Disconnects the client."""
         reason = msg["data"]["reason"]
-        self.kick.emit(reason)
+        self.kicked.emit(reason)
 
         self.disconnect_client()
 
     def handle_error(self, msg: dict) -> None:
         """Handles the `ERROR` message type. Disconnects the client."""
         reason = msg["data"]["reason"]
-        self.error.emit(reason)
+        self.error_occurred.emit(reason)
 
         self.disconnect_client()
 
     def handle_invalid_action(self, msg: dict) -> None:
         """Handles the `INVALID_ACTION` message type."""
         reason = msg["data"]["reason"]
-        self.invalid_action.emit(reason)
+        self.invalid_action_occurred.emit(reason)
 
     def send_join(self) -> None:
         """Sends a `JOIN_LOBBY` message type. Sends nickname to server."""

@@ -1,13 +1,15 @@
-from PyQt6.QtWidgets import QComboBox, QCompleter
+from PyQt6.QtWidgets import QWidget, QComboBox, QCompleter
 from PyQt6.QtCore import Qt
 
 
 class SearchableCombobox(QComboBox):
     """Searchable dropdown menu."""
 
-    def __init__(self, items: list[str] = [], parent=None) -> None:
+    def __init__(
+        self, items: list[str] | None = None, parent: QWidget | None = None
+    ) -> None:
         super().__init__(parent)
-        self.items = items
+        self.items = list(items) if items is not None else []
 
         self.setup_component()
 

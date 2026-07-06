@@ -30,7 +30,7 @@ class BaseScreen(QWidget):
 
     def set_status(self, message: str, timeout: int = 0) -> None:
         """Set status bar message, with optional timeout (in milliseconds).
-        A timeout of 0 is treated as a permanent message and will not change unless reset with `clear_status()`.
+        A timeout of 0 is treated as a permanent message and will not change unless reset with `reset_status()`.
         """
         self.status.emit(message, timeout)
 
@@ -39,15 +39,15 @@ class BaseScreen(QWidget):
         self.status_reset.emit()
 
     def show_error(self, title: str, desc: str) -> None:
-        """Show an error modal window. Should preferably only be used by logic."""
+        """Show an error modal window."""
         QMessageBox.critical(self, title, desc)
 
     def show_warning(self, title: str, desc: str) -> None:
-        """Show a warning modal window. Should preferably only be used by logic."""
+        """Show a warning modal window."""
         QMessageBox.warning(self, title, desc)
 
     def show_info(self, title: str, desc: str) -> None:
-        """Show an informational modal window. Should preferably only be used by logic."""
+        """Show an informational modal window."""
         QMessageBox.information(self, title, desc)
 
     def on_enter(self, payload=None) -> None:

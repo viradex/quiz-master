@@ -1,5 +1,5 @@
-from pathlib import Path
 import random
+from pathlib import Path
 from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
@@ -11,8 +11,8 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
 )
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
@@ -27,12 +27,28 @@ from utils.feedback_generator import feedback_generator
 class ClientFinalResultScreen(BaseScreen):
     title_text = "Quiz Master – Final Results"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
+
+        self.base_dir = Path(__file__).resolve().parent.parent.parent
+        self.icons_path = self.base_dir / "assets" / "icons"
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        ## FONTS SETUP ##
+        feedback_font = QFont()
+        feedback_font.setPointSize(11)
+
+        table_font = QFont()
+        table_font.setPointSize(12)
+
+        self.table_bold_font = QFont()
+        self.table_bold_font.setPointSize(12)
+        self.table_bold_font.setBold(True)
+
+        ## WIDGETS SETUP ##
+        # Header
         self.ordinal_position = QLabel()
         self.ordinal_position.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ordinal_position.setStyleSheet("font-size: 42px;" "font-weight: 600;")
@@ -41,11 +57,8 @@ class ClientFinalResultScreen(BaseScreen):
         self.position_feedback.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.position_feedback.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
-        header_layout = QVBoxLayout()
-        header_layout.addWidget(self.ordinal_position)
-        header_layout.addSpacing(2)
-        header_layout.addWidget(self.position_feedback)
-        header_layout.addSpacing(20)
+        # Left side
+        self.left_card = Card()
 
         stats_heading = QLabel("Your Performance")
         stats_heading.setStyleSheet("font-size: 24px;" "font-weight: 600;")
@@ -53,24 +66,10 @@ class ClientFinalResultScreen(BaseScreen):
         self.nickname = QLabel()
         self.nickname.setStyleSheet("font-size: 16px;" "color: #6E6E6E;")
 
-        base_dir = Path(__file__).resolve().parent.parent.parent
-        icons_path = base_dir / "assets" / "icons"
-
-        self.rank_stat = StatCard("Rank", "", icons_path / "trophy.png")
-        self.points_stat = StatCard("Points", "", icons_path / "star.png")
-        self.correct_stat = StatCard("Correct", "", icons_path / "correct.png")
-        self.accuracy_stat = StatCard("Accuracy", "", icons_path / "bullseye.png")
-
-        stats_grid = QGridLayout()
-        stats_grid.setSpacing(10)
-
-        stats_grid.addWidget(self.rank_stat, 0, 0)
-        stats_grid.addWidget(self.points_stat, 0, 1)
-        stats_grid.addWidget(self.correct_stat, 1, 0)
-        stats_grid.addWidget(self.accuracy_stat, 1, 1)
-
-        feedback_font = QFont()
-        feedback_font.setPointSize(11)
+        self.rank_stat = StatCard("Rank", "", self.icons_path / "trophy.png")
+        self.points_stat = StatCard("Points", "", self.icons_path / "star.png")
+        self.correct_stat = StatCard("Correct", "", self.icons_path / "correct.png")
+        self.accuracy_stat = StatCard("Accuracy", "", self.icons_path / "bullseye.png")
 
         self.feedback = QLabel()
         self.feedback.setWordWrap(True)
@@ -82,27 +81,14 @@ class ClientFinalResultScreen(BaseScreen):
             color: #C8C8C8;
         """)
 
-        self.left_card = Card()
-        left_layout = QVBoxLayout(self.left_card)
-        left_layout.setContentsMargins(20, 20, 20, 20)
-
-        left_layout.addWidget(stats_heading)
-        left_layout.addSpacing(2)
-        left_layout.addWidget(self.nickname)
-        left_layout.addSpacing(15)
-        left_layout.addLayout(stats_grid)
-        left_layout.addSpacing(15)
-        left_layout.addWidget(self.feedback)
-        left_layout.addStretch(1)
+        # Right side
+        right_card = Card()
 
         leaderboard_heading = QLabel("Leaderboard Snapshot")
         leaderboard_heading.setStyleSheet("font-size: 24px;" "font-weight: 600;")
 
         leaderboard_desc = QLabel("Nearby rankings")
         leaderboard_desc.setStyleSheet("font-size: 14px;" "color: #6E6E6E;")
-
-        table_font = QFont()
-        table_font.setPointSize(12)
 
         self.leaderboard_table = QTableWidget()
         self.leaderboard_table.setFont(table_font)
@@ -130,7 +116,6 @@ class ClientFinalResultScreen(BaseScreen):
 
         self.leaderboard_table.setColumnWidth(0, 80)
         self.leaderboard_table.setColumnWidth(2, 80)
-
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {
                 padding: 6px;
@@ -142,18 +127,41 @@ class ClientFinalResultScreen(BaseScreen):
         return_btn.clicked.connect(self.on_return)
         return_btn.setStyleSheet("font-size: 14px;")
 
-        right_card = Card()
-        right_layout = QVBoxLayout(right_card)
-        right_layout.setContentsMargins(20, 20, 20, 20)
+        ## LAYOUTS SETUP ##
+        vbox_header = QVBoxLayout()
+        vbox_header.addWidget(self.ordinal_position)
+        vbox_header.addSpacing(2)
+        vbox_header.addWidget(self.position_feedback)
+        vbox_header.addSpacing(20)
 
-        right_layout.addWidget(leaderboard_heading)
-        right_layout.addSpacing(2)
-        right_layout.addWidget(leaderboard_desc)
-        right_layout.addSpacing(15)
-        right_layout.addWidget(self.leaderboard_table)
-        right_layout.addSpacing(20)
-        right_layout.addWidget(return_btn, alignment=Qt.AlignmentFlag.AlignRight)
-        right_layout.addStretch(1)
+        stats_grid = QGridLayout()
+        stats_grid.setSpacing(10)
+        stats_grid.addWidget(self.rank_stat, 0, 0)
+        stats_grid.addWidget(self.points_stat, 0, 1)
+        stats_grid.addWidget(self.correct_stat, 1, 0)
+        stats_grid.addWidget(self.accuracy_stat, 1, 1)
+
+        vbox_left = QVBoxLayout(self.left_card)
+        vbox_left.setContentsMargins(20, 20, 20, 20)
+        vbox_left.addWidget(stats_heading)
+        vbox_left.addSpacing(2)
+        vbox_left.addWidget(self.nickname)
+        vbox_left.addSpacing(15)
+        vbox_left.addLayout(stats_grid)
+        vbox_left.addSpacing(15)
+        vbox_left.addWidget(self.feedback)
+        vbox_left.addStretch(1)
+
+        vbox_right = QVBoxLayout(right_card)
+        vbox_right.setContentsMargins(20, 20, 20, 20)
+        vbox_right.addWidget(leaderboard_heading)
+        vbox_right.addSpacing(2)
+        vbox_right.addWidget(leaderboard_desc)
+        vbox_right.addSpacing(15)
+        vbox_right.addWidget(self.leaderboard_table)
+        vbox_right.addSpacing(20)
+        vbox_right.addWidget(return_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        vbox_right.addStretch(1)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.left_card, 5)
@@ -162,32 +170,17 @@ class ClientFinalResultScreen(BaseScreen):
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(40, 20, 40, 20)
-
-        vbox.addLayout(header_layout)
+        vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
 
-    def _update_table_height(self):
-        self.leaderboard_table.resizeRowsToContents()
-
-        total = self.leaderboard_table.horizontalHeader().height()
-        total += sum(
-            self.leaderboard_table.rowHeight(i)
-            for i in range(self.leaderboard_table.rowCount())
-        )
-        total += self.leaderboard_table.frameWidth() * 2
-
-        self.leaderboard_table.setFixedHeight(total)
-
     def show_leaderboard_values(
         self, players: list[tuple[str, str, str]], own_nickname: str
     ) -> None:
-        table_bold_font = QFont()
-        table_bold_font.setPointSize(12)
-        table_bold_font.setBold(True)
-
+        """Show the entries in the leaderboard table, and mark the own nickname to stand out."""
         for rank, name, total in players:
+            # If the name matches the nickname
             is_you = name == own_nickname
 
             row = self.leaderboard_table.rowCount()
@@ -204,10 +197,11 @@ class ClientFinalResultScreen(BaseScreen):
             name_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             total_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
+            # Bold row if it matches the nickname
             if is_you:
-                rank_item.setFont(table_bold_font)
-                name_item.setFont(table_bold_font)
-                total_item.setFont(table_bold_font)
+                rank_item.setFont(self.table_bold_font)
+                name_item.setFont(self.table_bold_font)
+                total_item.setFont(self.table_bold_font)
 
             self.leaderboard_table.setItem(row, 0, rank_item)
             self.leaderboard_table.setItem(row, 1, name_item)
@@ -216,6 +210,7 @@ class ClientFinalResultScreen(BaseScreen):
         self._update_table_height()
 
     def clear_leaderboard(self) -> None:
+        """Remove all rows in the leaderboard table."""
         self.leaderboard_table.setRowCount(0)
 
     def on_return(self) -> None:
@@ -244,6 +239,7 @@ class ClientFinalResultScreen(BaseScreen):
             "Great participation!",
         ]
 
+        # Converts from decimal to number 0-100
         accuracy = round(payload.accuracy * 100)
 
         self.ordinal_position.setText(f"{to_ordinal(payload.rank)} Place!")
@@ -252,6 +248,7 @@ class ClientFinalResultScreen(BaseScreen):
                 f"font-size: 42px; font-weight: 600; color: {theme_color};"
             )
 
+        # Show certain message if on podium, else show random message
         if payload.on_podium:
             self.position_feedback.setText("You finished on the podium!")
         else:
@@ -267,6 +264,7 @@ class ClientFinalResultScreen(BaseScreen):
         )
         self.accuracy_stat.set_value(f"{accuracy}%")
 
+        # Set custom feedback based on certain cases as a sentence
         self.feedback.setText(
             feedback_generator(
                 payload.on_podium,
@@ -277,6 +275,7 @@ class ClientFinalResultScreen(BaseScreen):
             )
         )
 
+        # Show players in leaderboard
         leaderboard_players = []
         for player in payload.leaderboard:
             leaderboard_players.append(
@@ -306,3 +305,16 @@ class ClientFinalResultScreen(BaseScreen):
         self.feedback.setText("")
 
         self.clear_leaderboard()
+
+    def _update_table_height(self) -> None:
+        """Update table height based on the number of rows in the leaderboard table."""
+        self.leaderboard_table.resizeRowsToContents()
+
+        total = self.leaderboard_table.horizontalHeader().height()
+        total += sum(
+            self.leaderboard_table.rowHeight(i)
+            for i in range(self.leaderboard_table.rowCount())
+        )
+        total += self.leaderboard_table.frameWidth() * 2
+
+        self.leaderboard_table.setFixedHeight(total)

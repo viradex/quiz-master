@@ -4,23 +4,26 @@ from PyQt6.QtCore import Qt, pyqtSignal
 from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, StatCard
 from ui.components.answer_button_grid import AnswerButtonGrid
-from ui.components.button import LeaveButton
 from models.payloads import ClientResultsPayload
-from utils.color import darken_color
+
+from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning
+from utils.color import darken_color
 
 
 class ClientMultiResultScreen(BaseScreen):
     title_text = "Quiz Master – Results"
 
-    leave_server = pyqtSignal()
+    left_server = pyqtSignal()
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        ## WIDGETS SETUP ##
+        # Header
         self.result_lbl = QLabel()
         self.result_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.result_lbl.setStyleSheet("font-size: 42px;" "font-weight: 600;")
@@ -29,11 +32,8 @@ class ClientMultiResultScreen(BaseScreen):
         self.your_answer.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.your_answer.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
-        header_layout = QVBoxLayout()
-        header_layout.addWidget(self.result_lbl)
-        header_layout.addSpacing(2)
-        header_layout.addWidget(self.your_answer)
-        header_layout.addSpacing(20)
+        # Left side
+        self.left_card = Card()
 
         self.question_lbl = QLabel()
         self.question_lbl.setWordWrap(True)
@@ -45,16 +45,8 @@ class ClientMultiResultScreen(BaseScreen):
         self.answer_button_grid = AnswerButtonGrid("result")
         self.answer_button_grid.setMaximumHeight(500)
 
-        self.left_card = Card()
-        left_layout = QVBoxLayout(self.left_card)
-        left_layout.setContentsMargins(20, 20, 20, 20)
-
-        left_layout.addWidget(self.question_lbl)
-        left_layout.addSpacing(5)
-        left_layout.addWidget(self.correct_answer)
-        left_layout.addSpacing(10)
-        left_layout.addWidget(self.answer_button_grid, 4)
-        left_layout.addStretch(1)
+        # Right side
+        right_card = Card()
 
         stats_heading = QLabel("Your Progress")
         stats_heading.setWordWrap(True)
@@ -68,24 +60,38 @@ class ClientMultiResultScreen(BaseScreen):
         self.points_stat = StatCard("Total Points", "")
         self.rank_stat = StatCard("Leaderboard Rank", "")
 
-        leave_btn = LeaveButton("Leave")
+        leave_btn = create_return_button("Leave")
         leave_btn.clicked.connect(self.leave_game)
 
-        right_card = Card()
-        right_layout = QVBoxLayout(right_card)
-        right_layout.setContentsMargins(20, 20, 20, 20)
+        ## LAYOUTS SETUP ##
+        vbox_header = QVBoxLayout()
+        vbox_header.addWidget(self.result_lbl)
+        vbox_header.addSpacing(2)
+        vbox_header.addWidget(self.your_answer)
+        vbox_header.addSpacing(20)
 
-        right_layout.addWidget(stats_heading)
-        right_layout.addSpacing(2)
-        right_layout.addWidget(self.nickname)
-        right_layout.addSpacing(15)
-        right_layout.addWidget(self.time_stat)
-        right_layout.addSpacing(10)
-        right_layout.addWidget(self.points_stat)
-        right_layout.addSpacing(10)
-        right_layout.addWidget(self.rank_stat)
-        right_layout.addStretch(1)
-        right_layout.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        vbox_left = QVBoxLayout(self.left_card)
+        vbox_left.setContentsMargins(20, 20, 20, 20)
+        vbox_left.addWidget(self.question_lbl)
+        vbox_left.addSpacing(5)
+        vbox_left.addWidget(self.correct_answer)
+        vbox_left.addSpacing(10)
+        vbox_left.addWidget(self.answer_button_grid, 4)
+        vbox_left.addStretch(1)
+
+        vbox_right = QVBoxLayout(right_card)
+        vbox_right.setContentsMargins(20, 20, 20, 20)
+        vbox_right.addWidget(stats_heading)
+        vbox_right.addSpacing(2)
+        vbox_right.addWidget(self.nickname)
+        vbox_right.addSpacing(15)
+        vbox_right.addWidget(self.time_stat)
+        vbox_right.addSpacing(10)
+        vbox_right.addWidget(self.points_stat)
+        vbox_right.addSpacing(10)
+        vbox_right.addWidget(self.rank_stat)
+        vbox_right.addStretch(1)
+        vbox_right.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.left_card, 5)
@@ -94,8 +100,7 @@ class ClientMultiResultScreen(BaseScreen):
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(40, 20, 40, 20)
-
-        vbox.addLayout(header_layout)
+        vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
@@ -109,13 +114,14 @@ class ClientMultiResultScreen(BaseScreen):
         )
 
         if confirm:
-            self.leave_server.emit()
+            self.left_server.emit()
 
     def on_enter(self, payload: ClientResultsPayload):
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
         theme_color = "#3DDC84" if payload.is_correct else "#FF5C5C"
 
+        # If user didn't answer, show specialized text
         if payload.selected_answer is not None:
             selected_answer = payload.answer_options[payload.selected_answer]
         else:
@@ -149,6 +155,7 @@ class ClientMultiResultScreen(BaseScreen):
 
         self.nickname.setText(f"Nickname: {payload.nickname}")
 
+        # If user didn't answer in time, don't show the card
         if payload.time_taken is not None:
             self.time_stat.set_value(f"{payload.time_taken:.2f}s")
         else:
@@ -156,6 +163,7 @@ class ClientMultiResultScreen(BaseScreen):
 
         self.points_stat.set_value(str(payload.total_points))
 
+        # If the question is the final question, don't show the rank
         if payload.rank is not None:
             self.rank_stat.set_value(f"#{payload.rank}")
         else:

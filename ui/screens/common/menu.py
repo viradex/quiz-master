@@ -1,21 +1,13 @@
-from PyQt6.QtWidgets import (
-    QApplication,
-    QLabel,
-    QPushButton,
-    QVBoxLayout,
-    QHBoxLayout,
-    QMessageBox,
-)
+from PyQt6.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
-from ui.components.dialogs import not_implemented
 
 
 class CommonMenuScreen(BaseScreen):
-    start_server = pyqtSignal()
+    started_server = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -23,38 +15,45 @@ class CommonMenuScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self) -> None:
+        ## FONTS SETUP ##
         title_font = QFont()
         title_font.setPointSize(24)
         title_font.setBold(True)
 
+        desc_font = QFont()
+        desc_font.setPointSize(14)
+
+        ## WIDGETS SETUP ##
         title = QLabel("Welcome to Quiz Master!")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setFont(title_font)
-
-        desc_font = QFont()
-        desc_font.setPointSize(14)
 
         desc = QLabel("Select game mode:")
         desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc.setFont(desc_font)
 
-        self.client_btn = self._create_button("Join as Client", (275, 60), "large_btn")
+        self.client_btn = QPushButton("Join as Client")
+        self.client_btn.setFixedSize(275, 60)
+        self.client_btn.setStyleSheet("font-size: 22px;")
         self.client_btn.clicked.connect(lambda: self.go_to(Screens.CLIENT_SETUP))
-        self.server_btn = self._create_button("Start as Server", (275, 60), "large_btn")
-        self.server_btn.clicked.connect(self.on_start_server_clicked)
 
-        self.manage_quizzes_btn = self._create_button(
-            "Manage Quizzes", (275, 45), "medium_btn"
-        )
-        self.manage_quizzes_btn.clicked.connect(lambda: not_implemented(self))
-        self.settings_btn = self._create_button(
-            "Settings / Stats", (275, 45), "medium_btn"
-        )
-        self.settings_btn.clicked.connect(lambda: not_implemented(self))
+        self.server_btn = QPushButton("Start as Server")
+        self.server_btn.setFixedSize(275, 60)
+        self.server_btn.setStyleSheet("font-size: 22px;")
+        self.server_btn.clicked.connect(self.on_start_server)
 
-        self.about_btn = self._create_button("About / Help", (135, 35), "small_btn")
+        self.manage_quizzes_btn = QPushButton("Manage Quizzes")
+        self.manage_quizzes_btn.setFixedSize(275, 45)
+        self.manage_quizzes_btn.setStyleSheet("font-size: 16px;")
+
+        self.about_btn = QPushButton("About / Help")
+        self.about_btn.setFixedSize(135, 35)
+        self.about_btn.setStyleSheet("font-size: 12px;")
         self.about_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_ABOUT))
-        self.exit_btn = self._create_button("Exit", (135, 35), "small_btn")
+
+        self.exit_btn = QPushButton("Exit")
+        self.exit_btn.setFixedSize(135, 35)
+        self.exit_btn.setStyleSheet("font-size: 12px;")
         self.exit_btn.clicked.connect(QApplication.exit)
 
         small_btn_hbox = QHBoxLayout()
@@ -63,22 +62,8 @@ class CommonMenuScreen(BaseScreen):
         small_btn_hbox.addWidget(self.exit_btn)
         small_btn_hbox.addStretch()
 
-        # Applies styling to all buttons with same class
-        self.setStyleSheet("""
-            QPushButton[class="large_btn"] {
-                font-size: 22px;
-            }
-            QPushButton[class="medium_btn"] {
-                font-size: 16px;
-            }
-            QPushButton[class="small_btn"] {
-                font-size: 12px;
-            }
-        """)
-
         vbox = QVBoxLayout()
         vbox.setContentsMargins(40, 40, 40, 40)
-
         vbox.addStretch(1)
         vbox.addWidget(title)
         vbox.addSpacing(10)
@@ -90,22 +75,10 @@ class CommonMenuScreen(BaseScreen):
         vbox.addSpacing(30)
         vbox.addWidget(self.manage_quizzes_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         vbox.addSpacing(5)
-        vbox.addWidget(self.settings_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-        vbox.addSpacing(30)
         vbox.addLayout(small_btn_hbox)
         vbox.addStretch(2)
 
         self.setLayout(vbox)
 
-    def _create_button(
-        self, text: str, size: tuple[int, int], qss_class: str
-    ) -> QPushButton:
-        """Create an individual button with own size, text, and styling."""
-        btn = QPushButton(text)
-        btn.setFixedSize(*size)
-        btn.setProperty("class", qss_class)
-
-        return btn
-
-    def on_start_server_clicked(self) -> None:
-        self.start_server.emit()
+    def on_start_server(self) -> None:
+        self.started_server.emit()

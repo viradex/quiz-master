@@ -1,5 +1,5 @@
-from pathlib import Path
 import random
+from pathlib import Path
 from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
@@ -11,25 +11,35 @@ from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
 )
-from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtCore import Qt
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, StatCard
 from models.payloads import ServerFinalResultsPayload
+
 from utils.color import darken_color
 
 
 class ServerFinalResultScreen(BaseScreen):
     title_text = "Quiz Master – Final Results"
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None) -> None:
         super().__init__(parent)
+
+        self.base_dir = Path(__file__).resolve().parent.parent.parent
+        self.icons_path = self.base_dir / "assets" / "icons"
 
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
+        ## FONTS SETUP ##
+        table_font = QFont()
+        table_font.setPointSize(12)
+
+        ## WIDGETS SETUP ##
+        # Header
         heading = QLabel("Final Results")
         heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
         heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
@@ -38,20 +48,14 @@ class ServerFinalResultScreen(BaseScreen):
         self.winner.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.winner.setStyleSheet("font-size: 20px;" "color: #F5C542;")
 
-        header_layout = QVBoxLayout()
-        header_layout.addWidget(heading)
-        header_layout.addSpacing(2)
-        header_layout.addWidget(self.winner)
-        header_layout.addSpacing(20)
+        # Left side
+        left_card = Card(accent=darken_color("#8A5CFF", factor=0.6))
 
         leaderboard_heading = QLabel("Leaderboard")
         leaderboard_heading.setStyleSheet("font-size: 24px;" "font-weight: 600;")
 
         leaderboard_desc = QLabel("Final standings")
         leaderboard_desc.setStyleSheet("font-size: 14px;" "color: #6E6E6E;")
-
-        table_font = QFont()
-        table_font.setPointSize(12)
 
         self.leaderboard_table = QTableWidget()
         self.leaderboard_table.setFont(table_font)
@@ -76,23 +80,14 @@ class ServerFinalResultScreen(BaseScreen):
 
         self.leaderboard_table.setColumnWidth(0, 80)
         self.leaderboard_table.setColumnWidth(2, 80)
-
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {
                 padding: 6px;
             }
         """)
 
-        left_card = Card(accent=darken_color("#8A5CFF", factor=0.6))
-        left_layout = QVBoxLayout(left_card)
-        left_layout.setContentsMargins(20, 20, 20, 20)
-
-        left_layout.addWidget(leaderboard_heading)
-        left_layout.addSpacing(2)
-        left_layout.addWidget(leaderboard_desc)
-        left_layout.addSpacing(15)
-        left_layout.addWidget(self.leaderboard_table, stretch=5)
-        left_layout.addStretch(1)
+        # Right side
+        right_card = Card()
 
         stats_heading = QLabel("Game Stats")
         stats_heading.setStyleSheet("font-size: 24px;" "font-weight: 600;")
@@ -100,27 +95,44 @@ class ServerFinalResultScreen(BaseScreen):
         stats_desc = QLabel("Overall game stats")
         stats_desc.setStyleSheet("font-size: 14px;" "color: #6E6E6E;")
 
-        base_dir = Path(__file__).resolve().parent.parent.parent
-        icons_path = base_dir / "assets" / "icons"
-
-        self.winner_stat = StatCard("Winner", "", icons_path / "trophy.png")
+        self.winner_stat = StatCard("Winner", "", self.icons_path / "trophy.png")
         self.highest_points_stat = StatCard(
-            "Highest Points", "", icons_path / "star.png"
+            "Highest Points", "", self.icons_path / "star.png"
         )
         self.fastest_answer_stat = StatCard(
-            "Fastest Answer", "", icons_path / "lightning.png"
+            "Fastest Answer", "", self.icons_path / "lightning.png"
         )
         self.average_accuracy_stat = StatCard(
-            "Average Accuracy", "", icons_path / "bullseye.png"
+            "Average Accuracy", "", self.icons_path / "bullseye.png"
         )
-        self.players_stat = StatCard("Total Players", "", icons_path / "users.png")
+        self.players_stat = StatCard("Total Players", "", self.icons_path / "users.png")
         self.questions_stat = StatCard(
-            "Total Questions", "", icons_path / "question.png"
+            "Total Questions", "", self.icons_path / "question.png"
         )
+
+        return_btn = QPushButton("Return to Menu")
+        return_btn.setFixedSize(140, 40)
+        return_btn.setStyleSheet("font-size: 14px;")
+        return_btn.clicked.connect(self.on_return)
+
+        ## LAYOUTS SETUP ##
+        vbox_header = QVBoxLayout()
+        vbox_header.addWidget(heading)
+        vbox_header.addSpacing(2)
+        vbox_header.addWidget(self.winner)
+        vbox_header.addSpacing(20)
+
+        vbox_left = QVBoxLayout(left_card)
+        vbox_left.setContentsMargins(20, 20, 20, 20)
+        vbox_left.addWidget(leaderboard_heading)
+        vbox_left.addSpacing(2)
+        vbox_left.addWidget(leaderboard_desc)
+        vbox_left.addSpacing(15)
+        vbox_left.addWidget(self.leaderboard_table, stretch=5)
+        vbox_left.addStretch(1)
 
         stats_grid = QGridLayout()
         stats_grid.setSpacing(10)
-
         stats_grid.addWidget(self.winner_stat, 0, 0)
         stats_grid.addWidget(self.highest_points_stat, 0, 1)
         stats_grid.addWidget(self.fastest_answer_stat, 1, 0)
@@ -128,23 +140,16 @@ class ServerFinalResultScreen(BaseScreen):
         stats_grid.addWidget(self.players_stat, 2, 0)
         stats_grid.addWidget(self.questions_stat, 2, 1)
 
-        return_btn = QPushButton("Return to Menu")
-        return_btn.setFixedSize(140, 40)
-        return_btn.clicked.connect(self.on_return)
-        return_btn.setStyleSheet("font-size: 14px;")
-
-        right_card = Card()
-        right_layout = QVBoxLayout(right_card)
-        right_layout.setContentsMargins(20, 20, 20, 20)
-
-        right_layout.addWidget(stats_heading)
-        right_layout.addSpacing(2)
-        right_layout.addWidget(stats_desc)
-        right_layout.addSpacing(15)
-        right_layout.addLayout(stats_grid)
-        right_layout.addSpacing(10)
-        right_layout.addWidget(return_btn, alignment=Qt.AlignmentFlag.AlignRight)
-        right_layout.addStretch(1)
+        vbox_right = QVBoxLayout(right_card)
+        vbox_right.setContentsMargins(20, 20, 20, 20)
+        vbox_right.addWidget(stats_heading)
+        vbox_right.addSpacing(2)
+        vbox_right.addWidget(stats_desc)
+        vbox_right.addSpacing(15)
+        vbox_right.addLayout(stats_grid)
+        vbox_right.addSpacing(10)
+        vbox_right.addWidget(return_btn, alignment=Qt.AlignmentFlag.AlignRight)
+        vbox_right.addStretch(1)
 
         hbox = QHBoxLayout()
         hbox.addWidget(left_card, 5)
@@ -153,13 +158,13 @@ class ServerFinalResultScreen(BaseScreen):
 
         vbox = QVBoxLayout()
         vbox.setContentsMargins(40, 20, 40, 20)
-
-        vbox.addLayout(header_layout)
+        vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 
         self.setLayout(vbox)
 
     def show_leaderboard_values(self, players: list[tuple[str, str, str]]) -> None:
+        """Show the entries in the leaderboard table, and color/bold ranks accordingly to the podium."""
         for index, (rank, name, total) in enumerate(players):
             row = self.leaderboard_table.rowCount()
             self.leaderboard_table.insertRow(row)
@@ -168,6 +173,7 @@ class ServerFinalResultScreen(BaseScreen):
             name_item = QTableWidgetItem(name)
             total_item = QTableWidgetItem(total)
 
+            # Color according to podium
             if index == 0:
                 color = QColor("#F5C542")
             elif index == 1:
@@ -181,6 +187,7 @@ class ServerFinalResultScreen(BaseScreen):
             name_item.setForeground(color)
             total_item.setForeground(color)
 
+            # Bold rank rows if they are on the podium
             if index <= 2:
                 for item in (rank_item, name_item, total_item):
                     font = item.font()
@@ -196,6 +203,7 @@ class ServerFinalResultScreen(BaseScreen):
             self.leaderboard_table.setItem(row, 2, total_item)
 
     def clear_leaderboard(self) -> None:
+        """Remove all rows in the leaderboard table."""
         self.leaderboard_table.setRowCount(0)
 
     def on_return(self) -> None:
@@ -203,6 +211,7 @@ class ServerFinalResultScreen(BaseScreen):
         self.go_to(Screens.COMMON_MENU)
 
     def on_enter(self, payload: ServerFinalResultsPayload) -> None:
+        # Converts from decimal to number 0-100
         average_accuracy = round(payload.average_accuracy * 100)
 
         message_choices = [
@@ -223,6 +232,7 @@ class ServerFinalResultScreen(BaseScreen):
         self.players_stat.set_value(str(payload.total_players))
         self.questions_stat.set_value(str(payload.total_questions))
 
+        # Show players in leaderboard
         leaderboard_players = []
         for player in payload.leaderboard:
             leaderboard_players.append(

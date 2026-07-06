@@ -1,36 +1,43 @@
 import threading
 
 from core.services.network.connected_client import ConnectedClient
+from core.app.enums import AddPlayerResult
 from models.player import Player
 from models.session import Session
+
 from core.config.constants import MAX_PLAYERS, MAX_NICKNAME_LENGTH
 
 
 class PlayerRegistry:
     """Stores and manages connected players."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.sessions: dict[str, Session] = {}
         self.max_players = MAX_PLAYERS
 
+        # When doing data manipulation relating to self.sessions,
+        # you must use self.lock to prevent race conditions.
+        # Beware of deadlocks, however!
         self.lock = threading.Lock()
 
-    def add(self, nickname: str, client: ConnectedClient) -> tuple[bool, str]:
+    def add(
+        self, nickname: str, client: ConnectedClient
+    ) -> tuple[bool, AddPlayerResult]:
         """
         Add a client/player to the registry.
 
         Return values:
-            `(True, "")`
-                Player was added successfully.
-
             `(False, "lobby_full")`
                 Registry has reached the maximum player count.
 
-            `(False, "dupe_nickname")`
+            `(False, "duplicate_nickname")`
                 Nickname is already in use.
 
             `(False, "long_nickname")`
                 Nickname exceeds maximum character length.
+
+            `(True, "ok")`
+                Player was added successfully.
 
         Returns:
             Return format is a (success, reason) for values discussed above.
@@ -39,23 +46,24 @@ class PlayerRegistry:
         with self.lock:
             # Lobby full if player was added
             if len(self.sessions) + 1 > self.max_players:
-                return (False, "lobby_full")
+                return False, AddPlayerResult.LOBBY_FULL
 
             if self.has_nickname(nickname):
-                return (False, "dupe_nickname")
+                return False, AddPlayerResult.DUPLICATE_NICKNAME
 
             if len(nickname) > MAX_NICKNAME_LENGTH:
-                return (False, "long_nickname")
+                return False, AddPlayerResult.LONG_NICKNAME
 
-            # Save player
+            # Create player
             player_id = client.player_id
             player = Player(player_id, nickname)
 
+            # Save session
             self.sessions[player_id] = Session(player, client)
-            return (True, "")
+            return True, AddPlayerResult.OK
 
     def remove(self, player_id: str) -> bool:
-        """Remove a client/player from the registry."""
+        """Remove a client/player from the registry. Returns True if the player existed."""
         with self.lock:
             session = self.sessions.pop(player_id, None)
 

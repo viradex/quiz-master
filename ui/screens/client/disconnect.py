@@ -15,10 +15,15 @@ class ClientDisconnectScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self) -> None:
+        ## FONTS SETUP ##
         title_font = QFont()
         title_font.setPointSize(24)
         title_font.setBold(True)
 
+        reason_font = QFont()
+        reason_font.setPointSize(16)
+
+        ## WIDGETS SETUP ##
         title = QLabel("Disconnected")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         title.setFont(title_font)
@@ -26,9 +31,6 @@ class ClientDisconnectScreen(BaseScreen):
         desc = QLabel("You have been disconnected from the server.")
         desc.setAlignment(Qt.AlignmentFlag.AlignCenter)
         desc.setStyleSheet("font-size: 16px;" "color: #6E6E6E;")
-
-        reason_font = QFont()
-        reason_font.setPointSize(16)
 
         self.reason = QLabel("Reason: Unknown")
         self.reason.setWordWrap(True)
@@ -40,6 +42,7 @@ class ClientDisconnectScreen(BaseScreen):
         self.return_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
         self.return_btn.setStyleSheet("font-size: 22px;")
 
+        ## LAYOUTS SETUP ##
         vbox = QVBoxLayout()
         vbox.addStretch(1)
         vbox.addWidget(title)

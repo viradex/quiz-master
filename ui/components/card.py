@@ -26,17 +26,15 @@ class Card(QFrame):
         self.radius: int = radius
         self.accent: QColor | None = self._to_color(accent) if accent else None
 
-        self.setObjectName("card")
+        self.setup_component()
 
-        self._apply_style()
-        self._apply_shadow()
-
-    def _apply_style(self) -> None:
+    def setup_component(self) -> None:
         border_color = "#2A2A2A"
 
         if self.accent:
             border_color = self.accent.name()
 
+        self.setObjectName("card")
         self.setStyleSheet(f"""
             QFrame#card {{
                 background-color: #1E1E1E;
@@ -45,7 +43,6 @@ class Card(QFrame):
             }}
         """)
 
-    def _apply_shadow(self) -> None:
         shadow = QGraphicsDropShadowEffect(self)
         shadow.setBlurRadius(self.blur_radius)
         shadow.setOffset(0, 6)
@@ -62,14 +59,12 @@ class Card(QFrame):
     def set_accent(self, accent) -> None:
         """Set custom accent."""
         self.accent = self._to_color(accent)
-        self._apply_style()
-        self._apply_shadow()
+        self.setup_component()
 
     def reset_accent(self) -> None:
         """Clear custom accent."""
         self.accent = None
-        self._apply_style()
-        self._apply_shadow()
+        self.setup_component()
 
     def _to_color(self, value: QColor | str) -> QColor:
         """Convert a color to a QColor, if it not already one."""
@@ -79,8 +74,7 @@ class Card(QFrame):
 
 
 class StatCard(QFrame):
-    """Creates a statistic card, which is smaller than a normal Card, without a shadow,
-    and less flexible. Only should be used for displaying player stats."""
+    """Creates a statistic card, which is smaller than a normal Card and has a pre-determined layout."""
 
     def __init__(
         self,
@@ -94,11 +88,10 @@ class StatCard(QFrame):
         self.value = value
         self.icon_path = icon_path
 
-        self.setObjectName("statCard")
-
         self.setup_component()
 
     def setup_component(self) -> None:
+        self.setObjectName("statCard")
         self.setStyleSheet("""
             QFrame#statCard {
                 background-color: #2B2B2B;
@@ -106,27 +99,16 @@ class StatCard(QFrame):
             }
         """)
 
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 10, 12, 10)
-        layout.setSpacing(2)
-
-        header_layout = QHBoxLayout()
-        header_layout.setSpacing(6)
-
         # Shows icon if provided
         if self.icon_path is not None:
             self.icon_lbl = QLabel()
             self.set_icon(self.icon_path)
-
-            header_layout.addWidget(self.icon_lbl)
 
         self.title_lbl = QLabel(self.title)
         self.title_lbl.setStyleSheet("""
             font-size: 14px;
             color: #8A8A8A;
         """)
-        header_layout.addWidget(self.title_lbl)
-        header_layout.addStretch()
 
         self.value_lbl = QLabel(self.value)
         self.value_lbl.setStyleSheet("""
@@ -134,19 +116,34 @@ class StatCard(QFrame):
             font-weight: 600;
         """)
 
-        layout.addLayout(header_layout)
-        layout.addSpacing(5)
-        layout.addWidget(self.value_lbl)
+        hbox_header = QHBoxLayout()
+        hbox_header.setSpacing(6)
+
+        if self.icon_path is not None:
+            hbox_header.addWidget(self.icon_lbl)
+
+        hbox_header.addWidget(self.title_lbl)
+        hbox_header.addStretch()
+
+        vbox = QVBoxLayout(self)
+        vbox.setContentsMargins(12, 10, 12, 10)
+        vbox.setSpacing(2)
+        vbox.addLayout(hbox_header)
+        vbox.addSpacing(5)
+        vbox.addWidget(self.value_lbl)
 
     def set_title(self, title: str) -> None:
+        """Set title of stat card."""
         self.title = title
         self.title_lbl.setText(title)
 
     def set_value(self, value: str) -> None:
+        """Set value of stat card."""
         self.value = value
         self.value_lbl.setText(value)
 
     def set_icon(self, icon_path: Path) -> None:
+        """Set icon of stat card. Must be a valid path."""
         self.icon_path = icon_path
         pixmap = QPixmap(self.icon_path.as_posix()).scaled(
             16,

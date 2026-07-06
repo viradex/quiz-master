@@ -11,7 +11,7 @@ INTERVAL = 1000 // FPS
 class QuestionTimer(QWidget):
     """Custom question countdown timer widget, for questions."""
 
-    timeup = pyqtSignal()
+    timer_ended = pyqtSignal()
 
     def __init__(
         self, total_ms: int | None = None, parent: QWidget | None = None
@@ -20,14 +20,16 @@ class QuestionTimer(QWidget):
 
         self.set_duration(total_ms)
 
-        # Initialize properties
-        self.reset()
+        self.elapsed_ms = 0
+        self.locked = False
+        self.current_color = None
 
         self.setup_component()
         self.setup_timer()
 
     def setup_component(self) -> None:
         # Vertical timer progress bar
+        # Set range to 10000 rather than 100 for smoother movement
         self.timer_bar = QProgressBar()
         self.timer_bar.setOrientation(Qt.Orientation.Vertical)
         self.timer_bar.setTextVisible(False)
@@ -62,16 +64,42 @@ class QuestionTimer(QWidget):
         self.timer.timeout.connect(self._on_elapsed)
 
     def set_duration(self, total_ms: int | None) -> None:
+        """Set the duration of the timer in milliseconds. This does not start the timer; you must run `start()`."""
         if total_ms is None:
             self.total_ms = None
-            return
-
-        if total_ms < 0:
+        elif total_ms < 0:
             raise ValueError(
                 f"total_ms must be a number greater than zero (received {total_ms})"
             )
+        else:
+            self.total_ms = total_ms
 
-        self.total_ms = total_ms
+    def start(self) -> None:
+        """Start the timer."""
+        self.elapsed_ms = 0
+        self.locked = False
+        self.current_color = None
+
+        self._update_ui()
+        self.timer.start(INTERVAL)
+
+    def stop(self) -> None:
+        """Stop the timer."""
+        self.timer.stop()
+
+    def lock(self) -> None:
+        """Lock the widget timer. This does not freeze the timer,
+        but freezes the color to always show a darker green color."""
+        self.locked = True
+
+        dim = darken_color("#22c55e", 0.8)
+        self.timer_bar.setStyleSheet(self._style_progress_bar(dim))
+
+    def reset(self) -> None:
+        """Reset all properties of the component."""
+        self.elapsed_ms = 0
+        self.locked = False
+        self.current_color = None
 
     def _style_progress_bar(self, bg: str) -> str:
         """Returns a QSS stylesheet for styling the progress bar."""
@@ -124,33 +152,6 @@ class QuestionTimer(QWidget):
         if self.elapsed_ms >= self.total_ms:
             self.elapsed_ms = self.total_ms
             self.timer.stop()
-            self.timeup.emit()
+            self.timer_ended.emit()
 
         self._update_ui()
-
-    def reset(self) -> None:
-        """Reset all properties of the component."""
-        self.elapsed_ms = 0
-        self.locked = False
-        self.current_color = None
-
-    def lock(self) -> None:
-        """Lock the widget timer. This does not freeze the timer,
-        but freezes the color to always show a darker green color."""
-        self.locked = True
-
-        dim = darken_color("#22c55e", 0.8)
-        self.timer_bar.setStyleSheet(self._style_progress_bar(dim))
-
-    def start(self) -> None:
-        """Start the timer."""
-        self.elapsed_ms = 0
-        self.locked = False
-        self.current_color = None
-
-        self._update_ui()
-        self.timer.start(INTERVAL)
-
-    def stop(self) -> None:
-        """Stop the timer."""
-        self.timer.stop()

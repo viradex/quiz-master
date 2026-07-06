@@ -8,8 +8,8 @@ from utils.color import darken_color
 class AnswerBarChart(QWidget):
     """Used to show a visual bar chart representation of the amount of answers for each answer."""
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
 
         # Define colors for bars
         self.colors: list[str] = [

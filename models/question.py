@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 import secrets
 
 
@@ -40,21 +40,12 @@ class Question:
 
     def to_dict(self) -> dict:
         """Convert to a dictionary for serialization."""
-        return {
-            "question_id": self.question_id,
-            "question_text": self.question_text,
-            "answer_options": self.answer_options,
-            "correct_answer_index": self.correct_answer_index,
-            "time_limit": self.time_limit,
-        }
+        return asdict(self)
 
-    @staticmethod
-    def from_dict(data: dict) -> "Question":
+    @classmethod
+    def from_dict(cls, data: dict) -> "Question":
         """Convert from a dictionary for deserialization."""
-        return Question(
-            question_id=data["question_id"],
-            question_text=data["question_text"],
-            answer_options=data["answer_options"],
-            correct_answer_index=data["correct_answer_index"],
-            time_limit=data["time_limit"],
-        )
+        try:
+            return cls(**data)
+        except TypeError as e:
+            raise ValueError(f"Invalid format: {e}") from e

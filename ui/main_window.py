@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
         QFontMetrics(self.font()).horizontalAdvance("✖")
 
     def setup_ui(self) -> None:
-        """Create MainWindow UI with the stacked widget for showing individual screens, as well as status bar."""
+        """Create MainWindow UI with the stacked widget for showing individual screens, as well as the status bar."""
         self.central = QWidget()
         self.setCentralWidget(self.central)
 
@@ -106,7 +106,7 @@ class MainWindow(QMainWindow):
         self.status_bar.setStyleSheet("border-top: 1px solid #444;" "font-size: 11px;")
         self.status_bar.setSizeGripEnabled(False)
 
-        self.handle_status(self.status_text, 0)
+        self.set_status(self.status_text)
 
     def setup_app_controllers(self) -> None:
         """Set up app controllers (global logic)."""
@@ -114,23 +114,8 @@ class MainWindow(QMainWindow):
         self.server_app_controller = ServerAppController(self, self.services)
         self.common_app_controller = CommonAppController(self, self.services)
 
-    def _build_screen(self, screen: Screens) -> None:
-        """Build an individual screen and its respective logic."""
-        widget, logic = create_screen_bundle(screen, self.services, self)
-
-        self.screen_widgets[screen] = widget
-        self.screen_logic[screen] = logic
-
-        # Add screen to stacked widget
-        self.stack.addWidget(widget)
-
-        widget.navigate.connect(self.go_to)
-        widget.title_change.connect(self.set_title)
-        widget.status.connect(self.handle_status)
-        widget.status_reset.connect(self.handle_status_reset)
-
     def build_screens(self) -> None:
-        """Build all eager screens."""
+        """Initialize screen widgets and logic dictionary and build all eager screens."""
         self.screen_widgets: dict[Screens, BaseScreen] = {}
         self.screen_logic: dict[Screens, BaseLogic] = {}
 
@@ -145,17 +130,20 @@ class MainWindow(QMainWindow):
         return self.screen_widgets[screen]
 
     def go_to(self, screen: Screens, payload=None) -> None:
+        """Navigate to another screen of the app with an optional data payload."""
         # Call lifecycle functions if screen is shown
         if self.current_screen is not None:
             self.current_screen.on_leave()
             self.current_logic.on_leave()
 
+        # Setup screen and logic
         widget = self.get_screen(screen)
         logic = self.screen_logic[screen]
 
         self.stack.setCurrentWidget(widget)
         self.setWindowTitle(widget.title_text)
 
+        # Call lifecycle functions
         widget.on_enter(payload)
         logic.on_enter()
 
@@ -163,28 +151,27 @@ class MainWindow(QMainWindow):
         self.current_logic = logic
 
     def set_title(self, title: str) -> None:
+        """Change the application window title."""
         self.setWindowTitle(title)
 
-    def handle_status(self, message: str, timeout: int = 0) -> None:
-        """Set status bar message. If no message is shown, display default message.
-        A timeout of 0 is treated as a permanent message and will not change unless reset with `clear_status()`.
+    def set_status(self, message: str, timeout: int = 0) -> None:
+        """Set status bar message, with optional timeout (in milliseconds).
+        A timeout of 0 is treated as a permanent message and will not change unless reset with `reset_status()`.
         """
         self.status_bar.showMessage(message, timeout)
 
+        # Permanent status
         if timeout == 0:
             self.status_text = message
 
+        # Temporary status
         if timeout > 0:
             # Calls function once after the delay
             QTimer.singleShot(timeout, self._set_status_after_timeout)
 
-    def handle_status_reset(self) -> None:
-        """Reset status message to the default status message (not the last permanent one)."""
+    def reset_status(self) -> None:
+        """Clear status bar message, resetting it to the default."""
         self.status_text = DEFAULT_STATUS_BAR_MESSAGE
-        self.status_bar.showMessage(self.status_text)
-
-    def _set_status_after_timeout(self) -> None:
-        """Gets the original status after a temporary one concludes."""
         self.status_bar.showMessage(self.status_text)
 
     def show_error(self, title: str, desc: str) -> None:
@@ -198,3 +185,23 @@ class MainWindow(QMainWindow):
     def show_info(self, title: str, desc: str) -> None:
         """Show an informational modal window. Only intended to be used by AppController."""
         QMessageBox.information(self, title, desc)
+
+    def _build_screen(self, screen: Screens) -> None:
+        """Build an individual screen and its respective logic."""
+        widget, logic = create_screen_bundle(screen, self.services, self)
+
+        self.screen_widgets[screen] = widget
+        self.screen_logic[screen] = logic
+
+        # Add screen to stacked widget
+        self.stack.addWidget(widget)
+
+        # Connect signals from the window to this main window
+        widget.navigate.connect(self.go_to)
+        widget.title_change.connect(self.set_title)
+        widget.status.connect(self.set_status)
+        widget.status_reset.connect(self.reset_status)
+
+    def _set_status_after_timeout(self) -> None:
+        """Gets the original status after a temporary one concludes."""
+        self.status_bar.showMessage(self.status_text)

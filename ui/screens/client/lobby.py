@@ -9,17 +9,17 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, pyqtSignal
 
-from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
-from ui.components.button import LeaveButton
+
+from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning
 
 
 class ClientLobbyScreen(BaseScreen):
     title_text = "Quiz Master – Lobby"
 
-    leave_server = pyqtSignal()
+    left_server = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -27,16 +27,24 @@ class ClientLobbyScreen(BaseScreen):
         self.setup_ui()
 
     def setup_ui(self) -> None:
-        ### LEFT SIDE ###
+        ## FONTS SETUP ##
         title_font = QFont()
         title_font.setPointSize(24)
         title_font.setBold(True)
 
-        title = QLabel("Lobby")
-        title.setFont(title_font)
-
         table_font = QFont()
         table_font.setPointSize(12)
+
+        connected_font = QFont()
+        connected_font.setPointSize(8)
+
+        waiting_font = QFont()
+        waiting_font.setPointSize(18)
+
+        ## WIDGETS SETUP ##
+        # Left side
+        title = QLabel("Lobby")
+        title.setFont(title_font)
 
         self.lobby_table = QTableWidget()
         self.lobby_table.setFont(table_font)
@@ -57,12 +65,24 @@ class ClientLobbyScreen(BaseScreen):
             }
         """)
 
-        connected_font = QFont()
-        connected_font.setPointSize(8)
-
         self.connection_details = QLabel("Connected to server")
         self.connection_details.setFont(connected_font)
 
+        # Right side
+        waiting_lbl = QLabel("Waiting for the host to start the game...")
+        waiting_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        waiting_lbl.setFont(waiting_font)
+
+        self.spinner = Spinner(size=60)
+
+        status_lbl = QLabel("Connected to server. Game will begin shortly.")
+        status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        status_lbl.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
+
+        leave_btn = create_return_button("Leave Lobby", btn_width=100)
+        leave_btn.clicked.connect(self.leave_lobby)
+
+        ## LAYOUTS SETUP ##
         vbox_left = QVBoxLayout()
         vbox_left.addWidget(title)
 
@@ -71,23 +91,6 @@ class ClientLobbyScreen(BaseScreen):
         vbox_left.addStretch()
         vbox_left.addSpacing(20)
         vbox_left.addWidget(self.connection_details)
-
-        ### RIGHT SIDE ###
-        waiting_font = QFont()
-        waiting_font.setPointSize(18)
-
-        waiting_lbl = QLabel("Waiting for the host to start the game...")
-        waiting_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        waiting_lbl.setFont(waiting_font)
-
-        self.spinner = Spinner(self, size=60)
-
-        status_lbl = QLabel("Connected to server. Game will begin shortly.")
-        status_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        status_lbl.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
-
-        leave_btn = LeaveButton("Leave Lobby", btn_width=100)
-        leave_btn.clicked.connect(self.leave_lobby)
 
         vbox_right = QVBoxLayout()
         vbox_right.addStretch(1)
@@ -114,6 +117,7 @@ class ClientLobbyScreen(BaseScreen):
         row = self.lobby_table.rowCount()
         self.lobby_table.insertRow(row)
 
+        # Adds (you) suffix if is_you
         player = f"{player} (you)" if is_you else player
 
         item = QTableWidgetItem(player)
@@ -165,7 +169,7 @@ class ClientLobbyScreen(BaseScreen):
         )
 
         if confirm:
-            self.leave_server.emit()
+            self.left_server.emit()
 
     def on_enter(self, payload=None) -> None:
         self.spinner.start()
