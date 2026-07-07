@@ -6,7 +6,8 @@ from core.game.quiz_manager import QuizManager
 from models.player import Player
 from models.quiz import Quiz
 from models.question import Question
-from core.config.constants import MIN_PLAYERS_FOR_START, COUNTDOWN_TIME
+
+from core.config.constants import MIN_PLAYERS_FOR_GAME, COUNTDOWN_TIME
 
 
 class GameController(QObject):
@@ -62,7 +63,7 @@ class GameController(QObject):
 
         # If the number of players remaining is less than the minimum players
         # that was needed for the game to start, prematurely end the game
-        if len(self.quiz_manager.players) < MIN_PLAYERS_FOR_START and self.game_running:
+        if len(self.quiz_manager.players) < MIN_PLAYERS_FOR_GAME and self.game_running:
             self.reset()
             self.no_players_found.emit()
             return

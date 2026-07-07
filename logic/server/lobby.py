@@ -6,7 +6,7 @@ from core.game.game_controller import GameController
 from data.quiz_repo import QuizRepository
 
 from utils.networking import get_hostname
-from core.config.constants import MIN_PLAYERS_FOR_START
+from core.config.constants import MIN_PLAYERS_FOR_GAME
 
 
 class ServerLobbyLogic(BaseLogic):
@@ -68,7 +68,7 @@ class ServerLobbyLogic(BaseLogic):
                 "Invalid Conditions for Start", "The quiz selected does not exist."
             )
             return
-        elif players < MIN_PLAYERS_FOR_START:
+        elif players < MIN_PLAYERS_FOR_GAME:
             self.screen.show_error(
                 "Invalid Conditions for Start",
                 "There are not enough players to start the game.",

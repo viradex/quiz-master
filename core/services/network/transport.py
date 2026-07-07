@@ -15,7 +15,11 @@ class JSONSocket:
         self._validate_socket()
 
         # Add newline delimiter to signify separator, then encode and send
-        msg = json.dumps(data) + "\n"
+        try:
+            msg = json.dumps(data) + "\n"
+        except (TypeError, ValueError) as e:
+            raise ValueError("Invalid JSON data") from e
+
         self.sock.sendall(msg.encode())
 
     def recv(self) -> dict | bool | None:
@@ -57,8 +61,8 @@ class JSONSocket:
 
         try:
             return json.loads(line.decode())
-        except json.JSONDecodeError:
-            raise ValueError("Invalid JSON data")
+        except json.JSONDecodeError as e:
+            raise ValueError("Invalid JSON data") from e
 
     def set_socket(self, sock: socket.socket) -> None:
         """Set the socket to be used."""

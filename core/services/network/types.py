@@ -27,6 +27,6 @@ class ServerMessageType(StrEnum):
     RESULTS = "results"
     FINAL_RESULTS = "final_results"
 
-    ERROR = "error"  # generic only, if no other criteria fits
+    ERROR = "error"
     KICK = "kick"
     INVALID_ACTION = "invalid_action"

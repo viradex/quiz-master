@@ -93,26 +93,26 @@ class Leaderboard:
         Gets the amount of points the player specified is behind by from the following player,
         and their nickname.
 
-        If the player does not exist, (None, None) is returned.
+        If the player does not exist, `(None, None)` is returned.
 
-        If the player is first place, (None, 0) is returned.
+        If the player is first place, `(None, 0)` is returned.
 
-        Otherwise, ("player_name", points) is returned.
+        Otherwise, `("player_name", points)` is returned.
         """
         index = self._get_player_index(player_id)
         if index is None:
-            return (None, None)
+            return None, None
 
         # If player is first
         if index == 0:
-            return (None, 0)
+            return None, 0
 
         current_player_points = self.players[player_id].total_points
 
         player_ahead_points = self.sorted_players[index - 1].total_points
         player_ahead_nickname = self.sorted_players[index - 1].nickname
 
-        return (player_ahead_nickname, player_ahead_points - current_player_points)
+        return player_ahead_nickname, player_ahead_points - current_player_points
 
     def get_adjacent_players(
         self, player_id: str, radius: int = 1
@@ -187,6 +187,7 @@ class Leaderboard:
     def get_global_leaderboard(
         self, include_delta: bool = False
     ) -> list[dict[str, str | int]]:
+        """Get leaderboard information for all players that are stored in the leaderboard data."""
         players = self.get_players()
         delta = self.get_points_delta() if include_delta else None
 

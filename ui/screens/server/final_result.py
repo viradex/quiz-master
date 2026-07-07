@@ -44,6 +44,11 @@ class ServerFinalResultScreen(BaseScreen):
         heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
         heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
 
+        return_btn = QPushButton("Return to Menu")
+        return_btn.setFixedSize(140, 40)
+        return_btn.setStyleSheet("font-size: 14px;")
+        return_btn.clicked.connect(self.on_return)
+
         self.winner = QLabel()
         self.winner.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.winner.setStyleSheet("font-size: 20px;" "color: #F5C542;")
@@ -62,7 +67,7 @@ class ServerFinalResultScreen(BaseScreen):
         self.leaderboard_table.setShowGrid(False)
         self.leaderboard_table.setAlternatingRowColors(True)
         self.leaderboard_table.setColumnCount(3)
-        self.leaderboard_table.setHorizontalHeaderLabels(["Rank", "Name", "Total"])
+        self.leaderboard_table.setHorizontalHeaderLabels(["Rank", "Nickname", "Total"])
         self.leaderboard_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers
         )
@@ -110,14 +115,16 @@ class ServerFinalResultScreen(BaseScreen):
             "Total Questions", "", self.icons_path / "question.png"
         )
 
-        return_btn = QPushButton("Return to Menu")
-        return_btn.setFixedSize(140, 40)
-        return_btn.setStyleSheet("font-size: 14px;")
-        return_btn.clicked.connect(self.on_return)
-
         ## LAYOUTS SETUP ##
+        nav_grid = QGridLayout()
+        nav_grid.addWidget(heading, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter)
+        nav_grid.addWidget(return_btn, 0, 2, alignment=Qt.AlignmentFlag.AlignRight)
+        nav_grid.setColumnStretch(0, 1)
+        nav_grid.setColumnStretch(1, 0)
+        nav_grid.setColumnStretch(2, 1)
+
         vbox_header = QVBoxLayout()
-        vbox_header.addWidget(heading)
+        vbox_header.addLayout(nav_grid)
         vbox_header.addSpacing(2)
         vbox_header.addWidget(self.winner)
         vbox_header.addSpacing(20)
@@ -128,8 +135,7 @@ class ServerFinalResultScreen(BaseScreen):
         vbox_left.addSpacing(2)
         vbox_left.addWidget(leaderboard_desc)
         vbox_left.addSpacing(15)
-        vbox_left.addWidget(self.leaderboard_table, stretch=5)
-        vbox_left.addStretch(1)
+        vbox_left.addWidget(self.leaderboard_table, stretch=1)
 
         stats_grid = QGridLayout()
         stats_grid.setSpacing(10)
@@ -157,7 +163,7 @@ class ServerFinalResultScreen(BaseScreen):
         hbox.addWidget(right_card, 4)
 
         vbox = QVBoxLayout()
-        vbox.setContentsMargins(40, 20, 40, 20)
+        vbox.setContentsMargins(20, 20, 20, 20)
         vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 
@@ -227,7 +233,13 @@ class ServerFinalResultScreen(BaseScreen):
 
         self.winner_stat.set_value(payload.winner)
         self.highest_points_stat.set_value(str(payload.highest_points))
-        self.fastest_answer_stat.set_value(f"{payload.fastest_answer:.2f}s")
+
+        # If the quiz was ended without any submissions, fastest_answer is None
+        if payload.fastest_answer is not None:
+            self.fastest_answer_stat.set_value(f"{payload.fastest_answer:.2f}s")
+        else:
+            self.fastest_answer_stat.set_value("-")
+
         self.average_accuracy_stat.set_value(f"{average_accuracy}%")
         self.players_stat.set_value(str(payload.total_players))
         self.questions_stat.set_value(str(payload.total_questions))

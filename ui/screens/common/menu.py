@@ -6,6 +6,7 @@ from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
 
 
+# TODO Make menu look prettier, right now it's mostly a placeholder screen
 class CommonMenuScreen(BaseScreen):
     started_server = pyqtSignal()
 
@@ -56,6 +57,7 @@ class CommonMenuScreen(BaseScreen):
         self.exit_btn.setStyleSheet("font-size: 12px;")
         self.exit_btn.clicked.connect(QApplication.exit)
 
+        ## LAYOUTS SETUP ##
         small_btn_hbox = QHBoxLayout()
         small_btn_hbox.addStretch()
         small_btn_hbox.addWidget(self.about_btn)

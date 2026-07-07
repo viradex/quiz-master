@@ -39,7 +39,7 @@ class ClientAppController:
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
         self.window.show_error(
             "Protocol Error",
-            f"The connection was terminated by the server due to a communication error.\n\nReason: {reason}",
+            f"The connection was terminated due to a communication error.\n\nReason: {reason}",
         )
 
     def on_invalid_action_occurred(self, reason: str) -> None:

@@ -65,7 +65,8 @@ class QuizManager:
         player = self.players[player_id]
         player.submit_answer(points, selected_answer, time_taken, is_correct)
 
-        self.all_time_taken.append(time_taken)
+        if is_correct:
+            self.all_time_taken.append(time_taken)
 
     def finish_question(self) -> None:
         """End the current question, by forcing all remaining submissions and sorting the leaderboard."""

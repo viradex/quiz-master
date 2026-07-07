@@ -48,7 +48,7 @@ class CommonAboutScreen(BaseScreen):
         menu_btn.setStyleSheet("font-size: 14px;")
         menu_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
-        desc = QLabel("Designed, programmed, and tested by Arnav Thorat (2026).")
+        desc = QLabel("Designed, programmed, and tested by Arnav Thorat (2026)!")
         desc.setFont(desc_font)
 
         license_info = QLabel(
@@ -68,6 +68,7 @@ class CommonAboutScreen(BaseScreen):
         title_hbox.addWidget(menu_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         vbox = QVBoxLayout()
+        vbox.setContentsMargins(20, 20, 20, 20)
         vbox.addLayout(title_hbox)
         vbox.addSpacing(2)
         vbox.addWidget(desc)

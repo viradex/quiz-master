@@ -57,10 +57,13 @@ class QuizRepository:
         """Loads the cache of all quizzes on disk in `quiz_cache`."""
         self.quiz_cache.clear()
 
-        # Check child directories for .json files
-        for file in self.data_path.rglob("*.json"):
-            with open(file, mode="r", newline="", encoding="utf-8") as f:
-                data = json.load(f)
+        for directory in (self.custom_quiz_path, self.default_quiz_path):
+            if not directory.exists():
+                continue
 
-            quiz = Quiz.from_dict(data)
-            self.quiz_cache[quiz.quiz_id] = quiz
+            for file in directory.glob("*.json"):
+                with open(file, mode="r", encoding="utf-8") as f:
+                    data = json.load(f)
+
+                quiz = Quiz.from_dict(data)
+                self.quiz_cache[quiz.quiz_id] = quiz

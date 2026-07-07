@@ -18,7 +18,7 @@ from ui.components.spinner import Spinner
 from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning
 from utils.networking import get_ip_address
-from core.config.constants import MAX_PLAYERS, MIN_PLAYERS_FOR_START
+from core.config.constants import MAX_PLAYERS, MIN_PLAYERS_FOR_GAME
 
 
 class ServerLobbyScreen(BaseScreen):
@@ -109,8 +109,7 @@ class ServerLobbyScreen(BaseScreen):
         lobby_btn_hbox.addWidget(self.kick_btn)
 
         # Right side
-        # Dynamic IP address display
-        self.ip_address = QLabel(f"Server IP: {get_ip_address()}")
+        self.ip_address = QLabel("Server IP: Unable to determine")
         self.ip_address.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ip_address.setFont(ip_font)
 
@@ -177,36 +176,6 @@ class ServerLobbyScreen(BaseScreen):
             self.get_info_btn.setDisabled(True)
             self.kick_btn.setDisabled(True)
 
-    def on_get_info(self) -> None:
-        """Get player info for the selected player."""
-        selected_player = self._get_selected_player()
-
-        # Should not happen, but here as a precaution
-        if selected_player is None:
-            self.show_warning("No Player Selected", "Please select a player.")
-            return
-
-        self.player_info_requested.emit(selected_player)
-
-    def on_kick_player(self) -> None:
-        """Kick the selected player."""
-        selected_player = self._get_selected_player()
-
-        # Should not happen, but here as a precaution
-        if selected_player is None:
-            self.show_warning("No Player Selected", "Please select a player.")
-            return
-
-        confirm = QMessageBox.question(
-            self,
-            "Confirm Kick",
-            f"Are you sure you want to kick the player {selected_player}?",
-            defaultButton=QMessageBox.StandardButton.No,
-        )
-
-        if confirm == QMessageBox.StandardButton.Yes:
-            self.player_kicked.emit(selected_player)
-
     def update_player_count(self, amount: int) -> None:
         """
         Updates the player counter. The amount should be `1` or `-1` in almost all cases.
@@ -266,24 +235,47 @@ class ServerLobbyScreen(BaseScreen):
         if self.quiz_combo.currentIndex() == -1:
             self.start_btn.setDisabled(True)
             self.start_status.setText("(select a quiz from the list)")
-        elif self.players < MIN_PLAYERS_FOR_START:
+        elif self.players < MIN_PLAYERS_FOR_GAME:
             self.start_btn.setDisabled(True)
             self.start_status.setText(
-                f"(at least {MIN_PLAYERS_FOR_START} {"player is" if MIN_PLAYERS_FOR_START == 1 else "players are"} required)"
+                f"(at least {MIN_PLAYERS_FOR_GAME} {"player is" if MIN_PLAYERS_FOR_GAME == 1 else "players are"} required)"
             )
         else:
             self.start_btn.setDisabled(False)
             self.start_status.setText("")
 
+    def on_get_info(self) -> None:
+        """Get player info for the selected player."""
+        selected_player = self._get_selected_player()
+
+        # Should not happen, but here as a precaution
+        if selected_player is None:
+            self.show_warning("No Player Selected", "Please select a player.")
+            return
+
+        self.player_info_requested.emit(selected_player)
+
+    def on_kick_player(self) -> None:
+        """Kick the selected player."""
+        selected_player = self._get_selected_player()
+
+        # Should not happen, but here as a precaution
+        if selected_player is None:
+            self.show_warning("No Player Selected", "Please select a player.")
+            return
+
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Kick",
+            f"Are you sure you want to kick the player {selected_player}?",
+            defaultButton=QMessageBox.StandardButton.No,
+        )
+
+        if confirm == QMessageBox.StandardButton.Yes:
+            self.player_kicked.emit(selected_player)
+
     def on_start_game(self) -> None:
         self.game_started.emit(self.quiz_combo.currentText())
-
-    def on_enter(self, payload=None) -> None:
-        self.spinner.start()
-
-    def on_leave(self) -> None:
-        self.spinner.stop()
-        self.reset_lobby()
 
     def _get_selected_player(self) -> str | None:
         """Get selected player name from lobby table."""
@@ -320,3 +312,16 @@ class ServerLobbyScreen(BaseScreen):
                 return True
 
         return False
+
+    def on_enter(self, payload=None) -> None:
+        self.spinner.start()
+
+        ip = get_ip_address()
+        if ip:
+            self.ip_address.setText(f"Server IP: {ip}")
+        else:
+            self.ip_address.setText("Server IP: Unable to determine")
+
+    def on_leave(self) -> None:
+        self.spinner.stop()
+        self.reset_lobby()

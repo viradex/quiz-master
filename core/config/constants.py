@@ -58,7 +58,7 @@ RESPONSE_TIMEOUT = 15
 MAX_NICKNAME_LENGTH = 40
 
 # Minimum players needed to start the quiz game, and for there to be during the game
-MIN_PLAYERS_FOR_START = 2
+MIN_PLAYERS_FOR_GAME = 2
 
 # Time in seconds for the countdown between each question
 COUNTDOWN_TIME = 3

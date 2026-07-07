@@ -65,7 +65,7 @@ class ServerAppController:
         self.server.stop("Game over")
         self.window.show_warning(
             "Quiz Ended Early",
-            "All players who joined the quiz have left the server, so the game has ended prematurely.",
+            "There are not enough players to continue the quiz, so the game has ended prematurely.",
         )
 
         self.window.go_to(Screens.COMMON_MENU)

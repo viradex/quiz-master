@@ -21,6 +21,13 @@ MESSAGES: dict[str, tuple[list[str], list[int]]] = {
         ],
         [60, 30, 10],
     ),
+    "tie_podium": (
+        [
+            "You tied with {nickname} ON THE PODIUM! Wow!",
+            "You finished on the podium AND tied with {nickname}! If only you were just a millisecond faster on one of those questions...",
+        ],
+        [60, 40],
+    ),
     "close_podium": (
         [
             "You finished on the podium and were only {points} points behind {nickname}! So close!",
@@ -35,6 +42,13 @@ MESSAGES: dict[str, tuple[list[str], list[int]]] = {
             "{nickname} finished {points} points ahead this time!",
         ],
         [60, 30, 10],
+    ),
+    "tie_regular": (
+        [
+            "You tied with {nickname}! Wow!",
+            "Amazing tie with {nickname}! If only you were just a millisecond faster on one of those questions...",
+        ],
+        [60, 40],
     ),
     "close_regular": (
         [
@@ -64,15 +78,20 @@ def feedback_generator(
 ) -> str:
     """Generate a personalized random feedback message based on certain cases."""
     is_close = behind_points is not None and behind_points < 50
+    is_tie = behind_points is not None and behind_points == 0
 
     if is_first:
         text = _get_random_message("first", behind_nickname, behind_points)
+    elif is_podium and is_tie:
+        text = _get_random_message("tie_podium", behind_nickname, behind_points)
     elif is_podium and is_close:
         text = _get_random_message("close_podium", behind_nickname, behind_points)
     elif is_podium:
         text = _get_random_message("podium", behind_nickname, behind_points)
     elif is_last:
         text = _get_random_message("last", behind_nickname, behind_points)
+    elif is_tie:
+        text = _get_random_message("tie_regular", behind_nickname, behind_points)
     elif is_close:
         text = _get_random_message("close_regular", behind_nickname, behind_points)
     else:

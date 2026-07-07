@@ -146,7 +146,6 @@ class AnswerButtonGrid(QWidget):
 
             # Highlight selected button
             if btn is selected:
-                # TODO fix cutoff of glow effect
                 btn.setStyleSheet(self._style_button(bg, hover, click, text))
                 glow.setBlurRadius(50)
             else:

@@ -11,10 +11,14 @@ def is_valid_ipv4(address: str) -> bool:
         return False
 
 
-def get_ip_address() -> str:
-    """Gets own device IP address."""
-    hostname = socket.gethostname()
-    ip = socket.gethostbyname(hostname)
+def get_ip_address() -> str | None:
+    """Gets own device IP address. Returns None if the hostname cannot be resolved."""
+    try:
+        hostname = socket.gethostname()
+        ip = socket.gethostbyname(hostname)
+    except socket.gaierror:
+        ip = None
+
     return ip
 
 

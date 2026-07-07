@@ -7,7 +7,7 @@ class BasePayload:
     """Base payload for all payloads."""
 
     def to_dict(self) -> dict:
-        """Convert payload to a dictionary. Useful for networking data transfer."""
+        """Convert payload to a dictionary. Useful for serialization for networking data transfer."""
         return asdict(self)
 
     @classmethod

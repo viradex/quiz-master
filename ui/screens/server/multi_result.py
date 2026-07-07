@@ -5,6 +5,8 @@ from PyQt6.QtWidgets import (
     QTableWidgetItem,
     QVBoxLayout,
     QHBoxLayout,
+    QGridLayout,
+    QMessageBox,
     QStackedLayout,
     QAbstractItemView,
     QHeaderView,
@@ -29,6 +31,9 @@ class ServerMultiResultScreen(BaseScreen):
     next_question_requested = pyqtSignal()
     end_game_requested = pyqtSignal()
 
+    player_info_requested = pyqtSignal(str)
+    player_kicked = pyqtSignal(str)
+
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
@@ -48,6 +53,14 @@ class ServerMultiResultScreen(BaseScreen):
         self.heading = QLabel("Question Results")
         self.heading.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.heading.setStyleSheet("font-size: 36px;" "font-weight: 600;")
+
+        self.end_game_btn = create_return_button("End Game", btn_width=80)
+        self.end_game_btn.clicked.connect(self.on_end_game)
+
+        self.next_btn = QPushButton("Next Question")
+        self.next_btn.setFixedSize(140, 40)
+        self.next_btn.clicked.connect(self.on_next_question)
+        self.next_btn.setStyleSheet("font-size: 14px;")
 
         self.accuracy = QLabel()
         self.accuracy.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -80,14 +93,18 @@ class ServerMultiResultScreen(BaseScreen):
         self.leaderboard_table.setAlternatingRowColors(True)
         self.leaderboard_table.setColumnCount(4)
         self.leaderboard_table.setHorizontalHeaderLabels(
-            ["Rank", "Name", "Gained", "Total"]
+            ["Rank", "Nickname", "Gained", "Total"]
+        )
+        self.leaderboard_table.setSelectionBehavior(
+            QAbstractItemView.SelectionBehavior.SelectRows
+        )
+        self.leaderboard_table.setSelectionMode(
+            QAbstractItemView.SelectionMode.SingleSelection
         )
         self.leaderboard_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers
         )
-        self.leaderboard_table.setSelectionMode(
-            QAbstractItemView.SelectionMode.NoSelection
-        )
+        self.leaderboard_table.itemSelectionChanged.connect(self.on_selection_changed)
 
         self.leaderboard_table.verticalHeader().setVisible(False)
         self.leaderboard_table.verticalHeader().setDefaultSectionSize(32)
@@ -123,17 +140,34 @@ class ServerMultiResultScreen(BaseScreen):
         self.leaderboard_stack.addWidget(self.leaderboard_table)
         self.leaderboard_stack.addWidget(self.leaderboard_blur)
 
-        self.end_game_btn = create_return_button("End Game", btn_width=80)
-        self.end_game_btn.clicked.connect(self.on_end_game)
+        self.get_info_btn = QPushButton("Get Info")
+        self.get_info_btn.setStyleSheet("font-size: 14px;")
+        self.get_info_btn.setDisabled(True)
+        self.get_info_btn.clicked.connect(self.on_get_info)
 
-        self.next_btn = QPushButton("Next Question")
-        self.next_btn.setFixedSize(140, 40)
-        self.next_btn.clicked.connect(self.on_next_question)
-        self.next_btn.setStyleSheet("font-size: 14px;")
+        self.kick_btn = QPushButton("Kick Player")
+        self.kick_btn.setStyleSheet("font-size: 14px;")
+        self.kick_btn.setDisabled(True)
+        self.kick_btn.clicked.connect(self.on_kick_player)
+
+        # Hbox layout for buttons above (not in layouts section for easier readability)
+        player_btn_hbox = QHBoxLayout()
+        player_btn_hbox.addWidget(self.get_info_btn)
+        player_btn_hbox.addWidget(self.kick_btn)
 
         ## LAYOUTS SETUP ##
+        nav_grid = QGridLayout()
+        nav_grid.addWidget(
+            self.end_game_btn, 0, 0, alignment=Qt.AlignmentFlag.AlignLeft
+        )
+        nav_grid.addWidget(self.heading, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter)
+        nav_grid.addWidget(self.next_btn, 0, 2, alignment=Qt.AlignmentFlag.AlignRight)
+        nav_grid.setColumnStretch(0, 1)
+        nav_grid.setColumnStretch(1, 0)
+        nav_grid.setColumnStretch(2, 1)
+
         vbox_header = QVBoxLayout()
-        vbox_header.addWidget(self.heading)
+        vbox_header.addLayout(nav_grid)
         vbox_header.addSpacing(2)
         vbox_header.addWidget(self.accuracy)
         vbox_header.addSpacing(20)
@@ -147,18 +181,13 @@ class ServerMultiResultScreen(BaseScreen):
         vbox_left.addSpacing(15)
         vbox_left.addWidget(self.answer_button_grid, stretch=1)
 
-        btn_footer = QHBoxLayout()
-        btn_footer.addWidget(self.end_game_btn, alignment=Qt.AlignmentFlag.AlignLeft)
-        btn_footer.addWidget(self.next_btn, alignment=Qt.AlignmentFlag.AlignRight)
-
         vbox_right = QVBoxLayout(right_card)
         vbox_right.setContentsMargins(20, 20, 20, 20)
         vbox_right.addWidget(leaderboard_heading)
         vbox_right.addSpacing(15)
-        vbox_right.addLayout(self.leaderboard_stack, stretch=3)
-        vbox_right.addSpacing(20)
-        vbox_right.addLayout(btn_footer)
-        vbox_right.addStretch(1)
+        vbox_right.addLayout(self.leaderboard_stack, stretch=1)
+        vbox_right.addSpacing(2)
+        vbox_right.addLayout(player_btn_hbox)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.left_card, 5)
@@ -166,7 +195,7 @@ class ServerMultiResultScreen(BaseScreen):
         hbox.addWidget(right_card, 4)
 
         vbox = QVBoxLayout()
-        vbox.setContentsMargins(40, 20, 40, 20)
+        vbox.setContentsMargins(20, 20, 20, 20)
         vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 
@@ -219,6 +248,37 @@ class ServerMultiResultScreen(BaseScreen):
         """Remove all rows in the leaderboard table."""
         self.leaderboard_table.setRowCount(0)
 
+    def remove_player(self, nickname: str) -> bool:
+        """Remove a player from the leaderboard."""
+        for row in range(self.leaderboard_table.rowCount()):
+            item = self.leaderboard_table.item(row, 1)
+
+            if item is not None and item.text() == nickname:
+                self.leaderboard_table.removeRow(row)
+
+                self._update_ranks()
+                return True
+
+        return False
+
+    def show_player_info(
+        self, nickname: str, ip: str, port: str | int, hostname: str
+    ) -> None:
+        """Displays a dialog box showing player information."""
+        self.show_info(
+            "Player Info",
+            f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
+        )
+
+    def on_selection_changed(self) -> None:
+        # If player is selected, enable player buttons
+        if self._get_selected_player() is not None:
+            self.get_info_btn.setDisabled(False)
+            self.kick_btn.setDisabled(False)
+        else:
+            self.get_info_btn.setDisabled(True)
+            self.kick_btn.setDisabled(True)
+
     def on_next_question(self) -> None:
         self.next_question_requested.emit()
 
@@ -232,6 +292,54 @@ class ServerMultiResultScreen(BaseScreen):
 
         if confirm:
             self.end_game_requested.emit()
+
+    def on_get_info(self) -> None:
+        """Get player info for the selected player."""
+        selected_player = self._get_selected_player()
+
+        # Should not happen, but here as a precaution
+        if selected_player is None:
+            self.show_warning("No Player Selected", "Please select a player.")
+            return
+
+        self.player_info_requested.emit(selected_player)
+
+    def on_kick_player(self) -> None:
+        """Kick the selected player."""
+        selected_player = self._get_selected_player()
+
+        # Should not happen, but here as a precaution
+        if selected_player is None:
+            self.show_warning("No Player Selected", "Please select a player.")
+            return
+
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Kick",
+            f"Are you sure you want to kick the player {selected_player}?",
+            defaultButton=QMessageBox.StandardButton.No,
+        )
+
+        if confirm == QMessageBox.StandardButton.Yes:
+            self.player_kicked.emit(selected_player)
+
+    def _get_selected_player(self) -> str | None:
+        """Get selected player name from leaderboard table."""
+        row = self.leaderboard_table.currentRow()
+
+        # Nothing is selected
+        if row == -1:
+            return None
+
+        item = self.leaderboard_table.item(row, 1)
+        return item.text() if item else None
+
+    def _update_ranks(self):
+        """Refresh ranks when a player is removed from the leaderboard."""
+        for row in range(self.leaderboard_table.rowCount()):
+            rank_item = self.leaderboard_table.item(row, 0)
+            if rank_item:
+                rank_item.setText(f"#{row + 1}")
 
     def on_enter(self, payload: ServerResultsPayload) -> None:
         # Correct: #3DDC84
@@ -280,6 +388,9 @@ class ServerMultiResultScreen(BaseScreen):
         else:
             self.set_leaderboard_hidden(True)
 
+            self.get_info_btn.setHidden(True)
+            self.kick_btn.setHidden(True)
+
         # If the question is the last question, change button text
         if payload.question_num == payload.total_questions:
             self.next_btn.setText("Final Results")
@@ -297,6 +408,9 @@ class ServerMultiResultScreen(BaseScreen):
 
         self.set_leaderboard_hidden(False)
         self.clear_leaderboard()
+
+        self.get_info_btn.setHidden(False)
+        self.kick_btn.setHidden(False)
 
         self.next_btn.setText("Next Question")
         self.end_game_btn.setDisabled(False)

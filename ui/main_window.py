@@ -77,17 +77,20 @@ class MainWindow(QMainWindow):
             )
 
     def setup_theme(self) -> None:
-        """Set up application theme. Forces dark mode even if the system is in light mode. Only works in Windows 11."""
-        style_hints = QApplication.styleHints()
-
-        # Some platforms don't have style hints
-        if style_hints is not None:
-            style_hints.setColorScheme(Qt.ColorScheme.Dark)
+        """Set up application theme. Forces dark mode even if the system is in light mode."""
+        try:
+            # Some versions don't have the setColorScheme() method
+            QApplication.styleHints().setColorScheme(Qt.ColorScheme.Dark)
+        except AttributeError:
+            pass
 
     def setup_font(self) -> None:
         """Set up font details. Preloads emojis/glyphs width details so they do not lag the UI when rendering."""
-        QFontMetrics(self.font()).horizontalAdvance("✔")
-        QFontMetrics(self.font()).horizontalAdvance("✖")
+        # Emojis/glyphs can cause a noticeable lag when showing a screen containing them for the first time.
+        # To prevent that lag spike, make PyQt pre-calculate the width of the emojis to help with the rendering.
+        metrics = QFontMetrics(self.font())
+        metrics.horizontalAdvance("✔")
+        metrics.horizontalAdvance("✖")
 
     def setup_ui(self) -> None:
         """Create MainWindow UI with the stacked widget for showing individual screens, as well as the status bar."""

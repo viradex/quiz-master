@@ -101,7 +101,7 @@ class GameClient(QObject):
     def disconnect_client(self) -> None:
         """Disconnect client from the server cleanly, notifying server and logic."""
         if self.client_socket is None:
-            raise ValueError("Client cannot be closed without active socket")
+            return
 
         try:
             self.jsock.send({"type": ClientMessageType.LEAVE_LOBBY})
@@ -132,6 +132,11 @@ class GameClient(QObject):
             except socket.timeout:
                 continue
             except OSError:
+                break
+            except ValueError:
+                # Invalid JSON data
+                self.error_occurred.emit("Invalid data message from server")
+                self.disconnect_client()
                 break
 
             # Connection is dead
@@ -232,8 +237,7 @@ class GameClient(QObject):
 
         # No message type; client cannot delegate it
         if msg_type is None:
-            # TODO maybe different signal for if the client raised the error?
-            self.error_occurred.emit("Protocol violation: missing message type")
+            self.error_occurred.emit("Missing message type in data")
             self.disconnect_client()
             return
 
@@ -248,8 +252,7 @@ class GameClient(QObject):
             handler(msg)
         except KeyError as e:
             # If the handler tries accessing data that does not exist, assume server sent invalid data
-            # TODO maybe different signal for if the client raised the error?
-            self.error_occurred.emit("Protocol violation: missing fields")
+            self.error_occurred.emit("Missing fields in data")
             self.disconnect_client()
 
             print(f"Missing field: {e}")

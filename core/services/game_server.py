@@ -221,6 +221,9 @@ class GameServer(QObject):
                 self.handle_message(client, msg)
         except OSError:
             pass
+        except ValueError:
+            # Invalid JSON received
+            self._fail_and_disconnect(client, "Invalid data message from client")
         finally:
             self.remove_client(client.player_id)
 

@@ -53,6 +53,11 @@ class ClientFinalResultScreen(BaseScreen):
         self.ordinal_position.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ordinal_position.setStyleSheet("font-size: 42px;" "font-weight: 600;")
 
+        return_btn = QPushButton("Return to Menu")
+        return_btn.setFixedSize(140, 40)
+        return_btn.clicked.connect(self.on_return)
+        return_btn.setStyleSheet("font-size: 14px;")
+
         self.position_feedback = QLabel()
         self.position_feedback.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.position_feedback.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
@@ -95,7 +100,7 @@ class ClientFinalResultScreen(BaseScreen):
         self.leaderboard_table.setShowGrid(False)
         self.leaderboard_table.setAlternatingRowColors(True)
         self.leaderboard_table.setColumnCount(3)
-        self.leaderboard_table.setHorizontalHeaderLabels(["Rank", "Name", "Total"])
+        self.leaderboard_table.setHorizontalHeaderLabels(["Rank", "Nickname", "Total"])
         self.leaderboard_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers
         )
@@ -122,14 +127,18 @@ class ClientFinalResultScreen(BaseScreen):
             }
         """)
 
-        return_btn = QPushButton("Return to Menu")
-        return_btn.setFixedSize(140, 40)
-        return_btn.clicked.connect(self.on_return)
-        return_btn.setStyleSheet("font-size: 14px;")
-
         ## LAYOUTS SETUP ##
+        nav_grid = QGridLayout()
+        nav_grid.addWidget(
+            self.ordinal_position, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
+        )
+        nav_grid.addWidget(return_btn, 0, 2, alignment=Qt.AlignmentFlag.AlignRight)
+        nav_grid.setColumnStretch(0, 1)
+        nav_grid.setColumnStretch(1, 0)
+        nav_grid.setColumnStretch(2, 1)
+
         vbox_header = QVBoxLayout()
-        vbox_header.addWidget(self.ordinal_position)
+        vbox_header.addLayout(nav_grid)
         vbox_header.addSpacing(2)
         vbox_header.addWidget(self.position_feedback)
         vbox_header.addSpacing(20)
@@ -169,7 +178,7 @@ class ClientFinalResultScreen(BaseScreen):
         hbox.addWidget(right_card, 4)
 
         vbox = QVBoxLayout()
-        vbox.setContentsMargins(40, 20, 40, 20)
+        vbox.setContentsMargins(20, 20, 20, 20)
         vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 

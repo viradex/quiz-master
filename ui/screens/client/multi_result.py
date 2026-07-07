@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout
+from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from ui.screens.base_screen import BaseScreen
@@ -27,6 +27,9 @@ class ClientMultiResultScreen(BaseScreen):
         self.result_lbl = QLabel()
         self.result_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.result_lbl.setStyleSheet("font-size: 42px;" "font-weight: 600;")
+
+        leave_btn = create_return_button("Leave")
+        leave_btn.clicked.connect(self.leave_game)
 
         self.your_answer = QLabel()
         self.your_answer.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -60,12 +63,18 @@ class ClientMultiResultScreen(BaseScreen):
         self.points_stat = StatCard("Total Points", "")
         self.rank_stat = StatCard("Leaderboard Rank", "")
 
-        leave_btn = create_return_button("Leave")
-        leave_btn.clicked.connect(self.leave_game)
-
         ## LAYOUTS SETUP ##
+        nav_grid = QGridLayout()
+        nav_grid.addWidget(leave_btn, 0, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+        nav_grid.addWidget(
+            self.result_lbl, 0, 1, alignment=Qt.AlignmentFlag.AlignCenter
+        )
+        nav_grid.setColumnStretch(0, 1)
+        nav_grid.setColumnStretch(1, 0)
+        nav_grid.setColumnStretch(2, 1)
+
         vbox_header = QVBoxLayout()
-        vbox_header.addWidget(self.result_lbl)
+        vbox_header.addLayout(nav_grid)
         vbox_header.addSpacing(2)
         vbox_header.addWidget(self.your_answer)
         vbox_header.addSpacing(20)
@@ -91,7 +100,6 @@ class ClientMultiResultScreen(BaseScreen):
         vbox_right.addSpacing(10)
         vbox_right.addWidget(self.rank_stat)
         vbox_right.addStretch(1)
-        vbox_right.addWidget(leave_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
         hbox = QHBoxLayout()
         hbox.addWidget(self.left_card, 5)
@@ -99,7 +107,7 @@ class ClientMultiResultScreen(BaseScreen):
         hbox.addWidget(right_card, 2)
 
         vbox = QVBoxLayout()
-        vbox.setContentsMargins(40, 20, 40, 20)
+        vbox.setContentsMargins(20, 20, 20, 20)
         vbox.addLayout(vbox_header)
         vbox.addLayout(hbox, 1)
 
