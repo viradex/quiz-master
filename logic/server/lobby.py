@@ -57,6 +57,8 @@ class ServerLobbyLogic(BaseLogic):
         # Get number of players in server
         players = len(self.server.registry.get_all())
 
+        quiz_name = quiz_name.rstrip(" (default)")
+
         # Get all quiz names
         self.quiz_repo.refresh_cache()
         quizzes = self.quiz_repo.load_quizzes()
@@ -95,6 +97,12 @@ class ServerLobbyLogic(BaseLogic):
     def on_enter(self):
         # Show all quiz names in dropdown screen in UI
         quizzes = self.quiz_repo.load_quizzes()
-        names = [q.quiz_title for q in quizzes.values()]
+        quiz_names = []
 
-        self.screen.set_quizzes(names)
+        for quiz in quizzes.values():
+            if quiz.is_premade:
+                quiz_names.append(f"{quiz.quiz_title} (default)")
+            else:
+                quiz_names.append(quiz.quiz_title)
+
+        self.screen.set_quizzes(quiz_names)

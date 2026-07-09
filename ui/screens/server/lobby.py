@@ -33,8 +33,6 @@ class ServerLobbyScreen(BaseScreen):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
-        self.players = 0
-
         self.setup_ui()
 
     def setup_ui(self) -> None:
@@ -60,7 +58,7 @@ class ServerLobbyScreen(BaseScreen):
         title = QLabel("Lobby")
         title.setFont(title_font)
 
-        self.total_players = QLabel(f"Players: {self.players} / {MAX_PLAYERS}")
+        self.total_players = QLabel(f"Players: 0 / {MAX_PLAYERS}")
         self.total_players.setStyleSheet("font-size: 16px;" "color: #A0A0A0;")
 
         self.spinner = Spinner(size=20, color=QColor(255, 255, 255), interval_ms=20)
@@ -119,7 +117,7 @@ class ServerLobbyScreen(BaseScreen):
 
         self.quiz_combo = SearchableCombobox()
         self.quiz_combo.setFont(combobox_font)
-        self.quiz_combo.setFixedWidth(400)
+        self.quiz_combo.setMaximumWidth(500)
         self.quiz_combo.currentIndexChanged.connect(self.check_start_game_state)
 
         self.start_btn = QPushButton("Start Game")
@@ -147,12 +145,17 @@ class ServerLobbyScreen(BaseScreen):
         vbox_left.addLayout(lobby_btn_hbox)
         vbox_left.addStretch()
 
+        combo_hbox = QHBoxLayout()
+        combo_hbox.addStretch(1)
+        combo_hbox.addWidget(self.quiz_combo, stretch=3)
+        combo_hbox.addStretch(1)
+
         vbox_right = QVBoxLayout()
         vbox_right.addWidget(self.ip_address)
         vbox_right.addStretch(3)
         vbox_right.addWidget(select_lbl)
         vbox_right.addSpacing(10)
-        vbox_right.addWidget(self.quiz_combo, alignment=Qt.AlignmentFlag.AlignCenter)
+        vbox_right.addLayout(combo_hbox)
         vbox_right.addStretch(1)
         vbox_right.addWidget(self.start_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         vbox_right.addSpacing(2)
@@ -176,34 +179,26 @@ class ServerLobbyScreen(BaseScreen):
             self.get_info_btn.setDisabled(True)
             self.kick_btn.setDisabled(True)
 
-    def update_player_count(self, amount: int) -> None:
-        """
-        Updates the player counter. The amount should be `1` or `-1` in almost all cases.
-        To add player(s), make `amount` a positive integer, otherwise, make it negative.
-
-        Amounts that evaluate to less than zero are set to `0`.
-        """
-        self.players += amount
-        self.players = 0 if self.players < 0 else self.players
-
-        self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
+    def set_player_count(self) -> None:
+        """Set player counter to reflect the players in the lobby table."""
+        self.total_players.setText(
+            f"Players: {self.lobby_table.rowCount()} / {MAX_PLAYERS}"
+        )
 
     def add_player_lobby(self, player: str) -> None:
         """Adds a player to the lobby table and increases the player counter."""
-        self.update_player_count(1)
         self._add_player(player)
+        self.set_player_count()
 
     def remove_player_lobby(self, player: str) -> None:
         """Removes a player from the lobby table and decreases the player counter."""
-        self.update_player_count(-1)
         self._remove_player(player)
+        self.set_player_count()
 
     def reset_lobby(self) -> None:
         """Resets the player counter to `0`, and removes all values from the lobby table."""
-        self.players = 0
-
-        self.total_players.setText(f"Players: {self.players} / {MAX_PLAYERS}")
         self.lobby_table.setRowCount(0)
+        self.set_player_count()
         self.quiz_combo.clear()
 
     def show_player_info(
@@ -235,7 +230,7 @@ class ServerLobbyScreen(BaseScreen):
         if self.quiz_combo.currentIndex() == -1:
             self.start_btn.setDisabled(True)
             self.start_status.setText("(select a quiz from the list)")
-        elif self.players < MIN_PLAYERS_FOR_GAME:
+        elif self.lobby_table.rowCount() < MIN_PLAYERS_FOR_GAME:
             self.start_btn.setDisabled(True)
             self.start_status.setText(
                 f"(at least {MIN_PLAYERS_FOR_GAME} {"player is" if MIN_PLAYERS_FOR_GAME == 1 else "players are"} required)"

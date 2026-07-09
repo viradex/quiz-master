@@ -1,8 +1,9 @@
 {
   "quiz_id": "5f2c91a7",
-  "quiz_title": "Science Quiz (default)",
+  "quiz_title": "Science Quiz",
   "do_shuffle": false,
   "is_premade": true,
+  "updated_at": "2026-06-07T23:58:12",
   "questions": [
     {
       "question_id": "a8c1f3d9",

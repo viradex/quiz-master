@@ -1,4 +1,5 @@
 from dataclasses import dataclass, asdict
+from datetime import datetime
 import random
 
 from core.app.enums import QuizValidationResult
@@ -14,6 +15,7 @@ class Quiz:
     questions: list[Question]
     do_shuffle: bool
     is_premade: bool
+    updated_at: datetime | None = None
 
     def add_question(self, question: Question) -> None:
         """Adds a new question to the quiz."""
@@ -113,7 +115,7 @@ class Quiz:
             ):
                 return False, QuizValidationResult.INVALID_ANSWERS, index
 
-            if 0 <= question.correct_answer_index < len(question.answer_options):
+            if not (0 <= question.correct_answer_index < len(question.answer_options)):
                 return False, QuizValidationResult.INVALID_CORRECT_ANSWER, index
 
             if question.time_limit <= 0:
@@ -123,15 +125,25 @@ class Quiz:
 
     def to_dict(self) -> dict:
         """Convert to a dictionary for serialization."""
-        return asdict(self)
+        data = asdict(self)
+
+        if self.updated_at is not None:
+            data["updated_at"] = self.updated_at.isoformat()
+
+        return data
 
     @classmethod
     def from_dict(cls, data: dict) -> "Quiz":
         """Convert from a dictionary for deserialization."""
+        updated_at = data["updated_at"]
+        if updated_at is not None:
+            dt_updated = datetime.fromisoformat(updated_at)
+
         return cls(
             quiz_id=data["quiz_id"],
             quiz_title=data["quiz_title"],
             questions=[Question.from_dict(q) for q in data["questions"]],
             do_shuffle=data["do_shuffle"],
             is_premade=data["is_premade"],
+            updated_at=updated_at if updated_at is None else dt_updated,
         )

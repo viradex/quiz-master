@@ -19,6 +19,9 @@ from ui.screens.server.multi_result import ServerMultiResultScreen
 from ui.screens.server.final_result import ServerFinalResultScreen
 
 from ui.screens.common.menu import CommonMenuScreen
+from ui.screens.common.quiz_manager import CommonQuizManagerScreen
+from ui.screens.common.quiz_setup import CommonQuizSetupScreen
+from ui.screens.common.quiz_editor import CommonQuizEditorScreen
 from ui.screens.common.loading import CommonLoadingScreen
 from ui.screens.common.countdown import CommonCountdownScreen
 from ui.screens.common.about import CommonAboutScreen
@@ -37,6 +40,9 @@ from logic.server.multi_result import ServerMultiResultLogic
 from logic.server.final_result import ServerFinalResultLogic
 
 from logic.common.menu import CommonMenuLogic
+from logic.common.quiz_manager import CommonQuizManagerLogic
+from logic.common.quiz_setup import CommonQuizSetupLogic
+from logic.common.quiz_editor import CommonQuizEditorLogic
 from logic.common.loading import CommonLoadingLogic
 from logic.common.countdown import CommonCountdownLogic
 from logic.common.about import CommonAboutLogic
@@ -63,6 +69,9 @@ SCREEN_INFO: dict[Screens, tuple[BaseScreen, BaseLogic]] = {
     Screens.SERVER_FINAL_RESULT: (ServerFinalResultScreen, ServerFinalResultLogic),
     # Common
     Screens.COMMON_MENU: (CommonMenuScreen, CommonMenuLogic),
+    Screens.COMMON_QUIZ_MANAGER: (CommonQuizManagerScreen, CommonQuizManagerLogic),
+    Screens.COMMON_QUIZ_SETUP: (CommonQuizSetupScreen, CommonQuizSetupLogic),
+    Screens.COMMON_QUIZ_EDITOR: (CommonQuizEditorScreen, CommonQuizEditorLogic),
     Screens.COMMON_LOADING: (CommonLoadingScreen, CommonLoadingLogic),
     Screens.COMMON_COUNTDOWN: (CommonCountdownScreen, CommonCountdownLogic),
     Screens.COMMON_ABOUT: (CommonAboutScreen, CommonAboutLogic),

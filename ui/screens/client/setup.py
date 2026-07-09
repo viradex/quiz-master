@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import (
+    QWidget,
     QLabel,
     QPushButton,
     QLineEdit,
@@ -6,7 +7,6 @@ from PyQt6.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QFormLayout,
-    QSizePolicy,
 )
 from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -44,7 +44,6 @@ class ClientSetupScreen(BaseScreen):
 
         ip_lbl = QLabel("Server IP:")
         ip_lbl.setFont(form_font)
-        ip_lbl.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred)
 
         self.ip_input = QLineEdit(DEFAULT_IP_ADDRESS)
         self.ip_input.setFont(form_font)
@@ -57,20 +56,17 @@ class ClientSetupScreen(BaseScreen):
 
         nickname_lbl = QLabel("Nickname:")
         nickname_lbl.setFont(form_font)
-        nickname_lbl.setSizePolicy(
-            QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Preferred
-        )
 
         self.nickname_input = QLineEdit()
         self.nickname_input.setFont(form_font)
         self.nickname_input.returnPressed.connect(self.on_submit)
 
         # Action buttons
-        self.menu_btn = create_return_button(
+        self.return_btn = create_return_button(
             "Return to Menu", btn_width=200, btn_font_size=16
         )
-        self.menu_btn.setFixedHeight(45)
-        self.menu_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
+        self.return_btn.setFixedHeight(45)
+        self.return_btn.clicked.connect(lambda: self.go_to(Screens.COMMON_MENU))
 
         self.join_btn = QPushButton("Join")
         self.join_btn.setFixedSize(240, 50)
@@ -88,12 +84,14 @@ class ClientSetupScreen(BaseScreen):
         form_layout.addRow(nickname_lbl, self.nickname_input)
 
         btn_hbox = QHBoxLayout()
-        btn_hbox.addWidget(self.menu_btn, alignment=Qt.AlignmentFlag.AlignLeft)
+        btn_hbox.addWidget(self.return_btn, alignment=Qt.AlignmentFlag.AlignLeft)
         btn_hbox.addWidget(self.join_btn, alignment=Qt.AlignmentFlag.AlignRight)
 
-        vbox = QVBoxLayout()
-        vbox.setContentsMargins(150, 0, 150, 0)
+        vbox_wrapper = QWidget()
+        vbox_wrapper.setMaximumWidth(1000)
 
+        vbox = QVBoxLayout(vbox_wrapper)
+        vbox.setContentsMargins(20, 20, 20, 20)
         vbox.addStretch(1)
         vbox.addWidget(title)
         vbox.addSpacing(50)
@@ -102,7 +100,12 @@ class ClientSetupScreen(BaseScreen):
         vbox.addLayout(btn_hbox)
         vbox.addStretch(2)
 
-        self.setLayout(vbox)
+        hbox = QHBoxLayout()
+        hbox.addStretch(1)
+        hbox.addWidget(vbox_wrapper, stretch=6)
+        hbox.addStretch(1)
+
+        self.setLayout(hbox)
 
     def clear_fields(self) -> None:
         """Reset all form fields."""
