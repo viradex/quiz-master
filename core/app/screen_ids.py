@@ -20,6 +20,9 @@ class Screens(Enum):
 
     # Common
     COMMON_MENU = "common_menu"
+    COMMON_QUIZ_MANAGER = "common_quiz_manager"
+    COMMON_QUIZ_SETUP = "common_quiz_setup"
+    COMMON_QUIZ_EDITOR = "common_quiz_editor"
     COMMON_LOADING = "common_loading"
     COMMON_COUNTDOWN = "common_countdown"
     COMMON_ABOUT = "common_about"

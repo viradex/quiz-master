@@ -13,6 +13,7 @@ EAGER_SCREENS = {
     Screens.CLIENT_LOBBY,
     Screens.SERVER_LOBBY,
     Screens.COMMON_MENU,
+    Screens.COMMON_QUIZ_MANAGER,
     Screens.COMMON_LOADING,
 }
 

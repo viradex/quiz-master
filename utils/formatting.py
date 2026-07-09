@@ -1,3 +1,6 @@
+from datetime import datetime, timedelta
+
+
 def to_ordinal(num: int) -> str:
     """Convert a number to an ordinal (e.g. 1st, 2nd, 3rd, etc)."""
     unique_ordinals = {1: "st", 2: "nd", 3: "rd"}
@@ -13,3 +16,18 @@ def to_ordinal(num: int) -> str:
         suffix = unique_ordinals.get(num % 10, "th")
 
     return f"{num}{suffix}"
+
+
+def format_datetime(dt: datetime, start_lower: bool = False) -> str:
+    now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+
+    if dt.date() == now.date():
+        day = "today" if start_lower else "Today"
+    elif dt.date() == (now.date() - timedelta(days=1)):
+        day = "yesterday" if start_lower else "Yesterday"
+    else:
+        day = f"{dt.day} {dt.strftime('%b %Y')}"
+
+    # 12-hour format without leading zero
+    time = dt.strftime("%I:%M %p").lstrip("0").lower()
+    return f"{day}, {time}"

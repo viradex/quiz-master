@@ -59,7 +59,7 @@ class CommonAboutScreen(BaseScreen):
 
         self.license_area = QPlainTextEdit()
         self.license_area.setReadOnly(True)
-        self.license_area.setFixedWidth(500)
+        self.license_area.setFixedWidth(520)
         self.license_area.setPlainText(self.license_text)
 
         ## LAYOUTS SETUP ##
@@ -133,3 +133,7 @@ Meow."""
         else:
             self.license_area.setPlainText(self.license_text)
             self.showing_license = True
+
+    def on_leave(self):
+        self.license_area.setPlainText(self.license_text)
+        self.showing_license = True

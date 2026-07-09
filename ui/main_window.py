@@ -68,7 +68,8 @@ class MainWindow(QMainWindow):
         base_dir = Path(__file__).resolve().parent
         icon_path = base_dir / "assets" / "icons" / "icon.ico"
 
-        self.setWindowIcon(QIcon(icon_path.as_posix()))
+        file_path = icon_path.as_posix()
+        self.setWindowIcon(QIcon(file_path))
 
         # Set taskbar icon on Windows
         if sys.platform == "win32":

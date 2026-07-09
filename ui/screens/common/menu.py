@@ -46,6 +46,9 @@ class CommonMenuScreen(BaseScreen):
         self.manage_quizzes_btn = QPushButton("Manage Quizzes")
         self.manage_quizzes_btn.setFixedSize(275, 45)
         self.manage_quizzes_btn.setStyleSheet("font-size: 16px;")
+        self.manage_quizzes_btn.clicked.connect(
+            lambda: self.go_to(Screens.COMMON_QUIZ_MANAGER)
+        )
 
         self.about_btn = QPushButton("About / Help")
         self.about_btn.setFixedSize(135, 35)
