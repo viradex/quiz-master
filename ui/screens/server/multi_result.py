@@ -314,14 +314,13 @@ class ServerMultiResultScreen(BaseScreen):
         player_id = selected_item.data(Qt.ItemDataRole.UserRole)
         nickname = selected_item.text()
 
-        confirm = QMessageBox.question(
-            self,
+        confirm = self.show_question(
             "Confirm Kick",
             f"Are you sure you want to kick the player {nickname}?",
-            defaultButton=QMessageBox.StandardButton.No,
+            default="no",
         )
 
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirm:
             self.player_kicked.emit(player_id)
 
     def _get_selected_player_item(self) -> QTableWidgetItem | None:
@@ -389,8 +388,8 @@ class ServerMultiResultScreen(BaseScreen):
         else:
             self.set_leaderboard_hidden(True)
 
-            self.get_info_btn.setHidden(True)
-            self.kick_btn.setHidden(True)
+            self.get_info_btn.hide()
+            self.kick_btn.hide()
 
         # If the question is the last question, change button text
         if payload.question_num == payload.total_questions:

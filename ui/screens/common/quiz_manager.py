@@ -69,7 +69,7 @@ class CommonQuizManagerScreen(BaseScreen):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search quizzes...")
         self.search_input.setFixedHeight(35)
-        self.search_input.textEdited.connect(self.on_search_change)
+        self.search_input.textChanged.connect(self.on_search_change)
         self.search_input.setFont(list_mod_font)
         self.search_input.setStyleSheet("""
             QLineEdit {
@@ -86,25 +86,37 @@ class CommonQuizManagerScreen(BaseScreen):
 
         search_icon = self.icons_path / "search.png"
         self.search_input.addAction(
-            QIcon(search_icon.as_posix()), QLineEdit.ActionPosition.LeadingPosition
+            QIcon(str(search_icon)), QLineEdit.ActionPosition.LeadingPosition
         )
 
         sort_by_lbl = QLabel("Sort by:")
         sort_by_lbl.setStyleSheet("font-size: 14px;" "color: #888;")
 
-        # TODO down arrow appears broken due to styling
         self.sort_by_combo = QComboBox()
         self.sort_by_combo.setFixedSize(200, 35)
         self.sort_by_combo.setEditable(False)
         self.sort_by_combo.activated.connect(self.on_sort_changed)
         self.sort_by_combo.setFont(list_mod_font)
-        self.sort_by_combo.setStyleSheet("""
-            QComboBox {
+
+        chevron_down_icon = self.icons_path / "chevron_down.png"
+        self.sort_by_combo.setStyleSheet(f"""
+            QComboBox {{
                 background-color: #1e1e1e;
                 border: 1px solid #3a3a3a;
                 border-radius: 4px;
                 padding: 4px 8px;
-            }
+            }}
+
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+
+            QComboBox::down-arrow {{
+                image: url("{chevron_down_icon.as_posix()}");
+                width: 12px;
+                height: 12px;
+            }}
         """)
 
         self.sort_by_combo.addItem("Newest", QuizSortingOrder.NEWEST)
@@ -129,7 +141,7 @@ class CommonQuizManagerScreen(BaseScreen):
         scroll.setWidget(scroll_contents)
 
         self.empty_quizzes = QFrame()
-        self.empty_quizzes.setHidden(True)
+        self.empty_quizzes.hide()
         self.empty_quizzes.setObjectName("empty")
         self.empty_quizzes.setStyleSheet("""
             QFrame#empty {
@@ -198,7 +210,7 @@ class CommonQuizManagerScreen(BaseScreen):
             self.quiz_vbox.addStretch()
             return
         else:
-            self.empty_quizzes.setHidden(True)
+            self.empty_quizzes.hide()
 
         default_started = False
         starts_with_default = quizzes[0].is_premade

@@ -167,7 +167,7 @@ class ClientMultiResultScreen(BaseScreen):
         if payload.time_taken is not None:
             self.time_stat.set_value(f"{payload.time_taken:.2f}s")
         else:
-            self.time_stat.setHidden(True)
+            self.time_stat.hide()
 
         self.points_stat.set_value(str(payload.total_points))
 
@@ -175,7 +175,7 @@ class ClientMultiResultScreen(BaseScreen):
         if payload.rank is not None:
             self.rank_stat.set_value(f"#{payload.rank}")
         else:
-            self.rank_stat.setHidden(True)
+            self.rank_stat.hide()
 
     def on_leave(self) -> None:
         self.result_lbl.setText("")
