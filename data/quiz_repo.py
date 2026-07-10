@@ -11,8 +11,8 @@ class QuizRepository:
         """Initialize the quiz repo by setting paths and empty cache."""
         self.data_path = Path(__file__).resolve().parent
 
-        self.custom_quiz_path = self.data_path / "custom"
-        self.default_quiz_path = self.data_path / "default"
+        self.custom_quiz_path = self.data_path / "quizzes" / "custom"
+        self.default_quiz_path = self.data_path / "quizzes" / "default"
 
         self.quiz_cache: dict[str, Quiz] = {}
 

@@ -1,0 +1,159 @@
+{
+  "quiz_id": "d41a9c7e",
+  "quiz_title": "Guess the Movie by Emoji!",
+  "do_shuffle": true,
+  "is_premade": false,
+  "updated_at": "2026-07-03T23:51:52",
+  "questions": [
+    {
+      "question_id": "e8b42f91",
+      "question_text": "Guess the movie: 🦁👑",
+      "answer_options": ["Madagascar", "The Lion King", "Zootopia", "Tarzan"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "7c15d3ab",
+      "question_text": "Guess the movie: 🧊👸❄️",
+      "answer_options": ["Frozen", "Moana", "Brave", "Encanto"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "91af4e6d",
+      "question_text": "Guess the movie: 🦖🏞️",
+      "answer_options": ["Jumanji", "Ice Age", "Jurassic Park", "King Kong"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "3d7b5c2e",
+      "question_text": "Guess the movie: 🚢🧊❤️",
+      "answer_options": ["Jaws", "Titanic", "Cast Away", "Pirates of the Caribbean"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "5fa81d94",
+      "question_text": "Guess the movie: 🧙‍♂️⚡🦉",
+      "answer_options": [
+        "Harry Potter",
+        "The Lord of the Rings",
+        "Fantastic Beasts",
+        "Percy Jackson"
+      ],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "c29f8b73",
+      "question_text": "Guess the movie: 🤠🚀",
+      "answer_options": ["Lightyear", "Toy Story", "Cars", "Wall-E"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "84e6a1cf",
+      "question_text": "Guess the movie: 🐠🔍",
+      "answer_options": ["Shark Tale", "Finding Nemo", "Finding Dory", "The Little Mermaid"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "2abf57e8",
+      "question_text": "Guess the movie: 🤖🌍🗑️❤️",
+      "answer_options": ["Big Hero 6", "Robots", "WALL-E", "The Iron Giant"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "6d0ce492",
+      "question_text": "Guess the movie: 🕷️👨",
+      "answer_options": ["Ant-Man", "Spider-Man", "Batman", "Superman"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "bf48e17a",
+      "question_text": "Guess the movie: 🦇👨",
+      "answer_options": ["Iron Man", "Black Panther", "Batman", "The Flash"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "4fbc83d1",
+      "question_text": "Guess the movie: 🟢👹",
+      "answer_options": ["Shrek", "Monsters, Inc.", "The Hulk", "The Grinch"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "d72e9a4f",
+      "question_text": "Guess the movie: 🏴‍☠️⚔️🌊",
+      "answer_options": ["Treasure Planet", "Pirates of the Caribbean", "Moana", "Hook"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "1a5f9de3",
+      "question_text": "🚗⚡🏁",
+      "answer_options": ["Turbo", "Cars", "Speed Racer", "Herbie"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "9e37cb81",
+      "question_text": "👻🚫",
+      "answer_options": ["Casper", "Ghostbusters", "Beetlejuice", "Monster House"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "af14d6c8",
+      "question_text": "👽☎️🚲🌕",
+      "answer_options": ["Lilo & Stitch", "Paul", "E.T. the Extra-Terrestrial", "Home"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "78d3be5f",
+      "question_text": "🕶️💊💚",
+      "answer_options": ["Inception", "The Matrix", "Tron", "Ready Player One"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "53f9a2bc",
+      "question_text": "💍🌋",
+      "answer_options": [
+        "The Hobbit",
+        "The Lord of the Rings",
+        "Percy Jackson",
+        "Dungeons & Dragons"
+      ],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "c6a10f75",
+      "question_text": "🧞‍♂️🪔",
+      "answer_options": ["Aladdin", "Wish", "Moana", "Hercules"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "8f42de19",
+      "question_text": "🎈🏠",
+      "answer_options": ["Home", "Up", "Inside Out", "Cloudy with a Chance of Meatballs"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "27bd84ea",
+      "question_text": "🦈🌊",
+      "answer_options": ["Finding Nemo", "Jaws", "The Meg", "Shark Tale"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    }
+  ]
+}

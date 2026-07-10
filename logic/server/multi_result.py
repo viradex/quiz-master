@@ -31,7 +31,7 @@ class ServerMultiResultLogic(BaseLogic):
 
     def on_player_left(self, player_id: str, nickname: str) -> None:
         """When a player leaves the server."""
-        self.screen.remove_player(nickname)
+        self.screen.remove_player(player_id)
 
     def on_next_question_requested(self) -> None:
         """When the next question is requested."""
@@ -41,23 +41,27 @@ class ServerMultiResultLogic(BaseLogic):
         """When the game is requested to be ended prematurely."""
         self.controller.finish_quiz()
 
-    def on_player_info_requested(self, nickname: str) -> None:
+    def on_player_info_requested(self, player_id: str) -> None:
         """When player info is requested by the UI. Returns player info to user."""
-        player_id = self.server.registry.get_id_by_nickname(nickname)
+        # TODO Same issue as lobby logic. In fact, the code is so similar it
+        # doesn't even follow DRY principles anymore, so many fix that too :P
+        nickname = self.server.registry.get(player_id).player.nickname
 
         ip, port = self.server.get_player_address(player_id)
         hostname = get_hostname(ip)
 
-        self.screen.show_player_info(nickname, ip, port, hostname)
+        self.screen.show_info(
+            "Player Info",
+            f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
+        )
 
-    def on_player_kicked(self, nickname: str) -> None:
+    def on_player_kicked(self, player_id: str) -> None:
         """When a player is requested to be kicked by the UI.
         Sends a request to kick the player to the server."""
-        player_id = self.server.registry.get_id_by_nickname(nickname)
         self.server.kick_player(player_id, "Kicked by host")
 
         self.screen.set_status("Kicked player", 2000)
-        self.screen.remove_player(nickname)
+        self.screen.remove_player(player_id)
 
     def on_final_results_ready(
         self,

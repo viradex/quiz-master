@@ -57,6 +57,9 @@ class Quiz:
             `(False, "no_premade_info", None)`
                 The premade quiz info does not exist.
 
+            `(False, "invalid_updated_at", None)`
+                The last updated date is in the future.
+
             `(False, "id_used", index)`
                 Question ID has been duplicated.
 
@@ -94,6 +97,9 @@ class Quiz:
 
         if not isinstance(self.is_premade, bool):
             return False, QuizValidationResult.NO_PREMADE_INFO, None
+
+        if self.updated_at is not None and self.updated_at > datetime.now():
+            return False, QuizValidationResult.INVALID_UPDATED_AT, None
 
         # Store all IDs that were currently used
         # Set used to increase lookup speed
@@ -135,9 +141,13 @@ class Quiz:
     @classmethod
     def from_dict(cls, data: dict) -> "Quiz":
         """Convert from a dictionary for deserialization."""
-        updated_at = data["updated_at"]
-        if updated_at is not None:
-            dt_updated = datetime.fromisoformat(updated_at)
+        updated_at = data.get("updated_at")
+
+        try:
+            if updated_at is not None:
+                updated_at = datetime.fromisoformat(updated_at)
+        except (TypeError, ValueError):
+            updated_at = None
 
         return cls(
             quiz_id=data["quiz_id"],
@@ -145,5 +155,5 @@ class Quiz:
             questions=[Question.from_dict(q) for q in data["questions"]],
             do_shuffle=data["do_shuffle"],
             is_premade=data["is_premade"],
-            updated_at=updated_at if updated_at is None else dt_updated,
+            updated_at=updated_at,
         )

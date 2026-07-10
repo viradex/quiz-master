@@ -208,9 +208,14 @@ class ServerMultiResultScreen(BaseScreen):
         else:
             self.leaderboard_stack.setCurrentWidget(self.leaderboard_table)
 
-    def show_leaderboard_values(self, players: list[tuple[str, str, str, str]]) -> None:
-        """Show the entries in the leaderboard table, and color ranks accordingly to the podium."""
-        for index, (rank, name, gained, total) in enumerate(players):
+    def show_leaderboard_values(
+        self, players: list[tuple[str, str, str, str, str]]
+    ) -> None:
+        """
+        Show the entries in the leaderboard table, and color ranks accordingly to the podium.
+        The players list should contain tuples with this info in the following order: `(player_id, rank, name, gained, total)`.
+        """
+        for index, (player_id, rank, name, gained, total) in enumerate(players):
             row = self.leaderboard_table.rowCount()
             self.leaderboard_table.insertRow(row)
 
@@ -218,6 +223,9 @@ class ServerMultiResultScreen(BaseScreen):
             name_item = QTableWidgetItem(name)
             gained_item = QTableWidgetItem(gained)
             total_item = QTableWidgetItem(total)
+
+            # Store hidden player ID
+            name_item.setData(Qt.ItemDataRole.UserRole, player_id)
 
             # Color according to podium
             if index == 0:
@@ -248,31 +256,20 @@ class ServerMultiResultScreen(BaseScreen):
         """Remove all rows in the leaderboard table."""
         self.leaderboard_table.setRowCount(0)
 
-    def remove_player(self, nickname: str) -> bool:
+    def remove_player(self, player_id: str) -> bool:
         """Remove a player from the leaderboard."""
         for row in range(self.leaderboard_table.rowCount()):
             item = self.leaderboard_table.item(row, 1)
 
-            if item is not None and item.text() == nickname:
+            if item.data(Qt.ItemDataRole.UserRole) == player_id:
                 self.leaderboard_table.removeRow(row)
-
-                self._update_ranks()
                 return True
 
         return False
 
-    def show_player_info(
-        self, nickname: str, ip: str, port: str | int, hostname: str
-    ) -> None:
-        """Displays a dialog box showing player information."""
-        self.show_info(
-            "Player Info",
-            f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
-        )
-
     def on_selection_changed(self) -> None:
         # If player is selected, enable player buttons
-        if self._get_selected_player() is not None:
+        if self._get_selected_player_item() is not None:
             self.get_info_btn.setDisabled(False)
             self.kick_btn.setDisabled(False)
         else:
@@ -295,44 +292,47 @@ class ServerMultiResultScreen(BaseScreen):
 
     def on_get_info(self) -> None:
         """Get player info for the selected player."""
-        selected_player = self._get_selected_player()
+        selected_item = self._get_selected_player_item()
 
         # Should not happen, but here as a precaution
-        if selected_player is None:
+        if selected_item is None:
             self.show_warning("No Player Selected", "Please select a player.")
             return
 
-        self.player_info_requested.emit(selected_player)
+        player_id = selected_item.data(Qt.ItemDataRole.UserRole)
+        self.player_info_requested.emit(player_id)
 
     def on_kick_player(self) -> None:
         """Kick the selected player."""
-        selected_player = self._get_selected_player()
+        selected_item = self._get_selected_player_item()
 
         # Should not happen, but here as a precaution
-        if selected_player is None:
+        if selected_item is None:
             self.show_warning("No Player Selected", "Please select a player.")
             return
+
+        player_id = selected_item.data(Qt.ItemDataRole.UserRole)
+        nickname = selected_item.text()
 
         confirm = QMessageBox.question(
             self,
             "Confirm Kick",
-            f"Are you sure you want to kick the player {selected_player}?",
+            f"Are you sure you want to kick the player {nickname}?",
             defaultButton=QMessageBox.StandardButton.No,
         )
 
         if confirm == QMessageBox.StandardButton.Yes:
-            self.player_kicked.emit(selected_player)
+            self.player_kicked.emit(player_id)
 
-    def _get_selected_player(self) -> str | None:
-        """Get selected player name from leaderboard table."""
+    def _get_selected_player_item(self) -> QTableWidgetItem | None:
+        """Get the selected player item from the leaderboard table."""
         row = self.leaderboard_table.currentRow()
 
         # Nothing is selected
         if row == -1:
             return None
 
-        item = self.leaderboard_table.item(row, 1)
-        return item.text() if item else None
+        return self.leaderboard_table.item(row, 1)
 
     def _update_ranks(self):
         """Refresh ranks when a player is removed from the leaderboard."""
@@ -377,8 +377,9 @@ class ServerMultiResultScreen(BaseScreen):
             for player in payload.leaderboard:
                 leaderboard_players.append(
                     (
+                        player["player_id"],
                         f"#{player['rank']}",
-                        player["name"],
+                        player["nickname"],
                         f"+{player['gained']}",
                         str(player["total"]),
                     )

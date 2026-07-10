@@ -79,14 +79,6 @@ class PlayerRegistry:
         with self.lock:
             return self.sessions.get(player_id)
 
-    def get_id_by_nickname(self, nickname: str) -> str | None:
-        """Get player ID from the registry based on nickname."""
-        for player_id, session in self.sessions.items():
-            if session.player.nickname == nickname:
-                return player_id
-
-        return None
-
     def get_all(self) -> dict[str, Session]:
         """Retrieve all clients from the registry as a dictionary, with player ID as the key."""
         with self.lock:

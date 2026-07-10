@@ -2,6 +2,7 @@ from pathlib import Path
 from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget,
+    QFrame,
     QLabel,
     QPushButton,
     QLineEdit,
@@ -10,21 +11,28 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QGridLayout,
     QScrollArea,
-    QSizePolicy,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QFont, QIcon
 
 from core.app.screen_ids import Screens
+from core.app.enums import QuizSortingOrder
 from ui.screens.base_screen import BaseScreen
 from ui.components.card import Card, QuizCard
 from models.quiz import Quiz
 
 from ui.components.button import create_return_button
+from ui.components.dialogs import confirm_warning
 
 
 class CommonQuizManagerScreen(BaseScreen):
     title_text = "Quiz Master – Manage Quizzes"
+
+    edit_requested = pyqtSignal(str)
+    delete_requested = pyqtSignal(str)
+
+    search_requested = pyqtSignal(str)
+    sort_requested = pyqtSignal(object)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -61,6 +69,7 @@ class CommonQuizManagerScreen(BaseScreen):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search quizzes...")
         self.search_input.setFixedHeight(35)
+        self.search_input.textEdited.connect(self.on_search_change)
         self.search_input.setFont(list_mod_font)
         self.search_input.setStyleSheet("""
             QLineEdit {
@@ -74,6 +83,7 @@ class CommonQuizManagerScreen(BaseScreen):
                 color: #888;
             }
         """)
+
         search_icon = self.icons_path / "search.png"
         self.search_input.addAction(
             QIcon(search_icon.as_posix()), QLineEdit.ActionPosition.LeadingPosition
@@ -84,13 +94,10 @@ class CommonQuizManagerScreen(BaseScreen):
 
         # TODO down arrow appears broken due to styling
         self.sort_by_combo = QComboBox()
-        self.sort_by_combo.addItems(["Newest", "Oldest", "Name (A-Z)", "Name (Z-A)"])
         self.sort_by_combo.setFixedSize(200, 35)
         self.sort_by_combo.setEditable(False)
+        self.sort_by_combo.activated.connect(self.on_sort_changed)
         self.sort_by_combo.setFont(list_mod_font)
-        self.sort_by_combo.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
-        )
         self.sort_by_combo.setStyleSheet("""
             QComboBox {
                 background-color: #1e1e1e;
@@ -99,6 +106,11 @@ class CommonQuizManagerScreen(BaseScreen):
                 padding: 4px 8px;
             }
         """)
+
+        self.sort_by_combo.addItem("Newest", QuizSortingOrder.NEWEST)
+        self.sort_by_combo.addItem("Oldest", QuizSortingOrder.OLDEST)
+        self.sort_by_combo.addItem("Name (A-Z)", QuizSortingOrder.NAME_ASC)
+        self.sort_by_combo.addItem("Name (Z-A)", QuizSortingOrder.NAME_DESC)
 
         sort_by_hbox = QHBoxLayout()
         sort_by_hbox.addStretch()
@@ -114,11 +126,37 @@ class CommonQuizManagerScreen(BaseScreen):
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)
 
         scroll_contents = QWidget()
+        scroll.setWidget(scroll_contents)
+
+        self.empty_quizzes = QFrame()
+        self.empty_quizzes.setHidden(True)
+        self.empty_quizzes.setObjectName("empty")
+        self.empty_quizzes.setStyleSheet("""
+            QFrame#empty {
+                background-color: transparent;
+                border: 2px dotted #5C5C5C;
+                border-radius: 10px;
+            }
+        """)
+
+        empty_title_lbl = QLabel("No Quizzes Found")
+        empty_title_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        empty_title_lbl.setStyleSheet(
+            "font-size: 20px;" "font-weight: 600;" "color: #8A8A8A"
+        )
+
+        empty_desc_lbl = QLabel("Try a different search, or create a new quiz.")
+        empty_desc_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        empty_desc_lbl.setStyleSheet("font-size: 14px;" "color: #8A8A8A")
+
+        empty_vbox = QVBoxLayout(self.empty_quizzes)
+        empty_vbox.setContentsMargins(16, 12, 16, 12)
+        empty_vbox.addWidget(empty_title_lbl)
+        empty_vbox.addWidget(empty_desc_lbl)
 
         self.quiz_vbox = QVBoxLayout(scroll_contents)
         self.quiz_vbox.setSpacing(10)
-
-        scroll.setWidget(scroll_contents)
+        self.quiz_vbox.addWidget(self.empty_quizzes)
 
         ## LAYOUTS SETUP ##
         nav_grid = QGridLayout()
@@ -155,6 +193,13 @@ class CommonQuizManagerScreen(BaseScreen):
     def add_quizzes(
         self, quizzes: list[Quiz], do_default_spacing: bool = False
     ) -> None:
+        if not quizzes:
+            self.empty_quizzes.setHidden(False)
+            self.quiz_vbox.addStretch()
+            return
+        else:
+            self.empty_quizzes.setHidden(True)
+
         default_started = False
         starts_with_default = quizzes[0].is_premade
 
@@ -166,7 +211,15 @@ class CommonQuizManagerScreen(BaseScreen):
                 and do_default_spacing
             ):
                 default_started = True
-                self.quiz_vbox.addSpacing(20)
+
+                divider = QFrame()
+                divider.setFrameShape(QFrame.Shape.HLine)
+                divider.setFrameShadow(QFrame.Shadow.Plain)
+                divider.setStyleSheet("color: #3C3C3C;")
+
+                self.quiz_vbox.addSpacing(10)
+                self.quiz_vbox.addWidget(divider)
+                self.quiz_vbox.addSpacing(10)
 
             quiz_card = QuizCard(
                 quiz.quiz_id,
@@ -175,77 +228,55 @@ class CommonQuizManagerScreen(BaseScreen):
                 quiz.is_premade,
                 quiz.updated_at,
             )
-            quiz_card.delete_quiz_requested.connect(self.delete_quiz)
-            quiz_card.edit_quiz_requested.connect(self.edit_quiz)
+
+            quiz_card.edit_quiz_requested.connect(self.on_edit_quiz)
+            quiz_card.delete_quiz_requested.connect(self.on_delete_quiz)
 
             self.quiz_vbox.addWidget(quiz_card)
 
         self.quiz_vbox.addStretch()
 
-    def remove_all_quizzes(self):
-        while self.quiz_vbox.count():
-            item = self.quiz_vbox.takeAt(0)
+    def remove_all_quizzes(self) -> None:
+        # Doing in reversed order as removing indicies while iterating starting from 0
+        # can cause some to be skipped. Starting from the end prevents that.
+        for i in reversed(range(self.quiz_vbox.count())):
+            item = self.quiz_vbox.itemAt(i)
             widget = item.widget()
 
-            if widget is not None:
+            if widget is None:
+                # Remove stretchers and spacers
+                self.quiz_vbox.removeItem(item)
+            elif widget is self.empty_quizzes:
+                continue
+            else:
+                # Remove all other widets
+                self.quiz_vbox.removeWidget(widget)
                 widget.deleteLater()
 
-    def delete_quiz(self, title: str) -> None:
-        print(f"Delete: {title}")
+    def on_search_change(self, query: str) -> None:
+        self.search_requested.emit(query)
 
-    def edit_quiz(self, title: str) -> None:
-        print(f"Edit: {title}")
+    def on_sort_changed(self, index: int) -> None:
+        sort_order = self.sort_by_combo.currentData()
+        self.sort_requested.emit(sort_order)
 
-    def on_enter(self, payload=None) -> None:
-        quizzes = [
-            Quiz(
-                quiz_id="1",
-                quiz_title="Weird But True!",
-                questions=[""] * 20,
-                do_shuffle=False,
-                is_premade=False,
-                updated_at=datetime(2026, 4, 3, 21, 8, 54),
-            ),
-            Quiz(
-                quiz_id="2",
-                quiz_title="Guess the Movie by Emojis!",
-                questions=[""] * 20,
-                do_shuffle=True,
-                is_premade=False,
-                updated_at=datetime(2026, 3, 14, 16, 20, 0),
-            ),
-            Quiz(
-                quiz_id="3",
-                quiz_title="Python Quiz",
-                questions=[""] * 12,
-                do_shuffle=True,
-                is_premade=False,
-                updated_at=datetime(2026, 1, 28, 9, 15, 37),
-            ),
-            Quiz(
-                quiz_id="4",
-                quiz_title="General Knowledge Quiz",
-                questions=[""] * 10,
-                do_shuffle=False,
-                is_premade=True,
-            ),
-            Quiz(
-                quiz_id="5",
-                quiz_title="Mathematics Quiz",
-                questions=[""] * 10,
-                do_shuffle=False,
-                is_premade=True,
-            ),
-            Quiz(
-                quiz_id="6",
-                quiz_title="Science Quiz",
-                questions=[""] * 10,
-                do_shuffle=False,
-                is_premade=True,
-            ),
-        ]
+    def on_edit_quiz(self, quiz_id: str, quiz_title: str) -> None:
+        self.edit_requested.emit(quiz_id)
 
-        self.add_quizzes(quizzes, do_default_spacing=True)
+    def on_delete_quiz(self, quiz_id: str, quiz_title: str) -> None:
+        confirm = confirm_warning(
+            self,
+            "Confirm Deleting Quiz",
+            f'Are you sure you want to permanently delete the quiz "{quiz_title}"? This cannot be undone!',
+        )
 
-    def on_leave(self):
+        if confirm:
+            self.delete_requested.emit(quiz_id)
+
+    def on_leave(self) -> None:
+        self.search_input.setText("")
+
+        # TODO should we also reset sorting upon leaving screen?
+        self.sort_by_combo.setCurrentIndex(0)
+
         self.remove_all_quizzes()

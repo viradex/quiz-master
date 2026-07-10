@@ -1,0 +1,117 @@
+{
+  "quiz_id": "78e4359d",
+  "quiz_title": "Weird But True!",
+  "do_shuffle": false,
+  "is_premade": false,
+  "updated_at": "2026-06-04T11:31:31",
+  "questions": [
+    {
+      "question_id": "9f2b7c1a",
+      "question_text": "What were space rocks called in Ancient Greece?",
+      "answer_options": ["Hairy Stars", "Tailed Rocks", "Space Rocks", "Light Rocks"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "4d81e5f3",
+      "question_text": "What would happen if you fell into a black hole?",
+      "answer_options": [
+        "You'd disappear",
+        "You'd be in an alternate universe",
+        "You'd stretch out like spaghetti",
+        "You'd be thrown out"
+      ],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "c73a9d60",
+      "question_text": "What color is the sunset on Mars?",
+      "answer_options": ["Red", "Blue", "Yellow", "Green"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "18be42af",
+      "question_text": "Do meteorites fall every day on Earth?",
+      "answer_options": ["True", "False"],
+      "correct_answer_index": 0,
+      "time_limit": 10
+    },
+    {
+      "question_id": "a5f09c3e",
+      "question_text": "How large is the largest meteorite estimated to be?",
+      "answer_options": ["20 tons", "30 tons", "40 tons", "50 tons"],
+      "correct_answer_index": 3,
+      "time_limit": 20
+    },
+    {
+      "question_id": "6e14b8d9",
+      "question_text": "what does moon dust smell like?",
+      "answer_options": ["Nothing", "Burned gunpowder", "Dust", "Pollen"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "d2c4fa71",
+      "question_text": "Do astronauts' footprints disappear after 5 years?",
+      "answer_options": ["True", "False"],
+      "correct_answer_index": 1,
+      "time_limit": 10
+    },
+    {
+      "question_id": "3b8f1e5c",
+      "question_text": "How hot can the temperature on the Moon get?",
+      "answer_options": [
+        "It can never get above freezing",
+        "Around 50°C",
+        "Higher than boiling water",
+        "Average hottest temperature on Earth (aprox. 60°C)"
+      ],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "f94a206d",
+      "question_text": "Is it possible for sea creatures to rain down from the sky by waterspouts?",
+      "answer_options": ["True", "False"],
+      "correct_answer_index": 0,
+      "time_limit": 10
+    },
+    {
+      "question_id": "81d76b2f",
+      "question_text": "What animal rained down on a schoolyard in Louisiana?",
+      "answer_options": ["Worms", "Fish", "Spiders", "Elephants"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "b637ec48",
+      "question_text": "What was the speed of the fastest tornado recorded?",
+      "answer_options": ["200 mph", "250 mph", "300 mph", "350 mph"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "0ca9f5e1",
+      "question_text": "Who does lightning strike more often?",
+      "answer_options": ["Men", "Women"],
+      "correct_answer_index": 0,
+      "time_limit": 10
+    },
+    {
+      "question_id": "e84d13ac",
+      "question_text": "What was the size of the largest hailstone in the U.S?",
+      "answer_options": ["Golf ball", "Tennis ball", "Soccer ball", "Basketball"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "57ab90de",
+      "question_text": "Bolts of lightning can never shoot out of an erupting volcano. True or False?",
+      "answer_options": ["True", "False"],
+      "correct_answer_index": 1,
+      "time_limit": 10
+    }
+  ]
+}
