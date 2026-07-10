@@ -50,6 +50,7 @@ class QuizValidationResult(Enum):
     EMPTY_QUESTIONS = "empty_questions"
     NO_SHUFFLE_INFO = "no_shuffle_info"
     NO_PREMADE_INFO = "no_premade_info"
+    INVALID_UPDATED_AT = "invalid_updated_at"
 
     # Individual question errors
     ID_USED = "id_used"
@@ -60,3 +61,12 @@ class QuizValidationResult(Enum):
 
     # Success
     OK = "ok"
+
+
+class QuizSortingOrder(Enum):
+    """Possible quiz sorting orders for the manager."""
+
+    NEWEST = "newest"
+    OLDEST = "oldest"
+    NAME_ASC = "name_asc"
+    NAME_DESC = "name_desc"

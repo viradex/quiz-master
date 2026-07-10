@@ -159,8 +159,8 @@ class Leaderboard:
 
         for player in players:
             player_data = {
-                "id": player.player_id,
-                "name": player.nickname,
+                "player_id": player.player_id,
+                "nickname": player.nickname,
                 "rank": self.get_player_rank(player.player_id),
                 "total": player.total_points,
             }

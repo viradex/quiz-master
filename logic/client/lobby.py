@@ -34,10 +34,10 @@ class ClientLobbyLogic(BaseLogic):
             is_you = player == own_nickname
             self.screen.add_player_lobby(player, is_you)
 
-    def on_player_joined(self, player: str) -> None:
+    def on_player_joined(self, nickname: str) -> None:
         """When a player joins. Prompts UI to add a player to the player list."""
-        if player != self.game_client.nickname:
-            self.screen.add_player_lobby(player, is_you=False)
+        if nickname != self.game_client.nickname:
+            self.screen.add_player_lobby(nickname, is_you=False)
 
     def on_player_left(self, nickname: str) -> None:
         """When another player leaves. Prompts UI to add a player to the player list."""

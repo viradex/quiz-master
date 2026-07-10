@@ -250,7 +250,7 @@ class ServerFinalResultScreen(BaseScreen):
             leaderboard_players.append(
                 (
                     f"#{player['rank']}",
-                    player["name"],
+                    player["nickname"],
                     str(player["total"]),
                 )
             )

@@ -157,8 +157,8 @@ class StatCard(QFrame):
 class QuizCard(QFrame):
     """Creates a quiz card, which is for the quiz manager and contains information and actions for a single quiz."""
 
-    edit_quiz_requested = pyqtSignal(str)
-    delete_quiz_requested = pyqtSignal(str)
+    edit_quiz_requested = pyqtSignal(str, str)
+    delete_quiz_requested = pyqtSignal(str, str)
 
     def __init__(
         self,
@@ -220,7 +220,7 @@ class QuizCard(QFrame):
         self.delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.delete_btn.setAutoRaise(True)
         self.delete_btn.clicked.connect(
-            lambda: self.delete_quiz_requested.emit(self.quiz_id)
+            lambda: self.delete_quiz_requested.emit(self.quiz_id, self.quiz_title)
         )
         self.delete_btn.setStyleSheet("""
             QToolButton {
@@ -248,7 +248,7 @@ class QuizCard(QFrame):
         self.edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.edit_btn.setAutoRaise(True)
         self.edit_btn.clicked.connect(
-            lambda: self.edit_quiz_requested.emit(self.quiz_id)
+            lambda: self.edit_quiz_requested.emit(self.quiz_id, self.quiz_title)
         )
         self.edit_btn.setStyleSheet("""
             QToolButton {

@@ -20,7 +20,7 @@ class GameServer(QObject):
     start_failed = pyqtSignal(object)
     started = pyqtSignal()
 
-    player_joined = pyqtSignal(str)
+    player_joined = pyqtSignal(str, str)
     player_left = pyqtSignal(str, str)
 
     answer_submitted = pyqtSignal(str, int, float)
@@ -299,7 +299,7 @@ class GameServer(QObject):
             self._kick_client(client, "The player does not fit in the server")
             return
 
-        self.player_joined.emit(nickname)
+        self.player_joined.emit(client.player_id, nickname)
 
         # Inform clients of player join
         self.broadcast(

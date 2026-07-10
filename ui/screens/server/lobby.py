@@ -172,7 +172,7 @@ class ServerLobbyScreen(BaseScreen):
 
     def on_selection_changed(self) -> None:
         # If player is selected, enable player buttons
-        if self._get_selected_player() is not None:
+        if self._get_selected_player_item() is not None:
             self.get_info_btn.setDisabled(False)
             self.kick_btn.setDisabled(False)
         else:
@@ -185,14 +185,14 @@ class ServerLobbyScreen(BaseScreen):
             f"Players: {self.lobby_table.rowCount()} / {MAX_PLAYERS}"
         )
 
-    def add_player_lobby(self, player: str) -> None:
+    def add_player_lobby(self, player_id: str, nickname: str) -> None:
         """Adds a player to the lobby table and increases the player counter."""
-        self._add_player(player)
+        self._add_player(player_id, nickname)
         self.set_player_count()
 
-    def remove_player_lobby(self, player: str) -> None:
+    def remove_player_lobby(self, player_id: str) -> None:
         """Removes a player from the lobby table and decreases the player counter."""
-        self._remove_player(player)
+        self._remove_player(player_id)
         self.set_player_count()
 
     def reset_lobby(self) -> None:
@@ -200,15 +200,6 @@ class ServerLobbyScreen(BaseScreen):
         self.lobby_table.setRowCount(0)
         self.set_player_count()
         self.quiz_combo.clear()
-
-    def show_player_info(
-        self, nickname: str, ip: str, port: str | int, hostname: str
-    ) -> None:
-        """Displays a dialog box showing player information."""
-        self.show_info(
-            "Player Info",
-            f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
-        )
 
     def close_lobby(self) -> None:
         """Displays a warning modal box before closing the server."""
@@ -221,9 +212,13 @@ class ServerLobbyScreen(BaseScreen):
         if confirm:
             self.server_closed.emit()
 
-    def set_quizzes(self, quizzes: list[str]) -> None:
+    def set_quizzes(self, quizzes: dict[str, str]) -> None:
         """Set the quizzes that can be selected from the dropdown."""
-        self.quiz_combo.set_items(quizzes)
+        for quiz_id, quiz_title in quizzes.items():
+            self.quiz_combo.addItem(quiz_title, quiz_id)
+
+        # Leave no quiz selected at first
+        self.quiz_combo.setCurrentIndex(-1)
 
     def check_start_game_state(self) -> None:
         """Loosely checks if the game can be started, and if the checks are successful, enables the Start button."""
@@ -241,69 +236,70 @@ class ServerLobbyScreen(BaseScreen):
 
     def on_get_info(self) -> None:
         """Get player info for the selected player."""
-        selected_player = self._get_selected_player()
+        selected_item = self._get_selected_player_item()
 
         # Should not happen, but here as a precaution
-        if selected_player is None:
+        if selected_item is None:
             self.show_warning("No Player Selected", "Please select a player.")
             return
 
-        self.player_info_requested.emit(selected_player)
+        player_id = selected_item.data(Qt.ItemDataRole.UserRole)
+        self.player_info_requested.emit(player_id)
 
     def on_kick_player(self) -> None:
         """Kick the selected player."""
-        selected_player = self._get_selected_player()
+        selected_item = self._get_selected_player_item()
 
         # Should not happen, but here as a precaution
-        if selected_player is None:
+        if selected_item is None:
             self.show_warning("No Player Selected", "Please select a player.")
             return
+
+        player_id = selected_item.data(Qt.ItemDataRole.UserRole)
+        nickname = selected_item.text()
 
         confirm = QMessageBox.question(
             self,
             "Confirm Kick",
-            f"Are you sure you want to kick the player {selected_player}?",
+            f"Are you sure you want to kick the player {nickname}?",
             defaultButton=QMessageBox.StandardButton.No,
         )
 
         if confirm == QMessageBox.StandardButton.Yes:
-            self.player_kicked.emit(selected_player)
+            self.player_kicked.emit(player_id)
 
     def on_start_game(self) -> None:
-        self.game_started.emit(self.quiz_combo.currentText())
+        self.game_started.emit(self.quiz_combo.currentData())
 
-    def _get_selected_player(self) -> str | None:
-        """Get selected player name from lobby table."""
+    def _get_selected_player_item(self) -> QTableWidgetItem | None:
+        """Get the selected player item from the lobby table."""
         selected_items = self.lobby_table.selectedItems()
+        return selected_items[0] if selected_items else None
 
-        if selected_items:
-            item = selected_items[0]
-            return item.text()
-        else:
-            return None
-
-    def _add_player(self, player: str) -> None:
+    def _add_player(self, player_id: str, nickname: str) -> None:
         """Add a player to the lobby table."""
         row = self.lobby_table.rowCount()
         self.lobby_table.insertRow(row)
 
-        item = QTableWidgetItem(player)
+        item = QTableWidgetItem(nickname)
         item.setTextAlignment(
             Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
         )
 
+        # Store hidden player ID
+        item.setData(Qt.ItemDataRole.UserRole, player_id)
+
         self.lobby_table.setItem(row, 0, item)
         self.check_start_game_state()
 
-    def _remove_player(self, player: str) -> bool:
-        """Remove a player from the lobby table based on nickname."""
+    def _remove_player(self, player_id: str) -> bool:
+        """Remove a player from the lobby table based on player ID."""
         for row in range(self.lobby_table.rowCount()):
             item = self.lobby_table.item(row, 0)
 
-            if item and item.text() == player:
+            if item.data(Qt.ItemDataRole.UserRole) == player_id:
                 self.lobby_table.removeRow(row)
                 self.check_start_game_state()
-
                 return True
 
         return False

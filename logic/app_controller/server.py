@@ -30,12 +30,11 @@ class ServerAppController:
         self.controller.started_question.connect(self.on_started_question)
         self.controller.no_players_found.connect(self.on_no_players_found)
 
-    def on_player_joined(self, nickname: str) -> None:
+    def on_player_joined(self, player_id: str, nickname: str) -> None:
         """When a player joins. Adds player to the game controller."""
-        player_id = self.server.registry.get_id_by_nickname(nickname)
         player = self.server.registry.get(player_id).player
-
         self.controller.add_player(player)
+
         self.window.set_status(f"{nickname} joined the game", 5000)
 
     def on_player_left(self, player_id: str, nickname: str) -> None:
