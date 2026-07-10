@@ -214,6 +214,7 @@ class ServerLobbyScreen(BaseScreen):
 
     def set_quizzes(self, quizzes: dict[str, str]) -> None:
         """Set the quizzes that can be selected from the dropdown."""
+        # TODO add some sort of differentiation for quizzes with the same name
         for quiz_id, quiz_title in quizzes.items():
             self.quiz_combo.addItem(quiz_title, quiz_id)
 
@@ -258,14 +259,13 @@ class ServerLobbyScreen(BaseScreen):
         player_id = selected_item.data(Qt.ItemDataRole.UserRole)
         nickname = selected_item.text()
 
-        confirm = QMessageBox.question(
-            self,
+        confirm = self.show_question(
             "Confirm Kick",
             f"Are you sure you want to kick the player {nickname}?",
-            defaultButton=QMessageBox.StandardButton.No,
+            default="no",
         )
 
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirm:
             self.player_kicked.emit(player_id)
 
     def on_start_game(self) -> None:

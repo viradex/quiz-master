@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
 from datetime import datetime
 import random
+import secrets
 
 from core.app.enums import QuizValidationResult
 from models.question import Question
@@ -16,6 +17,11 @@ class Quiz:
     do_shuffle: bool
     is_premade: bool
     updated_at: datetime | None = None
+
+    @staticmethod
+    def generate_random_id() -> str:
+        """Generate a random ID. Static method; can be used when initializing a Quiz."""
+        return secrets.token_hex(4)
 
     def add_question(self, question: Question) -> None:
         """Adds a new question to the quiz."""
@@ -41,45 +47,8 @@ class Quiz:
         """
         Validates the quiz and its questions.
 
-        Return values:
-            `(False, "empty_id", None)`
-                Quiz ID does not exist or is not a string.
-
-            `(False, "empty_title", None)`
-                Quiz title does not exist or is not a string.
-
-            `(False, "empty_questions", None)`
-                Quiz questions do not exist.
-
-            `(False, "no_shuffle_info", None)`
-                The shuffle questions info does not exist.
-
-            `(False, "no_premade_info", None)`
-                The premade quiz info does not exist.
-
-            `(False, "invalid_updated_at", None)`
-                The last updated date is in the future.
-
-            `(False, "id_used", index)`
-                Question ID has been duplicated.
-
-            `(False, "empty_question", index)`
-                Question text is blank.
-
-            `(False, "invalid_answers", index)`
-                Answers are not a list or are out of the valid range.
-
-            `(False, "invalid_correct_answer", index)`
-                The correct answer index is not a number or out of the valid range.
-
-            `(False, "invalid_time", index)`
-                The time is not a positive integer.
-
-            `(True, "ok", None)`
-                All validation checks passed.
-
-        Returns:
-            Return format is `(passed, error, answer_index)` for values discussed above.
+        Return format is `(success, error, answer_index)`. If the error is with the quiz
+        in general, `answer_index` is None. The error type is of `QuizValidationResult`.
         """
 
         # General quiz metadata information validation
@@ -134,7 +103,8 @@ class Quiz:
         data = asdict(self)
 
         if self.updated_at is not None:
-            data["updated_at"] = self.updated_at.isoformat()
+            # Avoid saving microseconds using timespec="seconds"
+            data["updated_at"] = self.updated_at.isoformat(timespec="seconds")
 
         return data
 
@@ -149,11 +119,14 @@ class Quiz:
         except (TypeError, ValueError):
             updated_at = None
 
-        return cls(
-            quiz_id=data["quiz_id"],
-            quiz_title=data["quiz_title"],
-            questions=[Question.from_dict(q) for q in data["questions"]],
-            do_shuffle=data["do_shuffle"],
-            is_premade=data["is_premade"],
-            updated_at=updated_at,
-        )
+        try:
+            return cls(
+                quiz_id=data["quiz_id"],
+                quiz_title=data["quiz_title"],
+                questions=[Question.from_dict(q) for q in data["questions"]],
+                do_shuffle=data["do_shuffle"],
+                is_premade=data["is_premade"],
+                updated_at=updated_at,
+            )
+        except TypeError as e:
+            raise ValueError(f"Invalid format: {e}") from e

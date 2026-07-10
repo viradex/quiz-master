@@ -25,7 +25,8 @@ class BaseScreen(QWidget):
         self.navigate.emit(screen, payload)
 
     def set_title(self, title: str) -> None:
-        """Change the application window title."""
+        """Change the application window title.
+        The title should preferably be "Quiz Master – {window name}"."""
         self.title_change.emit(title)
 
     def set_status(self, message: str, timeout: int = 0) -> None:
@@ -49,6 +50,27 @@ class BaseScreen(QWidget):
     def show_info(self, title: str, desc: str) -> None:
         """Show an informational modal window."""
         QMessageBox.information(self, title, desc)
+
+    def show_question(self, title: str, desc: str, default: str = "no") -> bool:
+        """Show an question modal window. Returns True if Yes was selected."""
+        default = default.lower()
+        if default not in ("yes", "no"):
+            raise ValueError(f"Invalid default value: {default}")
+
+        default_button = (
+            QMessageBox.StandardButton.No
+            if default == "no"
+            else QMessageBox.StandardButton.Yes
+        )
+
+        confirm = QMessageBox.question(
+            self,
+            title,
+            desc,
+            defaultButton=default_button,
+        )
+
+        return confirm == QMessageBox.StandardButton.Yes
 
     def on_enter(self, payload=None) -> None:
         pass

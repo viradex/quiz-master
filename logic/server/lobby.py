@@ -62,7 +62,7 @@ class ServerLobbyLogic(BaseLogic):
 
         # Get all quiz names
         self.quiz_repo.refresh_cache()
-        quiz = self.quiz_repo.load_quiz(quiz_id)
+        quiz = self.quiz_repo.get(quiz_id)
 
         # Validation
         if quiz is None:
@@ -91,7 +91,7 @@ class ServerLobbyLogic(BaseLogic):
 
     def on_enter(self):
         # Show all quiz names in dropdown screen in UI
-        quizzes = self.quiz_repo.load_quizzes()
+        quizzes = self.quiz_repo.get_all()
         quiz_names = {quiz_id: quiz.quiz_title for quiz_id, quiz in quizzes.items()}
 
         for quiz_id, quiz in quizzes.items():

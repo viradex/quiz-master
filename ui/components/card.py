@@ -108,7 +108,7 @@ class StatCard(QFrame):
         if self.icon_path is not None:
             self.set_icon(self.icon_path)
         else:
-            self.icon_lbl.setHidden(True)
+            self.icon_lbl.hide()
 
         self.title_lbl = QLabel(self.title)
         self.title_lbl.setStyleSheet("font-size: 14px;" "color: #8A8A8A;")
@@ -143,8 +143,7 @@ class StatCard(QFrame):
         """Set icon of stat card. Must be a valid path."""
         self.icon_path = icon_path
 
-        file_path = self.icon_path.as_posix()
-        pixmap = QPixmap(file_path).scaled(
+        pixmap = QPixmap(str(self.icon_path)).scaled(
             16,
             16,
             Qt.AspectRatioMode.KeepAspectRatio,
@@ -207,13 +206,13 @@ class QuizCard(QFrame):
         self.updated_lbl.setStyleSheet("font-size: 12px;" "color: #8A8A8A;")
 
         if self.is_premade:
-            self.updated_lbl.setHidden(True)
+            self.updated_lbl.hide()
 
         delete_icon = self.icons_path / "delete.png"
         edit_icon = self.icons_path / "edit.png"
 
         self.delete_btn = QToolButton()
-        self.delete_btn.setIcon(QIcon(delete_icon.as_posix()))
+        self.delete_btn.setIcon(QIcon(str(delete_icon)))
         self.delete_btn.setIconSize(QSize(24, 24))
         self.delete_btn.setFixedSize(28, 28)
         self.delete_btn.setToolTip("Delete")
@@ -241,7 +240,7 @@ class QuizCard(QFrame):
         """)
 
         self.edit_btn = QToolButton()
-        self.edit_btn.setIcon(QIcon(edit_icon.as_posix()))
+        self.edit_btn.setIcon(QIcon(str(edit_icon)))
         self.edit_btn.setIconSize(QSize(24, 24))
         self.edit_btn.setFixedSize(28, 28)
         self.edit_btn.setToolTip("Edit")
@@ -273,7 +272,7 @@ class QuizCard(QFrame):
         default_lbl.setToolTip("This quiz cannot be edited or deleted")
         default_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
         default_lbl.setFixedSize(100, 30)
-        default_lbl.setHidden(True)
+        default_lbl.hide()
         default_lbl.setStyleSheet("""
             QLabel {
                 background-color: #383838;
@@ -285,8 +284,8 @@ class QuizCard(QFrame):
         """)
 
         if self.is_premade:
-            self.delete_btn.setHidden(True)
-            self.edit_btn.setHidden(True)
+            self.delete_btn.hide()
+            self.edit_btn.hide()
             default_lbl.setHidden(False)
 
         vbox = QVBoxLayout()

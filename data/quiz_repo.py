@@ -1,9 +1,11 @@
 import json
+from datetime import datetime
 from pathlib import Path
 
 from models.quiz import Quiz
 
 
+# NOTE Custom quizzes are saved as {quiz_id}.json
 class QuizRepository:
     """Discovers and loads quizzes from disk."""
 
@@ -16,38 +18,73 @@ class QuizRepository:
 
         self.quiz_cache: dict[str, Quiz] = {}
 
-    def load_quizzes(self) -> dict[str, Quiz]:
+    def get(self, quiz_id: str) -> Quiz | None:
+        """Load a certain quiz by ID stored on disk."""
+        # self.exists() loads cache automatically
+        if not self.exists(quiz_id):
+            return None
+
+        return self.quiz_cache[quiz_id]
+
+    def get_all(self) -> dict[str, Quiz]:
         """Return a dictionary of all quizzes on disk (quiz ID -> quiz data)."""
         if not self.quiz_cache:
             self._load_cache()
 
         return self.quiz_cache.copy()
 
-    def load_quiz(self, quiz_id: str) -> Quiz | None:
-        """Load a certain quiz by ID stored on disk."""
-        if not self.quiz_exists(quiz_id):
-            return None
+    def edit(self, quiz_id: str, data: dict) -> bool:
+        """Edit a quiz save file on disk based on ID."""
+        if not self.quiz_cache:
+            self._load_cache()
 
-        return self.quiz_cache[quiz_id]
+        quiz = self.get(quiz_id)
+        if quiz is None:
+            return False
 
-    def quiz_exists(self, quiz_id: str) -> bool:
+        # Set preferable for membership tests due to uniqueness
+        # and faster performance (though negligible here)
+        protected = {"quiz_id", "is_premade"}
+
+        for key, value in data.items():
+            if key in protected:
+                continue
+
+            # Checks if the quiz has an attribute with same name
+            if hasattr(quiz, key):
+                # Set attribute in quiz by name
+                setattr(quiz, key, value)
+
+        self.save(quiz)
+        return True
+
+    def save(self, quiz: Quiz) -> None:
+        """Save a quiz instance to disk in the custom quiz directory, with the quiz ID as the filename."""
+        quiz.updated_at = datetime.now()
+
+        file_path = self.custom_quiz_path / f"{quiz.quiz_id}.json"
+        with open(file_path, mode="w", encoding="utf-8") as f:
+            json.dump(quiz.to_dict(), f)
+
+        self.quiz_cache[quiz.quiz_id] = quiz
+
+    def remove(self, quiz_id: str) -> bool:
+        """Delete a custom quiz from disk."""
+        file_path = self.custom_quiz_path / f"{quiz_id}.json"
+        if not file_path.exists():
+            return False
+
+        file_path.unlink()
+        self.quiz_cache.pop(quiz_id, None)
+
+        return True
+
+    def exists(self, quiz_id: str) -> bool:
         """Check if a quiz exists by ID on disk."""
         if not self.quiz_cache:
             self._load_cache()
 
         return quiz_id in self.quiz_cache
-
-    def get_id_from_title(self, title: str) -> str | None:
-        """Finds a quiz based on the quiz title, and returns the quiz ID."""
-        if not self.quiz_cache:
-            self._load_cache()
-
-        quizzes = self.load_quizzes()
-
-        for quiz in quizzes.values():
-            if title == quiz.quiz_title:
-                return quiz.quiz_id
-        return None
 
     def refresh_cache(self) -> None:
         """Refresh the cache, such as when a quiz save file has been added, removed, or modified."""

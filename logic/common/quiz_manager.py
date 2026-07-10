@@ -1,6 +1,7 @@
 from ui.screens.common.quiz_manager import CommonQuizManagerScreen
 from logic.base_logic import BaseLogic
 from data.quiz_repo import QuizRepository
+from core.app.screen_ids import Screens
 from core.app.enums import QuizSortingOrder
 from models.quiz import Quiz
 
@@ -22,6 +23,9 @@ class CommonQuizManagerLogic(BaseLogic):
         self.screen.sort_requested.connect(self.on_sort_requested)
 
     def refresh_quizzes(self):
+        self.quiz_repo.refresh_cache()
+        self.quizzes = self.quiz_repo.get_all()
+
         quizzes = list(self.quizzes.values())
         if quizzes is None:
             return
@@ -63,11 +67,56 @@ class CommonQuizManagerLogic(BaseLogic):
         self.screen.remove_all_quizzes()
         self.screen.add_quizzes(quizzes, do_default_spacing=True)
 
+    def is_default_quiz(self, quiz_id: str) -> bool:
+        quiz = self.quizzes.get(quiz_id)
+        if quiz is None:
+            return False
+
+        return quiz.is_premade
+
     def on_edit_requested(self, quiz_id: str) -> None:
-        pass
+        self.quiz_repo.refresh_cache()
+        quiz = self.quiz_repo.get(quiz_id)
+
+        if quiz is None:
+            self.screen.show_error(
+                "Quiz Not Found", "The quiz selected no longer exists."
+            )
+            self.refresh_quizzes()
+            return
+        elif self.is_default_quiz(quiz_id):
+            self.screen.show_error(
+                "Cannot Edit Default Quiz",
+                "Default quizzes cannot be edited. Only custom quizzes may be modified.",
+            )
+            return
+
+        self.screen.go_to(
+            Screens.COMMON_QUIZ_SETUP,
+            {
+                "quiz_id": quiz_id,
+                "quiz_title": quiz.quiz_title,
+                "do_shuffle": quiz.do_shuffle,
+            },
+        )
 
     def on_delete_requested(self, quiz_id: str) -> None:
-        pass
+        self.quiz_repo.refresh_cache()
+        quiz = self.quiz_repo.get(quiz_id)
+
+        if quiz is None:
+            self.screen.show_error(
+                "Quiz Not Found", "The quiz selected no longer exists."
+            )
+        elif self.is_default_quiz(quiz_id):
+            self.screen.show_error(
+                "Cannot Delete Default Quiz",
+                "Default quizzes cannot be deleted. Only custom quizzes may be modified.",
+            )
+            return
+
+        self.quiz_repo.remove(quiz_id)
+        self.refresh_quizzes()
 
     def on_search_requested(self, query: str) -> None:
         self.current_search = query
@@ -78,7 +127,5 @@ class CommonQuizManagerLogic(BaseLogic):
         self.refresh_quizzes()
 
     def on_enter(self):
-        self.quiz_repo.refresh_cache()
 
-        self.quizzes = self.quiz_repo.load_quizzes()
         self.refresh_quizzes()
