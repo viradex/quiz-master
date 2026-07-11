@@ -127,5 +127,4 @@ class CommonQuizManagerLogic(BaseLogic):
         self.refresh_quizzes()
 
     def on_enter(self):
-
         self.refresh_quizzes()

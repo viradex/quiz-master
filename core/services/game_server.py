@@ -70,7 +70,7 @@ class GameServer(QObject):
     def stop(self, reason: str = "Server closed") -> None:
         """Stops the server clearnly, notifying and disconnecting all clients."""
         if self.server_socket is None:
-            raise ValueError("Server cannot be stopped without active socket")
+            return
 
         # Get all sessions and store them in memory, then clear the sessions
         sessions = self.registry.get_all().values()

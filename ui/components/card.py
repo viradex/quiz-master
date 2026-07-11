@@ -3,15 +3,18 @@ from datetime import datetime
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
-    QToolButton,
     QFrame,
     QVBoxLayout,
     QHBoxLayout,
     QGraphicsDropShadowEffect,
+    QMessageBox,
+    QSizePolicy,
 )
-from PyQt6.QtGui import QColor, QPixmap, QIcon
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
+from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtCore import Qt, pyqtSignal
 
+from ui.components.label import ClickableLabel
+from ui.components.button import create_tool_icon_button
 from utils.formatting import format_datetime
 
 
@@ -153,6 +156,69 @@ class StatCard(QFrame):
         self.icon_lbl.setPixmap(pixmap)
 
 
+class QuestionCard(QFrame):
+    def __init__(self, question_num: int, question_title: str, parent=None) -> None:
+        super().__init__(parent)
+        self.question_num = question_num
+        self.question_title = question_title
+
+        self.selected = False
+
+        # TODO add max height with ellipsis for question text if needed
+        self.setup_component()
+
+    def setup_component(self) -> None:
+        self.question_num_lbl = QLabel(str(self.question_num))
+        self.question_num_lbl.setAlignment(
+            Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
+        )
+        self.question_num_lbl.setFixedWidth(20)
+        self.question_num_lbl.setStyleSheet("""
+            QLabel {
+                font-size: 16px;
+                background-color: #404040;
+                padding-top: 4px;
+                font-weight: bold;
+            }
+        """)
+
+        self.question_lbl = QLabel(self.question_title)
+        self.question_lbl.setWordWrap(True)
+        self.question_lbl.setStyleSheet(
+            "font-size: 16px;" "background-color: #2b2b2b;" "padding: 8px 2px 8px 2px;"
+        )
+
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.addWidget(self.question_num_lbl)
+        hbox.addWidget(self.question_lbl)
+
+        self.setObjectName("questionCard")
+        self.setProperty("selected", "no")
+        self.setStyleSheet("""
+            QFrame#questionCard[selected="yes"] {
+                border: 2px solid #57C6FF;
+                background-color: #2b2b2b;
+                border-radius: 4px;
+            }
+                           
+            QFrame#questionCard[selected="no"] {
+                border: 2px solid #555;
+                background-color: #2b2b2b;
+                border-radius: 4px;
+            }
+        """)
+        self.setLayout(hbox)
+
+    def toggle_selected(self) -> None:
+        if self.selected:
+            self.setProperty("selected", "no")
+        else:
+            self.setProperty("selected", "yes")
+
+        self.selected = not self.selected
+
+
 class QuizCard(QFrame):
     """Creates a quiz card, which is for the quiz manager and contains information and actions for a single quiz."""
 
@@ -177,6 +243,8 @@ class QuizCard(QFrame):
 
         self.base_dir = Path(__file__).resolve().parent.parent
         self.icons_path = self.base_dir / "assets" / "icons"
+
+        self.default_clicked_counter = 0
 
         self.setup_component()
 
@@ -211,69 +279,25 @@ class QuizCard(QFrame):
         delete_icon = self.icons_path / "delete.png"
         edit_icon = self.icons_path / "edit.png"
 
-        self.delete_btn = QToolButton()
-        self.delete_btn.setIcon(QIcon(str(delete_icon)))
-        self.delete_btn.setIconSize(QSize(24, 24))
-        self.delete_btn.setFixedSize(28, 28)
-        self.delete_btn.setToolTip("Delete")
-        self.delete_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.delete_btn.setAutoRaise(True)
+        self.delete_btn = create_tool_icon_button(delete_icon, "Delete", icon_size=24)
         self.delete_btn.clicked.connect(
             lambda: self.delete_quiz_requested.emit(self.quiz_id, self.quiz_title)
         )
-        self.delete_btn.setStyleSheet("""
-            QToolButton {
-                background: transparent;
-                border: none;
-                padding: 0px;
-            }
-                                      
-            QToolButton:hover {
-                background: transparent;
-                border: none;
-            }
-                                      
-            QToolButton:pressed {
-                background: transparent;
-                border: none;
-            }
-        """)
 
-        self.edit_btn = QToolButton()
-        self.edit_btn.setIcon(QIcon(str(edit_icon)))
-        self.edit_btn.setIconSize(QSize(24, 24))
-        self.edit_btn.setFixedSize(28, 28)
-        self.edit_btn.setToolTip("Edit")
-        self.edit_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.edit_btn.setAutoRaise(True)
+        self.edit_btn = create_tool_icon_button(edit_icon, "Edit", icon_size=24)
         self.edit_btn.clicked.connect(
             lambda: self.edit_quiz_requested.emit(self.quiz_id, self.quiz_title)
         )
-        self.edit_btn.setStyleSheet("""
-            QToolButton {
-                background: transparent;
-                border: none;
-                padding: 0px;
-            }
-                                      
-            QToolButton:hover {
-                background: transparent;
-                border: none;
-            }
-                                      
-            QToolButton:pressed {
-                background: transparent;
-                border: none;
-            }
-        """)
 
         # Must add parent=self, otherwise it will appear as a top-level window temporarily
-        default_lbl = QLabel("Default Quiz", self)
-        default_lbl.setToolTip("This quiz cannot be edited or deleted")
-        default_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        default_lbl.setFixedSize(100, 30)
-        default_lbl.hide()
-        default_lbl.setStyleSheet("""
+        self.default_lbl = ClickableLabel("Default Quiz", self)
+        self.default_lbl.setToolTip("This quiz cannot be edited or deleted")
+        self.default_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.default_lbl.setFixedSize(100, 30)
+        self.default_lbl.hide()
+        self.default_lbl.unsetCursor()
+        self.default_lbl.clicked.connect(self._on_default_clicked)
+        self.default_lbl.setStyleSheet("""
             QLabel {
                 background-color: #383838;
                 color: #dadada;
@@ -286,7 +310,7 @@ class QuizCard(QFrame):
         if self.is_premade:
             self.delete_btn.hide()
             self.edit_btn.hide()
-            default_lbl.setHidden(False)
+            self.default_lbl.setHidden(False)
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.title_lbl)
@@ -298,9 +322,37 @@ class QuizCard(QFrame):
         btn_hbox.addWidget(self.edit_btn)
         btn_hbox.addSpacing(5)
         btn_hbox.addWidget(self.delete_btn)
-        btn_hbox.addWidget(default_lbl)
+        btn_hbox.addWidget(self.default_lbl)
 
-        hbox = QHBoxLayout(self)
+        hbox = QHBoxLayout()
         hbox.setContentsMargins(16, 12, 16, 12)
         hbox.addLayout(vbox)
         hbox.addLayout(btn_hbox)
+
+        self.setLayout(hbox)
+
+    def _on_default_clicked(self) -> None:
+        if not self.is_premade:
+            return
+
+        self.default_clicked_counter += 1
+
+        if self.default_clicked_counter == 10:
+            QMessageBox.information(
+                self,
+                " ",
+                "Just a heads up, I'm not a button, even though I might look like one. Don't worry, it's a common mistake, for some reason.",
+            )
+        elif self.default_clicked_counter == 20:
+            QMessageBox.warning(self, " ", "So we're just gonna keep clicking me, huh?")
+        elif self.default_clicked_counter == 30:
+            QMessageBox.warning(
+                self, " ", "This isn't even funny anymore, just stop please."
+            )
+        elif self.default_clicked_counter == 40:
+            QMessageBox.warning(self, " ", "This is your final warning...")
+        elif self.default_clicked_counter == 50:
+            QMessageBox.critical(
+                self, " ", "Can't you listen? I'm a label, not a button! I'm done here."
+            )
+            self.default_lbl.hide()

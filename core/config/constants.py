@@ -32,7 +32,7 @@ DEFAULT_STATUS_BAR_MESSAGE = "Ready"
 ## CLIENT/SERVER CONFIG ##
 ##########################
 
-# Only for development; set blank or remove when done
+# TODO Only for development; set blank or remove when done
 # Populates the IP address field when connecting to a server
 DEFAULT_IP_ADDRESS = "127.0.0.1"
 

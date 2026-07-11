@@ -1,3 +1,4 @@
+import random
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
@@ -47,7 +48,6 @@ class CommonQuizSetupScreen(BaseScreen):
 
         self.title_input = QLineEdit()
         self.title_input.setFont(form_font)
-        self.title_input.returnPressed.connect(self.on_create)
 
         self.shuffle_check = QCheckBox("Shuffle questions")
         self.shuffle_check.setFont(form_font)
@@ -117,8 +117,8 @@ class CommonQuizSetupScreen(BaseScreen):
         self.btn_spacer.hide()
 
         # TODO only for easier accessibility to quiz editor screen
-        # set to "" when done
-        self.title_input.setText("Temporary Quiz")
+        # set to "" when done and remove random import
+        self.title_input.setText(f"Testing Quiz #{random.randint(0, 1000)}")
         self.shuffle_check.setChecked(False)
 
     def edit_mode(self, quiz_title: str, do_shuffle: bool) -> None:
