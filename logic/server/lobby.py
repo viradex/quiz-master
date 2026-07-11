@@ -89,12 +89,21 @@ class ServerLobbyLogic(BaseLogic):
         self.screen.reset_status()
         self.screen.set_status("Stopped server", 2000)
 
-    def on_enter(self):
+    def on_enter(self) -> None:
         # Show all quiz names in dropdown screen in UI
         quizzes = self.quiz_repo.get_all()
-        quiz_names = {quiz_id: quiz.quiz_title for quiz_id, quiz in quizzes.items()}
+        sorted_quizzes = dict(
+            sorted(
+                quizzes.items(),
+                key=lambda quiz: (quiz[1].is_premade, quiz[1].quiz_title),
+            )
+        )
 
-        for quiz_id, quiz in quizzes.items():
+        quiz_names = {
+            quiz_id: quiz.quiz_title for quiz_id, quiz in sorted_quizzes.items()
+        }
+
+        for quiz_id, quiz in sorted_quizzes.items():
             if quiz.is_premade:
                 quiz_names[quiz_id] += " (default)"
 

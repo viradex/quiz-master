@@ -50,7 +50,7 @@ class GameClient(QObject):
         self.client_socket: socket.socket | None = None
         self.player_id: str | None = None
         self.nickname: str | None = None
-        self.last_ping_time: float | None = None
+        self.last_server_response_time: float | None = None
 
         # Handlers for incoming server messages
         self.handlers: dict[ServerMessageType, Callable[[dict], None]] = {
@@ -148,7 +148,7 @@ class GameClient(QObject):
                 continue
 
             # Any message from server means connection is still stable
-            self.last_ping_time = time.monotonic()
+            self.last_server_response_time = time.monotonic()
             self.handle_message(msg)
 
     def _connect_and_listen(self) -> None:
@@ -204,7 +204,7 @@ class GameClient(QObject):
 
         # Inform server of join and reset server ping time
         self.send_join()
-        self.last_ping_time = time.monotonic()
+        self.last_server_response_time = time.monotonic()
 
         threading.Thread(target=self._ping_loop, daemon=True).start()
         threading.Thread(target=self._watchdog_loop, daemon=True).start()
@@ -227,7 +227,7 @@ class GameClient(QObject):
             time.sleep(1)
 
             # If difference between now and last ping time exceeds response timeout, disconnect client
-            if time.monotonic() - self.last_ping_time > RESPONSE_TIMEOUT:
+            if time.monotonic() - self.last_server_response_time > RESPONSE_TIMEOUT:
                 self.time_out()
                 break
 

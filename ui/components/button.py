@@ -1,4 +1,7 @@
-from PyQt6.QtWidgets import QPushButton
+from pathlib import Path
+from PyQt6.QtWidgets import QPushButton, QToolButton
+from PyQt6.QtGui import QIcon
+from PyQt6.QtCore import Qt, QSize
 
 
 def create_return_button(
@@ -38,3 +41,34 @@ def create_return_button(
     """)
 
     return button
+
+
+def create_tool_icon_button(icon: Path | str, tooltip: str, icon_size: int) -> None:
+    tool_button = QToolButton()
+    tool_button.setToolTip(tooltip)
+
+    tool_button.setIcon(QIcon(str(icon)))
+    tool_button.setIconSize(QSize(icon_size, icon_size))
+    tool_button.setFixedSize(icon_size + 4, icon_size + 4)
+
+    tool_button.setCursor(Qt.CursorShape.PointingHandCursor)
+    tool_button.setAutoRaise(True)
+    tool_button.setStyleSheet("""
+        QToolButton {
+            background-color: transparent;
+            border: none;
+            padding: 0px;
+        }
+                                    
+        QToolButton:hover {
+            background-color: transparent;
+            border: none;
+        }
+                                    
+        QToolButton:pressed {
+            background-color: transparent;
+            border: none;
+        }
+    """)
+
+    return tool_button

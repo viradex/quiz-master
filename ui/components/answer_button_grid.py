@@ -11,13 +11,6 @@ from PyQt6.QtCore import Qt, pyqtSignal
 
 from utils.color import darken_color
 
-BUTTON_COLORS: dict[str, dict[str, str]] = {
-    "red": {"normal": "#C94F4F", "hover": "#D45B5B", "click": "#A94444"},
-    "blue": {"normal": "#4A78C2", "hover": "#5A86CC", "click": "#3D66A8"},
-    "yellow": {"normal": "#B89B2E", "hover": "#C5A83A", "click": "#9E8424"},
-    "green": {"normal": "#3E9B68", "hover": "#4AA977", "click": "#347F56"},
-}
-
 
 @dataclass
 class AnswerButtonData:
@@ -60,6 +53,13 @@ class AnswerButtonGrid(QWidget):
 
         self.correct_index: int | None = None
         self.selected_index: int | None = None
+
+        self.button_colors: dict[str, dict[str, str]] = {
+            "red": {"normal": "#C94F4F", "hover": "#D45B5B", "click": "#A94444"},
+            "blue": {"normal": "#4A78C2", "hover": "#5A86CC", "click": "#3D66A8"},
+            "yellow": {"normal": "#B89B2E", "hover": "#C5A83A", "click": "#9E8424"},
+            "green": {"normal": "#3E9B68", "hover": "#4AA977", "click": "#347F56"},
+        }
 
         self.setup_grid()
         self.setup_buttons()
@@ -165,16 +165,16 @@ class AnswerButtonGrid(QWidget):
             if self.mode == "server":
                 btn = self._create_answer_button(
                     answer,
-                    BUTTON_COLORS[color_name]["normal"],
-                    BUTTON_COLORS[color_name]["normal"],
-                    BUTTON_COLORS[color_name]["normal"],
+                    self.button_colors[color_name]["normal"],
+                    self.button_colors[color_name]["normal"],
+                    self.button_colors[color_name]["normal"],
                 )
             else:
                 btn = self._create_answer_button(
                     answer,
-                    BUTTON_COLORS[color_name]["normal"],
-                    BUTTON_COLORS[color_name]["hover"],
-                    BUTTON_COLORS[color_name]["click"],
+                    self.button_colors[color_name]["normal"],
+                    self.button_colors[color_name]["hover"],
+                    self.button_colors[color_name]["click"],
                 )
 
             self.answer_buttons.append(btn)

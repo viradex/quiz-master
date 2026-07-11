@@ -62,6 +62,10 @@ class QuizRepository:
         """Save a quiz instance to disk in the custom quiz directory, with the quiz ID as the filename."""
         quiz.updated_at = datetime.now()
 
+        # TODO only for dev to easily test quiz editor without a billion save files
+        print("Saving temporarily disabled")
+        return
+
         file_path = self.custom_quiz_path / f"{quiz.quiz_id}.json"
         with open(file_path, mode="w", encoding="utf-8") as f:
             json.dump(quiz.to_dict(), f)
