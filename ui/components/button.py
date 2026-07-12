@@ -43,7 +43,9 @@ def create_return_button(
     return button
 
 
-def create_tool_icon_button(icon: Path | str, tooltip: str, icon_size: int) -> None:
+def create_tool_icon_button(
+    icon: Path | str, tooltip: str, icon_size: int
+) -> QToolButton:
     tool_button = QToolButton()
     tool_button.setToolTip(tooltip)
 

@@ -8,12 +8,13 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QGraphicsDropShadowEffect,
     QMessageBox,
-    QSizePolicy,
 )
 from PyQt6.QtGui import QColor, QPixmap
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from ui.components.label import ClickableLabel
+from models.question import Question
+
 from ui.components.button import create_tool_icon_button
 from utils.formatting import format_datetime
 
@@ -157,10 +158,14 @@ class StatCard(QFrame):
 
 
 class QuestionCard(QFrame):
-    def __init__(self, question_num: int, question_title: str, parent=None) -> None:
+    clicked = pyqtSignal(object)
+
+    def __init__(
+        self, question: Question, question_num: int | str, parent=None
+    ) -> None:
         super().__init__(parent)
+        self.question = question
         self.question_num = question_num
-        self.question_title = question_title
 
         self.selected = False
 
@@ -168,6 +173,8 @@ class QuestionCard(QFrame):
         self.setup_component()
 
     def setup_component(self) -> None:
+        # TODO PyQt won't wrap the text if it's unbroken (no spaces)
+        # and the card will get infinitely longer
         self.question_num_lbl = QLabel(str(self.question_num))
         self.question_num_lbl.setAlignment(
             Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter
@@ -182,17 +189,21 @@ class QuestionCard(QFrame):
             }
         """)
 
-        self.question_lbl = QLabel(self.question_title)
+        self.question_lbl = QLabel()
+        self.question_lbl.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.question_lbl.setWordWrap(True)
         self.question_lbl.setStyleSheet(
-            "font-size: 16px;" "background-color: #2b2b2b;" "padding: 8px 2px 8px 2px;"
+            "font-size: 16px;" "background-color: #2b2b2b;" "padding: 8px 0px 8px 0px;"
         )
+        self.update_question_text(self.question.question_text)
 
         hbox = QHBoxLayout()
         hbox.setContentsMargins(0, 0, 0, 0)
         hbox.addWidget(self.question_num_lbl)
         hbox.addWidget(self.question_lbl)
 
+        self.setFixedHeight(90)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setObjectName("questionCard")
         self.setProperty("selected", "no")
         self.setStyleSheet("""
@@ -210,13 +221,31 @@ class QuestionCard(QFrame):
         """)
         self.setLayout(hbox)
 
-    def toggle_selected(self) -> None:
-        if self.selected:
-            self.setProperty("selected", "no")
-        else:
-            self.setProperty("selected", "yes")
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.clicked.emit(self.question)
 
-        self.selected = not self.selected
+        super().mousePressEvent(event)
+
+    def select(self) -> None:
+        self.setProperty("selected", "yes")
+        self.selected = True
+
+        self._update_styles()
+
+    def deselect(self) -> None:
+        self.setProperty("selected", "no")
+        self.selected = False
+
+        self._update_styles()
+
+    def update_question_text(self, text: str) -> None:
+        self.question_lbl.setText(text)
+
+    def _update_styles(self) -> None:
+        self.style().unpolish(self)
+        self.style().polish(self)
+        self.update()
 
 
 class QuizCard(QFrame):

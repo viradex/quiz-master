@@ -23,9 +23,10 @@ class Quiz:
         """Generate a random ID. Static method; can be used when initializing a Quiz."""
         return secrets.token_hex(4)
 
-    def add_question(self, question: Question) -> None:
-        """Adds a new question to the quiz."""
+    def add_question(self, question: Question) -> int:
+        """Adds a new question to the quiz. Returns index of the question."""
         self.questions.append(question)
+        return len(self.questions) - 1
 
     def remove_question(self, question_id: str) -> None:
         """Removes a question from the quiz, based on the question ID."""
