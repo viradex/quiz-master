@@ -2,7 +2,6 @@ from ui.screens.common.quiz_editor import CommonQuizEditorScreen
 from logic.base_logic import BaseLogic
 from data.quiz_repo import QuizRepository
 from core.app.screen_ids import Screens
-from core.app.enums import QuizSortingOrder
 from models.quiz import Quiz
 
 
@@ -40,4 +39,4 @@ class CommonQuizSetupLogic(BaseLogic):
                 return
 
         self.quiz_repo.save(quiz)
-        self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz_id": quiz_id})
+        self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
