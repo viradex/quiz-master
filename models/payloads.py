@@ -21,13 +21,14 @@ class BasePayload:
 
 @dataclass
 class QuestionPayload(BasePayload):
-    """Used for question data (for both client and server)."""
+    """Used for question data (for client/server and the quiz editor for previewing functionality)."""
 
     question_num: int
     total_questions: int
     question_text: str
     answer_options: list[str]
     time_limit: int
+    is_preview: bool = False
 
 
 @dataclass

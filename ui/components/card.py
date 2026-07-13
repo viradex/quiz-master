@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QColor, QPixmap
 from PyQt6.QtCore import Qt, pyqtSignal
 
-from ui.components.label import ClickableLabel
+from ui.components.input import ClickableLabel
 from models.question import Question
 
 from ui.components.button import create_tool_icon_button
@@ -245,7 +245,7 @@ class QuestionCard(QFrame):
 
         self._update_styles()
 
-    def deselect_error(self) -> None:
+    def error(self) -> None:
         self.setProperty("state", "error")
         self.selected = False
 

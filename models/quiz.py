@@ -44,6 +44,16 @@ class Quiz:
         """Randomly shuffles questions."""
         random.shuffle(self.questions)
 
+    def move_question(self, question_id: str, new_index: int) -> None:
+        questions = self.questions
+
+        old_index = next(
+            i for i, q in enumerate(questions) if q.question_id == question_id
+        )
+
+        question = questions.pop(old_index)
+        questions.insert(new_index, question)
+
     def validate_quiz(self) -> tuple[bool, QuizValidationResult, int | None]:
         """
         Validates the quiz and its questions.

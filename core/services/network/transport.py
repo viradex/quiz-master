@@ -71,4 +71,4 @@ class JSONSocket:
     def _validate_socket(self) -> None:
         """Ensures socket is set."""
         if self.sock is None:
-            raise ValueError("Socket must be set before sending/receiving")
+            raise RuntimeError("Socket must be set before sending/receiving")
