@@ -4,7 +4,7 @@ class BaseLogic:
     def __init__(self) -> None:
         pass
 
-    def on_enter(self) -> None:
+    def on_enter(self, payload=None) -> None:
         pass
 
     def on_leave(self) -> None:

@@ -16,7 +16,7 @@ from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.enums import QuestionValidationError
-from ui.components.input import ClickableLabel, ReversedSpinBox
+from ui.components.input import ClickableLabel, CharacterCountInput, ReversedSpinBox
 from models.question import Question
 from models.payloads import QuestionPayload
 
@@ -49,8 +49,9 @@ class QuestionEditor(QWidget):
 
     question_reordered = pyqtSignal(Question, int)
     question_text_changed = pyqtSignal(Question)
-    global_time_requested = pyqtSignal(int)
+    global_time_requested = pyqtSignal(int, str)
     preview_requested = pyqtSignal(QuestionPayload)
+    duplicate_requested = pyqtSignal(Question)
     delete_requested = pyqtSignal(Question)
 
     def __init__(
@@ -103,6 +104,7 @@ class QuestionEditor(QWidget):
 
         warning_icon = self.icons_path / "exclamation.png"
         preview_icon = self.icons_path / "preview.png"
+        duplicate_icon = self.icons_path / "duplicate.png"
         delete_icon = self.icons_path / "delete.png"
 
         self.issues_btn = create_tool_icon_button(
@@ -116,31 +118,29 @@ class QuestionEditor(QWidget):
         )
         self.preview_btn.clicked.connect(self._on_preview_clicked)
 
+        self.duplicate_btn = create_tool_icon_button(
+            duplicate_icon, "Duplicate", icon_size=28
+        )
+        self.duplicate_btn.clicked.connect(self._on_duplicate_clicked)
+
         self.delete_btn = create_tool_icon_button(delete_icon, "Delete", icon_size=28)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
 
         # Question input
-        self.question_input = QLineEdit()
-        self.question_input.setText(self.question.question_text)
-        self.question_input.setPlaceholderText("Enter question...")
-        self.question_input.setFixedHeight(60)
-        self.question_input.textChanged.connect(self._on_question_edit)
-        self.question_input.setStyleSheet(
+        self.question_counter = CharacterCountInput(MAX_QUESTION_LENGTH)
+        self.question_counter.line_edit.setText(self.question.question_text)
+        self.question_counter.line_edit.setPlaceholderText("Enter question...")
+        self.question_counter.line_edit.setFixedHeight(60)
+        self.question_counter.line_edit.textChanged.connect(self._on_question_edit)
+        self.question_counter.line_edit.setStyleSheet(
             "font-size: 22px;" "padding: 8px;" "padding-top: 12px;"
-        )
-
-        question_container, self.question_chars = self._create_char_counter_input(
-            self.question_input,
-            len(self.question.question_text),
-            MAX_QUESTION_LENGTH,
         )
 
         # Answer button grid
         btn_grid = QGridLayout()
         btn_grid.setSpacing(15)
 
-        self.answer_inputs = []
-        self.answer_char_labels = []
+        self.answer_counters = []
 
         for i in range(2):
             for j in range(2):
@@ -153,17 +153,17 @@ class QuestionEditor(QWidget):
                     else ""
                 )
 
-                answer_input = QLineEdit()
-                answer_input.setText(answer_text)
-                answer_input.setPlaceholderText(
+                counter = CharacterCountInput(MAX_ANSWER_LENGTH)
+                counter.line_edit.setText(answer_text)
+                counter.line_edit.setPlaceholderText(
                     f"Answer '{data['letter']}' {'(optional)' if not data['required'] else ''}"
                 )
-                answer_input.setFixedHeight(60)
-                answer_input.setFont(answer_input_font)
-                answer_input.textChanged.connect(
+                counter.line_edit.setFixedHeight(60)
+                counter.line_edit.setFont(answer_input_font)
+                counter.line_edit.textChanged.connect(
                     lambda text, index=index: self._on_answer_edit(index, text)
                 )
-                answer_input.setStyleSheet(f"""
+                counter.line_edit.setStyleSheet(f"""
                     QLineEdit {{
                         border: 2px solid {data["color"]};
                         border-radius: 10px;
@@ -171,16 +171,8 @@ class QuestionEditor(QWidget):
                     }}
                 """)
 
-                answer_container, answer_chars = self._create_char_counter_input(
-                    answer_input,
-                    len(answer_text),
-                    MAX_ANSWER_LENGTH,
-                )
-
-                self.answer_char_labels.append(answer_chars)
-                self.answer_inputs.append(answer_input)
-
-                btn_grid.addWidget(answer_container, i, j)
+                self.answer_counters.append(counter)
+                btn_grid.addWidget(counter, i, j)
 
         # Correct answer selection
         correct_answer_lbl = QLabel("Select correct answer:")
@@ -255,6 +247,8 @@ class QuestionEditor(QWidget):
         heading_hbox.addStretch()
         heading_hbox.addWidget(self.preview_btn)
         heading_hbox.addSpacing(10)
+        heading_hbox.addWidget(self.duplicate_btn)
+        heading_hbox.addSpacing(10)
         heading_hbox.addWidget(self.delete_btn)
         heading_hbox.addSpacing(5)
 
@@ -276,7 +270,7 @@ class QuestionEditor(QWidget):
         vbox.addStretch(1)
         vbox.addLayout(heading_hbox)
         vbox.addSpacing(20)
-        vbox.addWidget(question_container)
+        vbox.addWidget(self.question_counter)
         vbox.addSpacing(40)
         vbox.addLayout(btn_grid)
         vbox.addSpacing(40)
@@ -284,44 +278,6 @@ class QuestionEditor(QWidget):
         vbox.addStretch(2)
 
         self.setLayout(vbox)
-
-    def _create_char_counter_input(
-        self, input_widget: QLineEdit, current_length: int, max_length: int
-    ) -> tuple[QWidget, QLabel]:
-        container = QWidget()
-        grid = QGridLayout(container)
-        grid.setContentsMargins(0, 0, 0, 0)
-        grid.setSpacing(0)
-
-        chars_lbl = QLabel(f"{current_length}/{max_length}")
-        chars_lbl.setProperty("state", "normal")
-        chars_lbl.setStyleSheet("""
-            QLabel[state="normal"] {
-                color: #A0A0A0;
-                font-size: 12px;
-                padding-right: 4px;
-                padding-top: 2px;
-                background: transparent;
-            }
-
-            QLabel[state="error"] {
-                color: #C75A5A;
-                font-size: 12px;
-                padding-right: 4px;
-                padding-top: 2px;
-                background: transparent;
-            }
-        """)
-
-        grid.addWidget(input_widget, 0, 0)
-        grid.addWidget(
-            chars_lbl,
-            0,
-            0,
-            alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
-        )
-
-        return container, chars_lbl
 
     def update_question_num(
         self, question_num: int | str, total_questions: int | str | None = None
@@ -362,7 +318,9 @@ class QuestionEditor(QWidget):
         self.question_validation_results = self.question.validate_question()
 
         # Preview button will be disabled regardless of first time
-        if self.question_validation_results:
+        if self.question_validation_results - {
+            QuestionValidationError.NO_CORRECT_ANSWER
+        }:
             preview_disabled_icon = self.icons_path / "preview_disabled.png"
             self.preview_btn.setIcon(QIcon(str(preview_disabled_icon)))
             self.preview_btn.setToolTip("Finish question before previewing")
@@ -435,7 +393,9 @@ class QuestionEditor(QWidget):
         )
 
     def _on_preview_clicked(self) -> None:
-        if self.question_validation_results:
+        if self.question_validation_results - {
+            QuestionValidationError.NO_CORRECT_ANSWER
+        }:
             # This should ordinarily never happen
             QMessageBox.critical(
                 self,
@@ -456,6 +416,9 @@ class QuestionEditor(QWidget):
         )
         self.preview_requested.emit(question_payload)
 
+    def _on_duplicate_clicked(self) -> None:
+        self.duplicate_requested.emit(self.question)
+
     def _on_delete_clicked(self) -> None:
         confirm = confirm_warning(
             self,
@@ -467,16 +430,10 @@ class QuestionEditor(QWidget):
             self.delete_requested.emit(self.question)
 
     def _on_apply_global_time(self) -> None:
-        confirm = QMessageBox.question(
-            self,
-            "Set Time for All Questions?",
-            f"Are you sure you want to change the time limit for all questions to {self.time_combo.currentText()}?",
-            defaultButton=QMessageBox.StandardButton.No,
-        )
+        seconds = self.time_combo.currentData()
+        text = self.time_combo.currentText()
 
-        if confirm == QMessageBox.StandardButton.Yes:
-            seconds = self.time_combo.currentData()
-            self.global_time_requested.emit(seconds)
+        self.global_time_requested.emit(seconds, text)
 
     def _on_question_reorder(self, new_question_num: int) -> None:
         if not 0 < new_question_num <= int(self.total_questions):
@@ -491,19 +448,7 @@ class QuestionEditor(QWidget):
         self.question_reordered.emit(self.question, new_question_num)
 
     def _on_question_edit(self, text: str) -> None:
-        text = text.strip()
-        self.question.question_text = text
-
-        self.question_chars.setText(f"{len(text)}/{MAX_QUESTION_LENGTH}")
-
-        if len(text) > MAX_QUESTION_LENGTH:
-            self.question_chars.setProperty("state", "error")
-        else:
-            self.question_chars.setProperty("state", "normal")
-
-        self.question_chars.style().unpolish(self.question_chars)
-        self.question_chars.style().polish(self.question_chars)
-        self.question_chars.update()
+        self.question.question_text = text.strip()
 
         self.question_text_changed.emit(self.question)
         self.validate_question()
@@ -514,20 +459,7 @@ class QuestionEditor(QWidget):
         while len(self.question.answer_options) <= index:
             self.question.answer_options.append("")
 
-        char_lbl = self.answer_char_labels[index]
-
-        char_lbl.setText(f"{len(text)}/{MAX_ANSWER_LENGTH}")
         self.question.answer_options[index] = text
-
-        if len(text) > MAX_ANSWER_LENGTH:
-            char_lbl.setProperty("state", "error")
-        else:
-            char_lbl.setProperty("state", "normal")
-
-        char_lbl.style().unpolish(char_lbl)
-        char_lbl.style().polish(char_lbl)
-        char_lbl.update()
-
         answer_radio = self.correct_group.button(index)
 
         if answer_radio is not None:
@@ -552,7 +484,7 @@ class QuestionEditor(QWidget):
 
     def _update_correct_answer_buttons(self):
         for i, radio in enumerate(self.correct_radios):
-            has_text = bool(self.answer_inputs[i].text().strip())
+            has_text = bool(self.answer_counters[i].line_edit.text().strip())
 
             # A and B are always enabled
             if i < 2:

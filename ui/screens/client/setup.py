@@ -13,6 +13,7 @@ from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
+from ui.components.input import CharacterCountInput
 
 from ui.components.button import create_return_button
 from utils.networking import is_valid_ipv4
@@ -57,9 +58,9 @@ class ClientSetupScreen(BaseScreen):
         nickname_lbl = QLabel("Nickname:")
         nickname_lbl.setFont(form_font)
 
-        self.nickname_input = QLineEdit()
-        self.nickname_input.setFont(form_font)
-        self.nickname_input.returnPressed.connect(self.on_submit)
+        self.nickname_counter = CharacterCountInput(MAX_NICKNAME_LENGTH)
+        self.nickname_counter.line_edit.setFont(form_font)
+        self.nickname_counter.line_edit.returnPressed.connect(self.on_submit)
 
         # Action buttons
         self.return_btn = create_return_button(
@@ -81,7 +82,7 @@ class ClientSetupScreen(BaseScreen):
         form_layout.addRow(ip_lbl, self.ip_input)
         form_layout.addRow(self.port_lbl)
         form_layout.addItem(QSpacerItem(0, 10))
-        form_layout.addRow(nickname_lbl, self.nickname_input)
+        form_layout.addRow(nickname_lbl, self.nickname_counter)
 
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(self.return_btn, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -110,13 +111,13 @@ class ClientSetupScreen(BaseScreen):
     def clear_fields(self) -> None:
         """Reset all form fields."""
         self.ip_input.setText(DEFAULT_IP_ADDRESS)
-        self.nickname_input.setText("")
+        self.nickname_counter.line_edit.setText("")
 
     def on_submit(self) -> None:
         """Gets text from form fields and validates it."""
         data = {
             "ip": self.ip_input.text().strip(),
-            "nickname": self.nickname_input.text().strip(),
+            "nickname": self.nickname_counter.line_edit.text().strip(),
         }
 
         # Validate data (shows UI errors if failed)
@@ -128,7 +129,7 @@ class ClientSetupScreen(BaseScreen):
     def validate_data(self) -> None:
         """Validate all form field data through basic validation."""
         ip_address = self.ip_input.text().strip()
-        nickname = self.nickname_input.text().strip()
+        nickname = self.nickname_counter.line_edit.text().strip()
 
         if not ip_address or not nickname:
             self.show_error(
@@ -151,5 +152,7 @@ class ClientSetupScreen(BaseScreen):
 
         return True
 
-    def on_leave(self) -> None:
-        self.clear_fields()
+    def on_enter(self, payload: dict | None = None):
+        # Keeps fields populated if an error occurred while connecting
+        if not payload.get("error_occurred"):
+            self.clear_fields()

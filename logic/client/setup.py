@@ -40,7 +40,7 @@ class ClientSetupLogic(BaseLogic):
 
     def on_connection_failed(self, reason: ClientConnectionError) -> None:
         """When the connection to the server failed. Shows an error modal window displaying the reason."""
-        self.screen.go_to(Screens.CLIENT_SETUP)
+        self.screen.go_to(Screens.CLIENT_SETUP, {"error_occurred": True})
 
         self.screen.reset_status()
         self.screen.set_status("Failed to connect", 5000)

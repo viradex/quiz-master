@@ -89,7 +89,7 @@ class ServerLobbyLogic(BaseLogic):
         self.screen.reset_status()
         self.screen.set_status("Stopped server", 2000)
 
-    def on_enter(self) -> None:
+    def on_enter(self, payload=None) -> None:
         # Show all quiz names in dropdown screen in UI
         quizzes = self.quiz_repo.get_all()
         sorted_quizzes = dict(

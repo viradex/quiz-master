@@ -25,8 +25,11 @@ class Question:
         """Whether the selected answer index matches with the correct answer index."""
         return selected_answer_index == self.correct_answer_index
 
-    def get_correct_answer(self) -> str:
+    def get_correct_answer(self) -> str | None:
         """Retrieves the correct answer text."""
+        if self.correct_answer_index is None:
+            return None
+
         return self.answer_options[self.correct_answer_index]
 
     def validate_question(self) -> set[QuestionValidationError]:

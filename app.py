@@ -18,14 +18,13 @@ def run() -> None:
         )
 
     # While app will not crash on Windows 10, Windows 10 does not support PyQt dark mode
-    elif sys.platform == "win32":
-        # 22000 is the first build of Windows 11
-        if sys.getwindowsversion().build < 22000:
-            QMessageBox.warning(
-                None,
-                "Compatibility Warning",
-                "This program is designed for Windows 11. On Windows 10 and earlier, some visual features (such as native dark mode) are unavailable, and UI elements may not render as intended. Continue at your own risk.",
-            )
+    # 22000 is the first build of Windows 11
+    elif sys.platform == "win32" and sys.getwindowsversion().build < 22000:
+        QMessageBox.warning(
+            None,
+            "Compatibility Warning",
+            "This program is designed for Windows 11. On Windows 10 and earlier, some visual features (such as native dark mode) are unavailable, and UI elements may not render as intended. Continue at your own risk.",
+        )
 
     services = Services()
 

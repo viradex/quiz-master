@@ -7,6 +7,7 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QVBoxLayout,
     QHBoxLayout,
+    QMessageBox,
     QSizePolicy,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -25,12 +26,21 @@ from ui.components.dialogs import confirm_warning
 class CommonQuizEditorScreen(BaseScreen):
     title_text = "Quiz Master – Quiz Editor"
 
+    blank_question_requested = pyqtSignal()
+    duplicate_requested = pyqtSignal(Question)
+    delete_requested = pyqtSignal(Question)
+    question_reorder_requested = pyqtSignal(Question, int)
+
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
 
+        # When doing methods on self.quiz, avoid running methods that mutate the quiz
+        # Good: len(self.quiz.get_all_questions())
+        # Bad: self.quiz.remove_question(question.question_id)
         self.quiz: Quiz | None = None
         self.mode: str | None = None
-        self.changes_made: bool = False
+
+        self._original_quiz: Quiz | None = None
         self.returning_from_preview: bool = False
 
         # Question ID -> widget
@@ -73,7 +83,7 @@ class CommonQuizEditorScreen(BaseScreen):
         self.add_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
-        self.add_btn.clicked.connect(self.add_blank_question)
+        self.add_btn.clicked.connect(self.blank_question_requested.emit)
         self.add_btn.setStyleSheet("font-size: 18px;")
 
         self.discard_btn = QPushButton("Discard")
@@ -130,7 +140,21 @@ class CommonQuizEditorScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def add_question(self, question: Question, question_num: int) -> None:
+    def set_quiz(self, quiz: Quiz, copied_quiz: Quiz, mode: str) -> None:
+        self.quiz = quiz
+        self.mode = mode
+        self._original_quiz = copied_quiz
+
+        self.set_title(f"Quiz Master – Quiz Editor ({self.quiz.quiz_title})")
+
+        if self.mode == "edit":
+            for i, question in enumerate(self.quiz.get_all_questions(), start=1):
+                self.add_question_widgets(question, i)
+
+            first_question = self.quiz.get_all_questions()[0]
+            self.display_question(first_question)
+
+    def add_question_widgets(self, question: Question, question_num: int) -> None:
         if question.question_id in self.editors:
             self.display_question(question)
             return
@@ -152,11 +176,12 @@ class CommonQuizEditorScreen(BaseScreen):
 
         # Setup editor
         editor.error_results.connect(self._on_error_results)
-        editor.question_reordered.connect(self._on_question_reorder)
+        editor.question_reordered.connect(self.question_reorder_requested.emit)
         editor.question_text_changed.connect(self._on_question_text)
         editor.global_time_requested.connect(self._on_global_time)
         editor.preview_requested.connect(self.preview_question)
-        editor.delete_requested.connect(self.remove_question)
+        editor.duplicate_requested.connect(self.duplicate_requested.emit)
+        editor.delete_requested.connect(self.delete_requested.emit)
 
         # Setup card
         card.select()
@@ -164,16 +189,9 @@ class CommonQuizEditorScreen(BaseScreen):
 
         self._update_delete_state()
 
-    def remove_question(self, question: Question) -> None:
-        if len(self.quiz.get_all_questions()) == 1:
-            # Ordinarily, this should never happen
-            self.show_error(
-                "Cannot Delete Question", "Cannot delete the only question."
-            )
-            return
-
-        self.quiz.remove_question(question.question_id)
-
+    def remove_question_widgets(
+        self, question: Question, next_question: Question
+    ) -> None:
         # Remove editor
         editor = self.editors.pop(question.question_id, None)
         if editor is not None:
@@ -189,11 +207,7 @@ class CommonQuizEditorScreen(BaseScreen):
         self._update_question_numbers()
         self._update_delete_state()
 
-        # Ensure styles and other processes update from Qt automatic stacked widget switching
-        current_editor = self.editor_stack.currentWidget()
-        if current_editor is not None:
-            self._show_editor(current_editor)
-            self.cards[current_editor.question.question_id].select()
+        self.display_question(next_question)
 
     def clear_questions(self) -> None:
         # Remove editors
@@ -222,11 +236,9 @@ class CommonQuizEditorScreen(BaseScreen):
         self.returning_from_preview = True
         self.go_to(Screens.CLIENT_MULTI_QUESTION, payload)
 
-    def add_blank_question(self) -> None:
-        question = Question(Question.generate_random_id(), "", [], None, 20)
-        question_index = self.quiz.add_question(question)
-
-        self.add_question(question, question_index + 1)
+    def update_question_order(self) -> None:
+        self._refresh_card_order()
+        self._update_question_numbers()
 
     def _show_editor(self, editor: QuestionEditor, first: bool = False) -> None:
         old = self.editor_stack.currentWidget()
@@ -274,7 +286,7 @@ class CommonQuizEditorScreen(BaseScreen):
             self.cards[question.question_id].deselect()
 
     def _on_discard_clicked(self) -> None:
-        if self.changes_made:
+        if self.quiz is not None and self.quiz != self._original_quiz:
             confirm = confirm_warning(
                 self,
                 "Discard Quiz?",
@@ -287,52 +299,31 @@ class CommonQuizEditorScreen(BaseScreen):
             self.clear_questions()
             self.go_to(Screens.COMMON_QUIZ_MANAGER)
 
-    def _on_global_time(self, seconds: int) -> None:
-        for editor in self.editors.values():
-            editor.set_time_limit(seconds)
+    def _on_global_time(self, seconds: int, text: str) -> None:
+        confirm = QMessageBox.question(
+            self,
+            "Set Time for All Questions?",
+            f"Are you sure you want to change the time limit for all questions to {text}?",
+            defaultButton=QMessageBox.StandardButton.No,
+        )
 
-    def _on_question_reorder(self, question: Question, new_question_num: int) -> None:
-        self.quiz.move_question(question.question_id, new_question_num - 1)
-
-        self._refresh_card_order()
-        self._update_question_numbers()
+        if confirm == QMessageBox.StandardButton.Yes:
+            for editor in self.editors.values():
+                editor.set_time_limit(seconds)
 
     def _on_question_text(self, question: Question) -> None:
         self.cards[question.question_id].update_question_text(question.question_text)
 
-    def on_enter(self, payload: dict) -> None:
-        if self.returning_from_preview:
-            self.returning_from_preview = False
-            self.set_title(f"Quiz Master – Quiz Editor ({self.quiz.quiz_title})")
-            return
-
-        self.quiz = payload["quiz"]
-        self.set_title(f"Quiz Master – Quiz Editor ({self.quiz.quiz_title})")
-
-        if self.quiz.get_all_questions():
-            # Edit mode
-            self.mode = "edit"
-
-            for i, question in enumerate(self.quiz.get_all_questions(), start=1):
-                self.add_question(question, i)
-
-            first_question = self.quiz.get_all_questions()[0]
-            self.display_question(first_question)
-        else:
-            # Create mode
-            self.mode = "create"
-            self.add_blank_question()
-
     def on_window_close(self, event) -> None:
-        pass
-        # TODO make it save the quiz instead
-        # confirm = confirm_warning(
-        #     self,
-        #     "Close and Discard",
-        #     "Are you sure you want to discard any unsaved work? The changes made will be permanently deleted and irrecoverable!",
-        # )
+        if self.quiz is not None and self.quiz != self._original_quiz:
+            # TODO make it save the quiz instead
+            confirm = confirm_warning(
+                self,
+                "Close and Discard",
+                "Are you sure you want to discard any unsaved work? The changes made will be permanently deleted and irrecoverable!",
+            )
 
-        # if confirm:
-        #     event.accept()
-        # else:
-        #     event.ignore()
+            if confirm:
+                event.accept()
+            else:
+                event.ignore()

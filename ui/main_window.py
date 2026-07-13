@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
 
         # Call lifecycle functions
         widget.on_enter(payload)
-        logic.on_enter()
+        logic.on_enter(payload)
 
         self.current_screen = widget
         self.current_logic = logic

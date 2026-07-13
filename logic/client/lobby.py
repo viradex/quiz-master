@@ -51,7 +51,7 @@ class ClientLobbyLogic(BaseLogic):
         self.screen.reset_status()
         self.screen.set_status("Disconnected from server", 2000)
 
-    def on_enter(self) -> None:
+    def on_enter(self, payload=None) -> None:
         # Get IP and port of server to display in UI
         ip, port = self.game_client.get_server_address()
         self.screen.set_connection_details(ip, port)
