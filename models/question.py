@@ -1,5 +1,9 @@
-from dataclasses import dataclass, asdict
 import secrets
+from dataclasses import dataclass, asdict
+
+from core.app.enums import QuestionValidationError
+
+from core.config.constants import MAX_QUESTION_LENGTH, MAX_ANSWER_LENGTH
 
 
 @dataclass
@@ -9,7 +13,7 @@ class Question:
     question_id: str
     question_text: str
     answer_options: list[str]
-    correct_answer_index: int
+    correct_answer_index: int | None
     time_limit: int
 
     @staticmethod
@@ -25,18 +29,32 @@ class Question:
         """Retrieves the correct answer text."""
         return self.answer_options[self.correct_answer_index]
 
-    def update_question(
-        self,
-        question_text: str,
-        answer_options: list[str],
-        correct_answer_index: int,
-        time_limit: int,
-    ) -> None:
-        """Update certain properties of a Question."""
-        self.question_text = question_text
-        self.answer_options = answer_options
-        self.correct_answer_index = correct_answer_index
-        self.time_limit = time_limit
+    def validate_question(self) -> set[QuestionValidationError]:
+        errors = set()
+
+        question_text = self.question_text.strip()
+        answer_options = [answer.strip() for answer in self.answer_options]
+        non_empty_answers = [a for a in answer_options if a != ""]
+
+        if not question_text:
+            errors.add(QuestionValidationError.MISSING_QUESTION)
+
+        if len(question_text) > MAX_QUESTION_LENGTH:
+            errors.add(QuestionValidationError.QUESTION_TOO_LONG)
+
+        if len(answer_options) < 2 or not answer_options[0] or not answer_options[1]:
+            errors.add(QuestionValidationError.MISSING_REQUIRED_ANSWERS)
+
+        if any(len(answer) > MAX_ANSWER_LENGTH for answer in answer_options):
+            errors.add(QuestionValidationError.ANSWER_TOO_LONG)
+
+        if len(non_empty_answers) != len(set(non_empty_answers)):
+            errors.add(QuestionValidationError.DUPLICATE_ANSWER)
+
+        if self.correct_answer_index is None:
+            errors.add(QuestionValidationError.NO_CORRECT_ANSWER)
+
+        return errors
 
     def to_dict(self) -> dict:
         """Convert to a dictionary for serialization."""

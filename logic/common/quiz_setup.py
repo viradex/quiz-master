@@ -18,6 +18,9 @@ class CommonQuizSetupLogic(BaseLogic):
 
         if quiz_id is not None:
             self.quiz_repo.edit(quiz_id, data)
+            quiz = self.quiz_repo.get(quiz_id)
+
+            self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
             return
 
         quiz = Quiz(

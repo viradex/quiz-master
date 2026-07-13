@@ -55,6 +55,12 @@ RESPONSE_TIMEOUT = 15
 ## GENERIC VALIDATION CONFIG ##
 ###############################
 
+# Maximum question text length in characters
+MAX_QUESTION_LENGTH = 120
+
+# Maximum single answer text length in characters
+MAX_ANSWER_LENGTH = 75
+
 # Maximum nickname length to join with
 MAX_NICKNAME_LENGTH = 40
 

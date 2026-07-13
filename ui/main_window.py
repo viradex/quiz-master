@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QMessageBox,
     QStatusBar,
 )
-from PyQt6.QtGui import QIcon, QFontMetrics
+from PyQt6.QtGui import QIcon, QFontMetrics, QCloseEvent
 from PyQt6.QtCore import Qt, QTimer
 
 from core.app.screen_ids import Screens
@@ -188,6 +188,10 @@ class MainWindow(QMainWindow):
     def show_info(self, title: str, desc: str) -> None:
         """Show an informational modal window. Only intended to be used by AppController."""
         QMessageBox.information(self, title, desc)
+
+    def closeEvent(self, event: QCloseEvent):
+        if self.current_screen is not None:
+            self.current_screen.on_window_close(event)
 
     def _build_screen(self, screen: Screens) -> None:
         """Build an individual screen and its respective logic."""
