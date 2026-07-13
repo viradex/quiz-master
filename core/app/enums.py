@@ -63,6 +63,17 @@ class QuizValidationResult(Enum):
     OK = "ok"
 
 
+class QuestionValidationError(Enum):
+    """Errors relating to question validation."""
+
+    MISSING_QUESTION = "missing_question"
+    QUESTION_TOO_LONG = "question_too_long"
+    MISSING_REQUIRED_ANSWERS = "missing_required_answers"
+    ANSWER_TOO_LONG = "answer_too_long"
+    DUPLICATE_ANSWER = "duplicate_answer"
+    NO_CORRECT_ANSWER = "no_correct_answer"
+
+
 class QuizSortingOrder(Enum):
     """Possible quiz sorting orders for the manager."""
 

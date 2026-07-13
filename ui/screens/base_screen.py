@@ -1,4 +1,5 @@
 from PyQt6.QtWidgets import QWidget, QMessageBox
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtCore import pyqtSignal
 
 from core.app.screen_ids import Screens
@@ -76,4 +77,7 @@ class BaseScreen(QWidget):
         pass
 
     def on_leave(self) -> None:
+        pass
+
+    def on_window_close(self, event: QCloseEvent) -> None:
         pass

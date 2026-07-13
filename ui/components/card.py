@@ -205,16 +205,22 @@ class QuestionCard(QFrame):
         self.setFixedHeight(90)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setObjectName("questionCard")
-        self.setProperty("selected", "no")
+        self.setProperty("state", "deselected")
         self.setStyleSheet("""
-            QFrame#questionCard[selected="yes"] {
+            QFrame#questionCard[state="selected"] {
                 border: 2px solid #57C6FF;
                 background-color: #2b2b2b;
                 border-radius: 4px;
             }
                            
-            QFrame#questionCard[selected="no"] {
+            QFrame#questionCard[state="deselected"] {
                 border: 2px solid #555;
+                background-color: #2b2b2b;
+                border-radius: 4px;
+            }
+                           
+            QFrame#questionCard[state="error"] {
+                border: 2px solid #C75A5A;
                 background-color: #2b2b2b;
                 border-radius: 4px;
             }
@@ -228,19 +234,29 @@ class QuestionCard(QFrame):
         super().mousePressEvent(event)
 
     def select(self) -> None:
-        self.setProperty("selected", "yes")
+        self.setProperty("state", "selected")
         self.selected = True
 
         self._update_styles()
 
     def deselect(self) -> None:
-        self.setProperty("selected", "no")
+        self.setProperty("state", "deselected")
+        self.selected = False
+
+        self._update_styles()
+
+    def deselect_error(self) -> None:
+        self.setProperty("state", "error")
         self.selected = False
 
         self._update_styles()
 
     def update_question_text(self, text: str) -> None:
         self.question_lbl.setText(text)
+
+    def update_question_num(self, question_num: int | str) -> None:
+        self.question_num = question_num
+        self.question_num_lbl.setText(str(self.question_num))
 
     def _update_styles(self) -> None:
         self.style().unpolish(self)
