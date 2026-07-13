@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QLineEdit,
+    QSpinBox,
     QRadioButton,
     QButtonGroup,
     QComboBox,
@@ -14,9 +15,10 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtCore import Qt, pyqtSignal
 
-from ui.components.label import ClickableLabel
-from models.question import Question
 from core.app.enums import QuestionValidationError
+from ui.components.input import ClickableLabel, ReversedSpinBox
+from models.question import Question
+from models.payloads import QuestionPayload
 
 from ui.components.button import create_tool_icon_button
 from ui.components.dialogs import confirm_warning
@@ -39,18 +41,17 @@ TIME_DATA = {
     60: "1 minute",
     90: "1 minute 30 seconds",
     120: "2 minutes",
-    180: "3 minutes",
-    240: "4 minutes",
 }
 
 
 class QuestionEditor(QWidget):
-    error_results = pyqtSignal(object, bool)
+    error_results = pyqtSignal(Question, bool)
 
-    question_text_changed = pyqtSignal(object)
+    question_reordered = pyqtSignal(Question, int)
+    question_text_changed = pyqtSignal(Question)
     global_time_requested = pyqtSignal(int)
-    preview_requested = pyqtSignal(object)
-    delete_requested = pyqtSignal(object)
+    preview_requested = pyqtSignal(QuestionPayload)
+    delete_requested = pyqtSignal(Question)
 
     def __init__(
         self,
@@ -85,10 +86,20 @@ class QuestionEditor(QWidget):
 
         ## WIDGETS SETUP ##
         # Question nums and helper btns
-        self.question_num_lbl = QLabel(
-            f"Question {self.question_num} / {self.total_questions}"
-        )
-        self.question_num_lbl.setFont(question_num_font)
+        question_num_lbl = QLabel("Question ")
+        question_num_lbl.setFont(question_num_font)
+
+        self.question_num_input = ReversedSpinBox()
+        self.question_num_input.setToolTip("Move question position")
+        self.question_num_input.setValue(int(self.question_num))
+        self.question_num_input.setMinimum(1)
+        self.question_num_input.setMaximum(int(self.total_questions))
+        self.question_num_input.setFont(question_num_font)
+        self.question_num_input.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+        self.question_num_input.valueChanged.connect(self._on_question_reorder)
+
+        self.total_question_lbl = QLabel(f"/ {self.total_questions}")
+        self.total_question_lbl.setFont(question_num_font)
 
         warning_icon = self.icons_path / "exclamation.png"
         preview_icon = self.icons_path / "preview.png"
@@ -103,7 +114,7 @@ class QuestionEditor(QWidget):
         self.preview_btn = create_tool_icon_button(
             preview_icon, "Preview", icon_size=28
         )
-        self.preview_btn.clicked.connect(self._start_preview)
+        self.preview_btn.clicked.connect(self._on_preview_clicked)
 
         self.delete_btn = create_tool_icon_button(delete_icon, "Delete", icon_size=28)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
@@ -112,15 +123,24 @@ class QuestionEditor(QWidget):
         self.question_input = QLineEdit()
         self.question_input.setText(self.question.question_text)
         self.question_input.setPlaceholderText("Enter question...")
-        self.question_input.setFixedHeight(50)
+        self.question_input.setFixedHeight(60)
         self.question_input.textChanged.connect(self._on_question_edit)
-        self.question_input.setStyleSheet("font-size: 22px; padding: 8px;")
+        self.question_input.setStyleSheet(
+            "font-size: 22px;" "padding: 8px;" "padding-top: 12px;"
+        )
+
+        question_container, self.question_chars = self._create_char_counter_input(
+            self.question_input,
+            len(self.question.question_text),
+            MAX_QUESTION_LENGTH,
+        )
 
         # Answer button grid
         btn_grid = QGridLayout()
         btn_grid.setSpacing(15)
 
         self.answer_inputs = []
+        self.answer_char_labels = []
 
         for i in range(2):
             for j in range(2):
@@ -138,8 +158,7 @@ class QuestionEditor(QWidget):
                 answer_input.setPlaceholderText(
                     f"Answer '{data['letter']}' {'(optional)' if not data['required'] else ''}"
                 )
-
-                answer_input.setFixedHeight(80)
+                answer_input.setFixedHeight(60)
                 answer_input.setFont(answer_input_font)
                 answer_input.textChanged.connect(
                     lambda text, index=index: self._on_answer_edit(index, text)
@@ -152,8 +171,16 @@ class QuestionEditor(QWidget):
                     }}
                 """)
 
+                answer_container, answer_chars = self._create_char_counter_input(
+                    answer_input,
+                    len(answer_text),
+                    MAX_ANSWER_LENGTH,
+                )
+
+                self.answer_char_labels.append(answer_chars)
                 self.answer_inputs.append(answer_input)
-                btn_grid.addWidget(answer_input, i, j)
+
+                btn_grid.addWidget(answer_container, i, j)
 
         # Correct answer selection
         correct_answer_lbl = QLabel("Select correct answer:")
@@ -205,12 +232,12 @@ class QuestionEditor(QWidget):
         self.time_combo.setFixedSize(250, 40)
         self.time_combo.setEditable(False)
         self.time_combo.setFont(extra_data_font)
-        # self.time_combo.currentIndexChanged.connect(self._on_time_changed)
 
         for seconds, value in TIME_DATA.items():
             self.time_combo.addItem(value, seconds)
 
         self.set_time_limit(self.question.time_limit)
+        self.time_combo.currentIndexChanged.connect(self._on_time_changed)
 
         self.apply_global_time = ClickableLabel("Apply to all questions")
         self.apply_global_time.clicked.connect(self._on_apply_global_time)
@@ -220,7 +247,9 @@ class QuestionEditor(QWidget):
 
         ## LAYOUTS SETUP ##
         heading_hbox = QHBoxLayout()
-        heading_hbox.addWidget(self.question_num_lbl)
+        heading_hbox.addWidget(question_num_lbl)
+        heading_hbox.addWidget(self.question_num_input)
+        heading_hbox.addWidget(self.total_question_lbl)
         heading_hbox.addSpacing(5)
         heading_hbox.addWidget(self.issues_btn)
         heading_hbox.addStretch()
@@ -247,7 +276,7 @@ class QuestionEditor(QWidget):
         vbox.addStretch(1)
         vbox.addLayout(heading_hbox)
         vbox.addSpacing(20)
-        vbox.addWidget(self.question_input)
+        vbox.addWidget(question_container)
         vbox.addSpacing(40)
         vbox.addLayout(btn_grid)
         vbox.addSpacing(40)
@@ -256,6 +285,44 @@ class QuestionEditor(QWidget):
 
         self.setLayout(vbox)
 
+    def _create_char_counter_input(
+        self, input_widget: QLineEdit, current_length: int, max_length: int
+    ) -> tuple[QWidget, QLabel]:
+        container = QWidget()
+        grid = QGridLayout(container)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(0)
+
+        chars_lbl = QLabel(f"{current_length}/{max_length}")
+        chars_lbl.setProperty("state", "normal")
+        chars_lbl.setStyleSheet("""
+            QLabel[state="normal"] {
+                color: #A0A0A0;
+                font-size: 12px;
+                padding-right: 4px;
+                padding-top: 2px;
+                background: transparent;
+            }
+
+            QLabel[state="error"] {
+                color: #C75A5A;
+                font-size: 12px;
+                padding-right: 4px;
+                padding-top: 2px;
+                background: transparent;
+            }
+        """)
+
+        grid.addWidget(input_widget, 0, 0)
+        grid.addWidget(
+            chars_lbl,
+            0,
+            0,
+            alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
+        )
+
+        return container, chars_lbl
+
     def update_question_num(
         self, question_num: int | str, total_questions: int | str | None = None
     ) -> None:
@@ -263,9 +330,9 @@ class QuestionEditor(QWidget):
         if total_questions is not None:
             self.total_questions = total_questions
 
-        self.question_num_lbl.setText(
-            f"Question {self.question_num} / {self.total_questions}"
-        )
+        self.question_num_input.setValue(int(self.question_num))
+        self.question_num_input.setMaximum(int(self.total_questions))
+        self.total_question_lbl.setText(f"/ {self.total_questions}")
 
     def get_all_data(self) -> None:
         pass
@@ -315,12 +382,9 @@ class QuestionEditor(QWidget):
         else:
             self.issues_btn.hide()
 
-    def _start_preview(self) -> None:
-        pass
-
     def _show_issues(self) -> None:
         self.validate_question()
-        issues = []
+        issues: list[str] = []
 
         if not self.question_validation_results:
             # Ordinarily this should never happen
@@ -367,8 +431,30 @@ class QuestionEditor(QWidget):
         QMessageBox.warning(
             self,
             "Question Issues",
-            f"The following issue(s) were detected in this question. These must be fixed in order for the quiz to be saved.\n\n{'\n'.join(issues)}",
+            f"The following issue(s) were detected in this question. These must be fixed before the quiz can be saved.\n\n{'\n'.join(issues)}",
         )
+
+    def _on_preview_clicked(self) -> None:
+        if self.question_validation_results:
+            # This should ordinarily never happen
+            QMessageBox.critical(
+                self,
+                "Question is Invalid",
+                "Cannot preview a question when there are validation errors.",
+            )
+            return
+
+        answers = [a for a in self.question.answer_options if a.strip() != ""]
+
+        question_payload = QuestionPayload(
+            int(self.question_num),
+            int(self.total_questions),
+            self.question.question_text,
+            answers,
+            self.question.time_limit,
+            is_preview=True,
+        )
+        self.preview_requested.emit(question_payload)
 
     def _on_delete_clicked(self) -> None:
         confirm = confirm_warning(
@@ -392,9 +478,32 @@ class QuestionEditor(QWidget):
             seconds = self.time_combo.currentData()
             self.global_time_requested.emit(seconds)
 
+    def _on_question_reorder(self, new_question_num: int) -> None:
+        if not 0 < new_question_num <= int(self.total_questions):
+            # Should ordinarily never happen
+            QMessageBox.critical(
+                self,
+                "Invalid Question Number",
+                "The question cannot be moved to the requested value as it is out of range.",
+            )
+            return
+
+        self.question_reordered.emit(self.question, new_question_num)
+
     def _on_question_edit(self, text: str) -> None:
         text = text.strip()
         self.question.question_text = text
+
+        self.question_chars.setText(f"{len(text)}/{MAX_QUESTION_LENGTH}")
+
+        if len(text) > MAX_QUESTION_LENGTH:
+            self.question_chars.setProperty("state", "error")
+        else:
+            self.question_chars.setProperty("state", "normal")
+
+        self.question_chars.style().unpolish(self.question_chars)
+        self.question_chars.style().polish(self.question_chars)
+        self.question_chars.update()
 
         self.question_text_changed.emit(self.question)
         self.validate_question()
@@ -405,7 +514,19 @@ class QuestionEditor(QWidget):
         while len(self.question.answer_options) <= index:
             self.question.answer_options.append("")
 
+        char_lbl = self.answer_char_labels[index]
+
+        char_lbl.setText(f"{len(text)}/{MAX_ANSWER_LENGTH}")
         self.question.answer_options[index] = text
+
+        if len(text) > MAX_ANSWER_LENGTH:
+            char_lbl.setProperty("state", "error")
+        else:
+            char_lbl.setProperty("state", "normal")
+
+        char_lbl.style().unpolish(char_lbl)
+        char_lbl.style().polish(char_lbl)
+        char_lbl.update()
 
         answer_radio = self.correct_group.button(index)
 
@@ -450,9 +571,8 @@ class QuestionEditor(QWidget):
 
     def on_enter(self, total_questions: int, is_first: bool) -> None:
         self.total_questions = total_questions
-        self.question_num_lbl.setText(
-            f"Question {self.question_num} / {self.total_questions}"
-        )
+
+        self.update_question_num(self.question_num, self.total_questions)
 
         self.is_first = is_first
         self.validate_question()

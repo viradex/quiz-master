@@ -6,6 +6,7 @@ from ui.screens.base_screen import BaseScreen
 from ui.components.question_timer import QuestionTimer
 from ui.components.answer_button_grid import AnswerButtonGrid
 from models.payloads import QuestionPayload
+from core.app.screen_ids import Screens
 
 from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning
@@ -19,6 +20,8 @@ class ClientMultiQuestionScreen(BaseScreen):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+
+        self.is_preview: bool = False
 
         self.setup_ui()
 
@@ -46,8 +49,8 @@ class ClientMultiQuestionScreen(BaseScreen):
         )
 
         # Right side
-        leave_btn = create_return_button("Leave")
-        leave_btn.clicked.connect(self.leave_game)
+        self.leave_btn = create_return_button("Leave")
+        self.leave_btn.clicked.connect(self.leave_game)
 
         self.question_timer = QuestionTimer()
 
@@ -62,7 +65,7 @@ class ClientMultiQuestionScreen(BaseScreen):
         vbox_left.addSpacing(20)
 
         vbox_right = QVBoxLayout()
-        vbox_right.addWidget(leave_btn, 0, alignment=Qt.AlignmentFlag.AlignRight)
+        vbox_right.addWidget(self.leave_btn, 0, alignment=Qt.AlignmentFlag.AlignRight)
         vbox_right.addWidget(
             self.question_timer, 1, alignment=Qt.AlignmentFlag.AlignRight
         )
@@ -77,11 +80,17 @@ class ClientMultiQuestionScreen(BaseScreen):
 
     def on_answer_select(self, index: int) -> None:
         """Called when the user selects an answer in the answer button grid."""
-        self.answer_submitted.emit(index)
+        if not self.is_preview:
+            self.answer_submitted.emit(index)
+
         self.question_timer.lock()
 
     def leave_game(self) -> None:
         """Displays a warning modal box before leaving the game."""
+        if self.is_preview:
+            self.go_to(Screens.COMMON_QUIZ_EDITOR)
+            return
+
         confirm = confirm_warning(
             self,
             "Confirm Leaving",
@@ -92,13 +101,18 @@ class ClientMultiQuestionScreen(BaseScreen):
             self.left_server.emit()
 
     def on_enter(self, payload: QuestionPayload) -> None:
+        self.is_preview = payload.is_preview
+
         question_progress = f"{payload.question_num} / {payload.total_questions}"
-        self.set_title(f"Quiz Master – Question {question_progress}")
+        self.set_title(
+            f"Quiz Master – Question {question_progress} {'(Preview)' if self.is_preview else ''}"
+        )
 
         self.question_num.setText(f"Question {question_progress}")
         self.question_lbl.setText(payload.question_text)
 
         self.answer_button_grid.set_answers(payload.answer_options)
+        self.leave_btn.setText("Return" if self.is_preview else "Leave")
 
         # Set time limit in milliseconds from seconds
         self.question_timer.set_duration(payload.time_limit * 1000)

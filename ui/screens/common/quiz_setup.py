@@ -20,7 +20,7 @@ from ui.components.button import create_return_button
 class CommonQuizSetupScreen(BaseScreen):
     title_text = "Quiz Master – Create New Quiz"
 
-    save_requested = pyqtSignal(dict)
+    save_requested = pyqtSignal(dict, bool)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -141,7 +141,7 @@ class CommonQuizSetupScreen(BaseScreen):
 
     def on_save(self) -> None:
         if self.quiz_id is not None:
-            self.save_requested.emit(self.get_data_entered())
+            self.save_requested.emit(self.get_data_entered(), False)
 
         self.go_to(Screens.COMMON_QUIZ_MANAGER)
 
@@ -155,7 +155,7 @@ class CommonQuizSetupScreen(BaseScreen):
             )
             return
 
-        self.save_requested.emit(data)
+        self.save_requested.emit(data, True)
 
     def on_enter(self, payload: dict | None = None):
         self.quiz_id = payload.get("quiz_id")

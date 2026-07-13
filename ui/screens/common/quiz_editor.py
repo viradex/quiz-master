@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import (
     QFrame,
     QPushButton,
     QScrollArea,
+    QSplitter,
     QVBoxLayout,
     QHBoxLayout,
     QSizePolicy,
@@ -16,12 +17,13 @@ from ui.components.card import QuestionCard
 from ui.components.question_editor import QuestionEditor
 from models.quiz import Quiz
 from models.question import Question
+from models.payloads import QuestionPayload
 
 from ui.components.dialogs import confirm_warning
 
 
 class CommonQuizEditorScreen(BaseScreen):
-    title_text = "Quiz Master – Quiz Editor (Quiz Name)"
+    title_text = "Quiz Master – Quiz Editor"
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -29,6 +31,7 @@ class CommonQuizEditorScreen(BaseScreen):
         self.quiz: Quiz | None = None
         self.mode: str | None = None
         self.changes_made: bool = False
+        self.returning_from_preview: bool = False
 
         # Question ID -> widget
         self.cards: dict[str, QuestionCard] = {}
@@ -39,7 +42,8 @@ class CommonQuizEditorScreen(BaseScreen):
     def setup_ui(self) -> None:
         ## WIDGETS SETUP ##
         sidebar = QFrame()
-        sidebar.setFixedWidth(200)
+        sidebar.setMinimumWidth(160)
+        sidebar.setMaximumWidth(500)
         sidebar.setStyleSheet("""
             QFrame {
                 background-color: #252526;
@@ -100,10 +104,29 @@ class CommonQuizEditorScreen(BaseScreen):
         sidebar_vbox.addWidget(self.add_btn)
         sidebar_vbox.addLayout(sidebar_btn_hbox)
 
+        splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.addWidget(sidebar)
+        splitter.addWidget(self.editor_stack)
+
+        # 1:4 starting ratio
+        splitter.setSizes([200, 800])
+        splitter.setStretchFactor(0, 0)
+        splitter.setStretchFactor(1, 1)
+        splitter.setChildrenCollapsible(False)
+        splitter.setHandleWidth(2)
+        splitter.setStyleSheet("""
+            QSplitter::handle {
+                background: #3a3a3a;
+            }
+
+            QSplitter::handle:hover {
+                background: #5a5a5a;
+            }
+        """)
+
         hbox = QHBoxLayout()
         hbox.setContentsMargins(0, 0, 0, 0)
-        hbox.addWidget(sidebar)
-        hbox.addWidget(self.editor_stack, stretch=1)
+        hbox.addWidget(splitter)
 
         self.setLayout(hbox)
 
@@ -129,13 +152,15 @@ class CommonQuizEditorScreen(BaseScreen):
 
         # Setup editor
         editor.error_results.connect(self._on_error_results)
+        editor.question_reordered.connect(self._on_question_reorder)
         editor.question_text_changed.connect(self._on_question_text)
         editor.global_time_requested.connect(self._on_global_time)
+        editor.preview_requested.connect(self.preview_question)
         editor.delete_requested.connect(self.remove_question)
 
         # Setup card
         card.select()
-        card.clicked.connect(lambda: self.display_question(question))
+        card.clicked.connect(lambda q=question: self.display_question(q))
 
         self._update_delete_state()
 
@@ -193,6 +218,10 @@ class CommonQuizEditorScreen(BaseScreen):
             self._show_editor(editor)
             card.select()
 
+    def preview_question(self, payload: QuestionPayload) -> None:
+        self.returning_from_preview = True
+        self.go_to(Screens.CLIENT_MULTI_QUESTION, payload)
+
     def add_blank_question(self) -> None:
         question = Question(Question.generate_random_id(), "", [], None, 20)
         question_index = self.quiz.add_question(question)
@@ -206,6 +235,18 @@ class CommonQuizEditorScreen(BaseScreen):
 
         self.editor_stack.setCurrentWidget(editor)
         editor.on_enter(len(self.quiz.get_all_questions()), first)
+
+    def _refresh_card_order(self) -> None:
+        # Remove every card
+        for card in self.cards.values():
+            self.question_list.removeWidget(card)
+
+        # Reinsert in proper order
+        for question in self.quiz.get_all_questions():
+            self.question_list.insertWidget(
+                self.question_list.count() - 1,
+                self.cards[question.question_id],
+            )
 
     def _update_question_numbers(self) -> None:
         for i, question in enumerate(self.quiz.get_all_questions(), start=1):
@@ -228,7 +269,7 @@ class CommonQuizEditorScreen(BaseScreen):
 
     def _on_error_results(self, question: Question, error_occurred: bool) -> None:
         if error_occurred:
-            self.cards[question.question_id].deselect_error()
+            self.cards[question.question_id].error()
         else:
             self.cards[question.question_id].deselect()
 
@@ -250,11 +291,23 @@ class CommonQuizEditorScreen(BaseScreen):
         for editor in self.editors.values():
             editor.set_time_limit(seconds)
 
+    def _on_question_reorder(self, question: Question, new_question_num: int) -> None:
+        self.quiz.move_question(question.question_id, new_question_num - 1)
+
+        self._refresh_card_order()
+        self._update_question_numbers()
+
     def _on_question_text(self, question: Question) -> None:
         self.cards[question.question_id].update_question_text(question.question_text)
 
     def on_enter(self, payload: dict) -> None:
+        if self.returning_from_preview:
+            self.returning_from_preview = False
+            self.set_title(f"Quiz Master – Quiz Editor ({self.quiz.quiz_title})")
+            return
+
         self.quiz = payload["quiz"]
+        self.set_title(f"Quiz Master – Quiz Editor ({self.quiz.quiz_title})")
 
         if self.quiz.get_all_questions():
             # Edit mode

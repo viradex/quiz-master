@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         """Show an informational modal window. Only intended to be used by AppController."""
         QMessageBox.information(self, title, desc)
 
-    def closeEvent(self, event: QCloseEvent):
+    def closeEvent(self, event: QCloseEvent) -> None:
         if self.current_screen is not None:
             self.current_screen.on_window_close(event)
 

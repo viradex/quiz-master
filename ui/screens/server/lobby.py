@@ -12,7 +12,7 @@ from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from ui.screens.base_screen import BaseScreen
-from ui.components.combobox import SearchableCombobox
+from ui.components.input import SearchableCombobox
 from ui.components.spinner import Spinner
 
 from ui.components.button import create_return_button

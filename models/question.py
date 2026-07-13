@@ -33,7 +33,7 @@ class Question:
         errors = set()
 
         question_text = self.question_text.strip()
-        answer_options = [answer.strip() for answer in self.answer_options]
+        answer_options = [a.strip() for a in self.answer_options]
         non_empty_answers = [a for a in answer_options if a != ""]
 
         if not question_text:

@@ -108,7 +108,7 @@
     {
       "question_id": "af14d6c8",
       "question_text": "Guess the movie: \ud83d\udc7d\u260e\ufe0f\ud83d\udeb2\ud83c\udf15",
-      "answer_options": ["Lilo & Stitch", "Paul", "E.T. the Extra-Terrestrial", "Home"],
+      "answer_options": ["Lilo and Stitch", "Paul", "E.T. the Extra-Terrestrial", "Home"],
       "correct_answer_index": 2,
       "time_limit": 20
     },
@@ -126,7 +126,7 @@
         "The Hobbit",
         "The Lord of the Rings",
         "Percy Jackson",
-        "Dungeons & Dragons"
+        "Dungeons and Dragons"
       ],
       "correct_answer_index": 1,
       "time_limit": 20

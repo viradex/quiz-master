@@ -13,14 +13,16 @@ class CommonQuizSetupLogic(BaseLogic):
 
         self.screen.save_requested.connect(self.on_save_requested)
 
-    def on_save_requested(self, data: dict) -> None:
+    def on_save_requested(self, data: dict, edit_questions: bool = True) -> None:
         quiz_id = data.get("quiz_id")
 
         if quiz_id is not None:
             self.quiz_repo.edit(quiz_id, data)
             quiz = self.quiz_repo.get(quiz_id)
 
-            self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
+            if edit_questions:
+                self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
+
             return
 
         quiz = Quiz(
@@ -42,4 +44,6 @@ class CommonQuizSetupLogic(BaseLogic):
                 return
 
         self.quiz_repo.save(quiz)
-        self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
+
+        if edit_questions:
+            self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
