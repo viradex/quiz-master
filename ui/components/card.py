@@ -305,10 +305,20 @@ class QuizCard(QFrame):
         self.title_lbl = QLabel(self.quiz_title)
         self.title_lbl.setStyleSheet("font-size: 20px;" "font-weight: 600;")
 
+        no_questions = int(self.total_questions) <= 0
+
         self.questions_lbl = QLabel(
             f"{self.total_questions} {'question' if int(self.total_questions) == 1 else 'questions'}",
         )
-        self.questions_lbl.setStyleSheet("font-size: 14px;" "color: #8A8A8A;")
+        self.questions_lbl.setStyleSheet(f"""
+            QLabel {{
+                font-size: 14px;
+                color: {'#C75A5A' if no_questions else '#8A8A8A'};
+            }}
+        """)
+
+        if no_questions:
+            self.questions_lbl.setToolTip("This quiz cannot be played")
 
         if self.last_updated is not None:
             formatted_date = format_datetime(self.last_updated, start_lower=True)

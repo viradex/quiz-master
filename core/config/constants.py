@@ -55,14 +55,17 @@ RESPONSE_TIMEOUT = 15
 ## GENERIC VALIDATION CONFIG ##
 ###############################
 
+# Maximum nickname length to join with
+MAX_NICKNAME_LENGTH = 40
+
+# Maximum quiz title length that can be created
+MAX_QUIZ_TITLE_LENGTH = 60
+
 # Maximum question text length in characters
 MAX_QUESTION_LENGTH = 120
 
 # Maximum single answer text length in characters
 MAX_ANSWER_LENGTH = 75
-
-# Maximum nickname length to join with
-MAX_NICKNAME_LENGTH = 40
 
 # Minimum players needed to start the quiz game, and for there to be during the game
 MIN_PLAYERS_FOR_GAME = 2

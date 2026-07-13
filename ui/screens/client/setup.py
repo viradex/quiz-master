@@ -126,7 +126,7 @@ class ClientSetupScreen(BaseScreen):
 
         self.submitted.emit(data)
 
-    def validate_data(self) -> None:
+    def validate_data(self) -> bool:
         """Validate all form field data through basic validation."""
         ip_address = self.ip_input.text().strip()
         nickname = self.nickname_counter.line_edit.text().strip()

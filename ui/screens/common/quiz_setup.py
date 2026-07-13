@@ -1,4 +1,3 @@
-import random
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
@@ -13,8 +12,10 @@ from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
+from ui.components.input import CharacterCountInput
 
 from ui.components.button import create_return_button
+from core.config.constants import MAX_QUIZ_TITLE_LENGTH
 
 
 class CommonQuizSetupScreen(BaseScreen):
@@ -46,8 +47,8 @@ class CommonQuizSetupScreen(BaseScreen):
         title_lbl = QLabel("Quiz title:")
         title_lbl.setFont(form_font)
 
-        self.title_input = QLineEdit()
-        self.title_input.setFont(form_font)
+        self.title_counter = CharacterCountInput(MAX_QUIZ_TITLE_LENGTH)
+        self.title_counter.line_edit.setFont(form_font)
 
         self.shuffle_check = QCheckBox("Shuffle questions")
         self.shuffle_check.setFont(form_font)
@@ -77,7 +78,7 @@ class CommonQuizSetupScreen(BaseScreen):
         title_hbox = QHBoxLayout()
         title_hbox.addWidget(title_lbl)
         title_hbox.addSpacing(25)
-        title_hbox.addWidget(self.title_input)
+        title_hbox.addWidget(self.title_counter)
 
         btn_hbox = QHBoxLayout()
         btn_hbox.addWidget(self.return_btn, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -116,9 +117,7 @@ class CommonQuizSetupScreen(BaseScreen):
         self.save_btn.hide()
         self.btn_spacer.hide()
 
-        # TODO only for easier accessibility to quiz editor screen
-        # set to "" when done and remove random import
-        self.title_input.setText(f"Testing Quiz #{random.randint(0, 1000)}")
+        self.title_counter.line_edit.setText("")
         self.shuffle_check.setChecked(False)
 
     def edit_mode(self, quiz_title: str, do_shuffle: bool) -> None:
@@ -129,17 +128,38 @@ class CommonQuizSetupScreen(BaseScreen):
         self.save_btn.show()
         self.btn_spacer.show()
 
-        self.title_input.setText(quiz_title)
+        self.title_counter.line_edit.setText(quiz_title)
         self.shuffle_check.setChecked(do_shuffle)
 
     def get_data_entered(self) -> dict[str, str | bool]:
         return {
             "quiz_id": self.quiz_id,
-            "quiz_title": self.title_input.text().strip(),
+            "quiz_title": self.title_counter.line_edit.text().strip(),
             "do_shuffle": self.shuffle_check.isChecked(),
         }
 
+    def validate_data(self) -> bool:
+        title = self.title_counter.line_edit.text().strip()
+
+        if not title:
+            self.show_error(
+                "Empty Title",
+                "Please ensure the title is filled in and try again.",
+            )
+            return False
+        elif len(title) > MAX_QUIZ_TITLE_LENGTH:
+            self.show_error(
+                "Title Too Long",
+                f"The title exceeds the maximum length of {MAX_QUIZ_TITLE_LENGTH} characters. Please shorten it and try again.",
+            )
+            return False
+
+        return True
+
     def on_save(self) -> None:
+        if not self.validate_data():
+            return
+
         if self.quiz_id is not None:
             self.save_requested.emit(self.get_data_entered(), False)
 
@@ -148,11 +168,7 @@ class CommonQuizSetupScreen(BaseScreen):
     def on_create(self) -> None:
         data = self.get_data_entered()
 
-        if not data["quiz_title"]:
-            self.show_error(
-                "Empty Title",
-                "Please ensure the title is filled in and try again.",
-            )
+        if not self.validate_data():
             return
 
         self.save_requested.emit(data, True)

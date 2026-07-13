@@ -76,6 +76,12 @@ class ServerLobbyLogic(BaseLogic):
                 "There are not enough players to start the game.",
             )
             return
+        elif not quiz.questions:
+            self.screen.show_error(
+                "Invalid Conditions for Start",
+                "The quiz selected has no questions.",
+            )
+            return
 
         self.controller.load_quiz(quiz)
         self.controller.start_game()
@@ -100,7 +106,9 @@ class ServerLobbyLogic(BaseLogic):
         )
 
         quiz_names = {
-            quiz_id: quiz.quiz_title for quiz_id, quiz in sorted_quizzes.items()
+            quiz_id: quiz.quiz_title
+            for quiz_id, quiz in sorted_quizzes.items()
+            if quiz.questions
         }
 
         for quiz_id, quiz in sorted_quizzes.items():
