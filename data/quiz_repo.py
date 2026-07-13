@@ -45,6 +45,7 @@ class QuizRepository:
         # Set preferable for membership tests due to uniqueness
         # and faster performance (though negligible here)
         protected = {"quiz_id", "is_premade"}
+        changed = False
 
         for key, value in data.items():
             if key in protected:
@@ -52,19 +53,18 @@ class QuizRepository:
 
             # Checks if the quiz has an attribute with same name
             if hasattr(quiz, key):
-                # Set attribute in quiz by name
-                setattr(quiz, key, value)
+                if getattr(quiz, key) != value:
+                    setattr(quiz, key, value)
+                    changed = True
 
-        self.save(quiz)
+        if changed:
+            self.save(quiz)
+
         return True
 
     def save(self, quiz: Quiz) -> None:
         """Save a quiz instance to disk in the custom quiz directory, with the quiz ID as the filename."""
         quiz.updated_at = datetime.now()
-
-        # TODO only for dev to easily test quiz editor without a billion save files
-        print("Saving temporarily disabled")
-        return
 
         file_path = self.custom_quiz_path / f"{quiz.quiz_id}.json"
         with open(file_path, mode="w", encoding="utf-8") as f:

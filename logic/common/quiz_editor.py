@@ -2,7 +2,8 @@ from copy import deepcopy
 
 from ui.screens.common.quiz_editor import CommonQuizEditorScreen
 from logic.base_logic import BaseLogic
-from core.services.app_context import Services
+from data.quiz_repo import QuizRepository
+from core.app.screen_ids import Screens
 from models.quiz import Quiz
 from models.question import Question
 
@@ -11,7 +12,7 @@ class CommonQuizEditorLogic(BaseLogic):
     def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: CommonQuizEditorScreen = screen
-        self.services: Services = services
+        self.quiz_repo: QuizRepository = services.quiz_repo
 
         self.quiz: Quiz | None = None
         self.mode: str | None = None
@@ -22,6 +23,7 @@ class CommonQuizEditorLogic(BaseLogic):
         self.screen.question_reorder_requested.connect(
             self.on_question_reorder_requested
         )
+        self.screen.save_requested.connect(self.on_save_requested)
 
     def on_blank_question_requested(self) -> None:
         question = Question(Question.generate_random_id(), "", [], None, 20)
@@ -69,6 +71,20 @@ class CommonQuizEditorLogic(BaseLogic):
     ) -> None:
         self.quiz.move_question(question.question_id, new_question_num - 1)
         self.screen.update_question_order()
+
+    def on_save_requested(self) -> None:
+        for question in self.quiz.questions:
+            errors = question.validate_question()
+
+            if errors:
+                self.screen.show_error(
+                    "Question Issues",
+                    "Some questions have issues that prevent the quiz from being saved. Questions with errors are highlighted with a red outline. Please fix them and try again.",
+                )
+                return
+
+        self.quiz_repo.edit(self.quiz.quiz_id, self.quiz.to_dict())
+        self.screen.go_to(Screens.COMMON_QUIZ_MANAGER)
 
     def on_enter(self, payload=None):
         if self.screen.returning_from_preview:

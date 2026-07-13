@@ -121,7 +121,9 @@ class QuestionEditor(QWidget):
         self.duplicate_btn = create_tool_icon_button(
             duplicate_icon, "Duplicate", icon_size=28
         )
-        self.duplicate_btn.clicked.connect(self._on_duplicate_clicked)
+        self.duplicate_btn.clicked.connect(
+            lambda: self.duplicate_requested.emit(self.question)
+        )
 
         self.delete_btn = create_tool_icon_button(delete_icon, "Delete", icon_size=28)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
@@ -415,9 +417,6 @@ class QuestionEditor(QWidget):
             is_preview=True,
         )
         self.preview_requested.emit(question_payload)
-
-    def _on_duplicate_clicked(self) -> None:
-        self.duplicate_requested.emit(self.question)
 
     def _on_delete_clicked(self) -> None:
         confirm = confirm_warning(

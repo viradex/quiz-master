@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import (
     QSplitter,
     QVBoxLayout,
     QHBoxLayout,
-    QMessageBox,
     QSizePolicy,
 )
 from PyQt6.QtCore import Qt, pyqtSignal
@@ -30,6 +29,7 @@ class CommonQuizEditorScreen(BaseScreen):
     duplicate_requested = pyqtSignal(Question)
     delete_requested = pyqtSignal(Question)
     question_reorder_requested = pyqtSignal(Question, int)
+    save_requested = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -99,6 +99,7 @@ class CommonQuizEditorScreen(BaseScreen):
         self.save_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
+        self.save_btn.clicked.connect(self._on_save_clicked)
         self.save_btn.setStyleSheet("font-size: 14px;")
 
         # Main screen editor
@@ -299,15 +300,21 @@ class CommonQuizEditorScreen(BaseScreen):
             self.clear_questions()
             self.go_to(Screens.COMMON_QUIZ_MANAGER)
 
+    def _on_save_clicked(self) -> None:
+        if self.quiz is not None and self.quiz == self._original_quiz:
+            self.clear_questions()
+            self.go_to(Screens.COMMON_QUIZ_MANAGER)
+            return
+
+        self.save_requested.emit()
+
     def _on_global_time(self, seconds: int, text: str) -> None:
-        confirm = QMessageBox.question(
-            self,
+        confirm = self.show_question(
             "Set Time for All Questions?",
             f"Are you sure you want to change the time limit for all questions to {text}?",
-            defaultButton=QMessageBox.StandardButton.No,
         )
 
-        if confirm == QMessageBox.StandardButton.Yes:
+        if confirm:
             for editor in self.editors.values():
                 editor.set_time_limit(seconds)
 
