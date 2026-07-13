@@ -126,5 +126,5 @@ class CommonQuizManagerLogic(BaseLogic):
         self.current_sort = sort_order
         self.refresh_quizzes()
 
-    def on_enter(self):
+    def on_enter(self, payload=None) -> None:
         self.refresh_quizzes()

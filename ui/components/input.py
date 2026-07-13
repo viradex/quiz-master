@@ -25,6 +25,86 @@ class ClickableLabel(QLabel):
         super().mousePressEvent(event)
 
 
+class FocusLineEdit(QLineEdit):
+    focused = pyqtSignal(bool)
+
+    def focusInEvent(self, event) -> None:
+        self.focused.emit(True)
+        super().focusInEvent(event)
+
+    def focusOutEvent(self, event) -> None:
+        self.focused.emit(False)
+        super().focusOutEvent(event)
+
+
+class CharacterCountInput(QWidget):
+    def __init__(self, max_length: int, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.max_length = max_length
+
+        self.setup_component()
+
+    def setup_component(self) -> None:
+        self.line_edit = FocusLineEdit()
+        self.line_edit.focused.connect(self._on_focus_changed)
+
+        self.counter = QLabel(f"0/{self.max_length}")
+        self.counter.hide()
+        self.counter.setProperty("state", "normal")
+        self.counter.setStyleSheet("""
+            QLabel[state="normal"] {
+                color: #A0A0A0;
+                font-size: 12px;
+                padding-right: 4px;
+                padding-top: 2px;
+                background: transparent;
+            }
+
+            QLabel[state="error"] {
+                color: #C75A5A;
+                font-size: 12px;
+                padding-right: 4px;
+                padding-top: 2px;
+                background: transparent;
+            }
+        """)
+
+        grid = QGridLayout(self)
+        grid.setContentsMargins(0, 0, 0, 0)
+        grid.setSpacing(0)
+        grid.addWidget(self.line_edit, 0, 0)
+        grid.addWidget(
+            self.counter,
+            0,
+            0,
+            alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
+        )
+
+        self.line_edit.textChanged.connect(self.update_count)
+        self.update_count(self.line_edit.text())
+
+    def update_count(self, text: str) -> None:
+        length = len(text.strip())
+
+        self.counter.setText(f"{length}/{self.max_length}")
+        self.counter.setProperty(
+            "state",
+            "error" if length > self.max_length else "normal",
+        )
+
+        self.counter.style().unpolish(self.counter)
+        self.counter.style().polish(self.counter)
+        self.counter.update()
+
+    def _on_focus_changed(self, focused: bool) -> None:
+        if focused:
+            self.counter.show()
+        elif len(self.line_edit.text().strip()) > self.max_length:
+            self.counter.show()
+        else:
+            self.counter.hide()
+
+
 class SearchableCombobox(QComboBox):
     """Searchable dropdown menu."""
 
@@ -65,7 +145,7 @@ class SearchableCombobox(QComboBox):
 
 
 class ReversedSpinBox(QSpinBox):
-    def keyPressEvent(self, event):
+    def keyPressEvent(self, event) -> None:
         # Pressing up goes down instead and vice versa
         if event.key() == Qt.Key.Key_Up:
             self.setValue(min(self.value() - 1, self.maximum()))
@@ -76,7 +156,7 @@ class ReversedSpinBox(QSpinBox):
         else:
             super().keyPressEvent(event)
 
-    def wheelEvent(self, event):
+    def wheelEvent(self, event) -> None:
         # Scrolling up acts as if it scrolls down and vice versa
         if event.angleDelta().y() > 0:
             self.setValue(max(self.minimum(), self.value() - 1))
