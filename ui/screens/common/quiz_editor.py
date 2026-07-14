@@ -19,8 +19,6 @@ from models.quiz import Quiz
 from models.question import Question
 from models.payloads import QuestionPayload
 
-from ui.components.dialogs import confirm_warning
-
 
 class CommonQuizEditorScreen(BaseScreen):
     title_text = "Quiz Master – Quiz Editor"
@@ -29,6 +27,8 @@ class CommonQuizEditorScreen(BaseScreen):
     duplicate_requested = pyqtSignal(Question)
     delete_requested = pyqtSignal(Question)
     question_reorder_requested = pyqtSignal(Question, int)
+
+    discard_requested = pyqtSignal()
     save_requested = pyqtSignal()
 
     def __init__(self, parent=None) -> None:
@@ -38,9 +38,7 @@ class CommonQuizEditorScreen(BaseScreen):
         # Good: len(self.quiz.get_all_questions())
         # Bad: self.quiz.remove_question(question.question_id)
         self.quiz: Quiz | None = None
-        self.mode: str | None = None
-
-        self._original_quiz: Quiz | None = None
+        self.read_only: bool = False
         self.returning_from_preview: bool = False
 
         # Question ID -> widget
@@ -84,23 +82,23 @@ class CommonQuizEditorScreen(BaseScreen):
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
         self.add_btn.clicked.connect(self.blank_question_requested.emit)
-        self.add_btn.setStyleSheet("font-size: 18px;")
+        self.add_btn.setStyleSheet("QPushButton { font-size: 18px; }")
 
         self.discard_btn = QPushButton("Discard")
         self.discard_btn.setFixedHeight(30)
         self.discard_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
-        self.discard_btn.clicked.connect(self._on_discard_clicked)
-        self.discard_btn.setStyleSheet("font-size: 14px;")
+        self.discard_btn.clicked.connect(lambda: self.discard_requested.emit())
+        self.discard_btn.setStyleSheet("QPushButton { font-size: 14px; }")
 
         self.save_btn = QPushButton("Save")
         self.save_btn.setFixedHeight(30)
         self.save_btn.setSizePolicy(
             QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed
         )
-        self.save_btn.clicked.connect(self._on_save_clicked)
-        self.save_btn.setStyleSheet("font-size: 14px;")
+        self.save_btn.clicked.connect(lambda: self.save_requested.emit())
+        self.save_btn.setStyleSheet("QPushButton { font-size: 14px; }")
 
         # Main screen editor
         self.editor_stack = QStackedWidget()
@@ -141,19 +139,32 @@ class CommonQuizEditorScreen(BaseScreen):
 
         self.setLayout(hbox)
 
-    def set_quiz(self, quiz: Quiz, copied_quiz: Quiz, mode: str) -> None:
+    def set_quiz(self, quiz: Quiz, read_only: bool) -> None:
         self.quiz = quiz
-        self.mode = mode
-        self._original_quiz = copied_quiz
+        self.read_only = read_only
 
-        self.set_title(f"Quiz Master – Quiz Editor ({self.quiz.quiz_title})")
+        self.set_window_title()
 
-        if self.mode == "edit":
+        self.add_btn.setDisabled(self.read_only)
+        self.save_btn.setDisabled(self.read_only)
+
+        self.add_btn.setToolTip("Cannot edit read-only quiz" if self.read_only else "")
+        self.save_btn.setToolTip("Cannot edit read-only quiz" if self.read_only else "")
+        self.discard_btn.setText("Return" if self.read_only else "Discard")
+
+        questions = self.quiz.get_all_questions()
+        if questions:
             for i, question in enumerate(self.quiz.get_all_questions(), start=1):
                 self.add_question_widgets(question, i)
 
             first_question = self.quiz.get_all_questions()[0]
             self.display_question(first_question)
+
+    def set_window_title(self) -> None:
+        if not self.read_only:
+            self.set_title(f"Quiz Master – Editing {self.quiz.quiz_title}")
+        else:
+            self.set_title(f"Quiz Master – Viewing {self.quiz.quiz_title}")
 
     def add_question_widgets(self, question: Question, question_num: int) -> None:
         if question.question_id in self.editors:
@@ -163,7 +174,7 @@ class CommonQuizEditorScreen(BaseScreen):
         total_questions = len(self.quiz.get_all_questions())
 
         # Initialize editor and card
-        editor = QuestionEditor(question, question_num, total_questions)
+        editor = QuestionEditor(question, question_num, total_questions, self.read_only)
         card = QuestionCard(question, question_num)
 
         # Save editor and show
@@ -229,6 +240,10 @@ class CommonQuizEditorScreen(BaseScreen):
         editor = self.editors.get(question.question_id)
         card = self.cards.get(question.question_id)
 
+        if self.editor_stack.currentWidget() is editor:
+            card.select()
+            return
+
         if editor and card:
             self._show_editor(editor)
             card.select()
@@ -286,28 +301,6 @@ class CommonQuizEditorScreen(BaseScreen):
         else:
             self.cards[question.question_id].deselect()
 
-    def _on_discard_clicked(self) -> None:
-        if self.quiz is not None and self.quiz != self._original_quiz:
-            confirm = confirm_warning(
-                self,
-                "Discard Quiz?",
-                "Are you sure you want to discard any unsaved work? The changes made will be permanently deleted and irrecoverable!",
-            )
-        else:
-            confirm = True
-
-        if confirm:
-            self.clear_questions()
-            self.go_to(Screens.COMMON_QUIZ_MANAGER)
-
-    def _on_save_clicked(self) -> None:
-        if self.quiz is not None and self.quiz == self._original_quiz:
-            self.clear_questions()
-            self.go_to(Screens.COMMON_QUIZ_MANAGER)
-            return
-
-        self.save_requested.emit()
-
     def _on_global_time(self, seconds: int, text: str) -> None:
         confirm = self.show_question(
             "Set Time for All Questions?",
@@ -321,16 +314,7 @@ class CommonQuizEditorScreen(BaseScreen):
     def _on_question_text(self, question: Question) -> None:
         self.cards[question.question_id].update_question_text(question.question_text)
 
-    def on_window_close(self, event) -> None:
-        if self.quiz is not None and self.quiz != self._original_quiz:
-            # TODO make it save the quiz instead
-            confirm = confirm_warning(
-                self,
-                "Close and Discard",
-                "Are you sure you want to discard any unsaved work? The changes made will be permanently deleted and irrecoverable!",
-            )
-
-            if confirm:
-                event.accept()
-            else:
-                event.ignore()
+    def on_enter(self, payload=None):
+        if self.returning_from_preview and self.quiz is not None:
+            # Do not reset returning_from_preview here, the logic does that
+            self.set_window_title()

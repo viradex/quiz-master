@@ -2,7 +2,6 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
-    QLineEdit,
     QSpinBox,
     QRadioButton,
     QButtonGroup,
@@ -22,6 +21,7 @@ from models.payloads import QuestionPayload
 
 from ui.components.button import create_tool_icon_button
 from ui.components.dialogs import confirm_warning
+from utils.error_messages import format_errors, QUESTION_ERROR_MESSAGES
 from core.config.constants import MAX_QUESTION_LENGTH, MAX_ANSWER_LENGTH
 
 ANSWER_DATA = [
@@ -59,12 +59,14 @@ class QuestionEditor(QWidget):
         question: Question,
         question_num: int | str,
         total_questions: int | str,
+        read_only: bool,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self.question = question
         self.question_num = question_num
         self.total_questions = total_questions
+        self.read_only = read_only
 
         self.question_validation_results: set[QuestionValidationError] = set()
         self.is_first = True
@@ -91,10 +93,15 @@ class QuestionEditor(QWidget):
         question_num_lbl.setFont(question_num_font)
 
         self.question_num_input = ReversedSpinBox()
-        self.question_num_input.setToolTip("Move question position")
+        self.question_num_input.setToolTip(
+            "Move question position"
+            if not self.read_only
+            else "Cannot edit read-only quiz"
+        )
         self.question_num_input.setValue(int(self.question_num))
         self.question_num_input.setMinimum(1)
         self.question_num_input.setMaximum(int(self.total_questions))
+        self.question_num_input.setDisabled(self.read_only)
         self.question_num_input.setFont(question_num_font)
         self.question_num_input.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
         self.question_num_input.valueChanged.connect(self._on_question_reorder)
@@ -128,10 +135,24 @@ class QuestionEditor(QWidget):
         self.delete_btn = create_tool_icon_button(delete_icon, "Delete", icon_size=28)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
 
+        if self.read_only:
+            duplicate_disabled_icon = self.icons_path / "duplicate_disabled.png"
+            self.duplicate_btn.setIcon(QIcon(str(duplicate_disabled_icon)))
+
+            delete_disabled_icon = self.icons_path / "delete_disabled.png"
+            self.delete_btn.setIcon(QIcon(str(delete_disabled_icon)))
+
+            self.duplicate_btn.setDisabled(self.read_only)
+            self.duplicate_btn.setToolTip("Cannot edit read-only quiz")
+
+            self.delete_btn.setDisabled(self.read_only)
+            self.delete_btn.setToolTip("Cannot edit read-only quiz")
+
         # Question input
         self.question_counter = CharacterCountInput(MAX_QUESTION_LENGTH)
         self.question_counter.line_edit.setText(self.question.question_text)
         self.question_counter.line_edit.setPlaceholderText("Enter question...")
+        self.question_counter.line_edit.setDisabled(self.read_only)
         self.question_counter.line_edit.setFixedHeight(60)
         self.question_counter.line_edit.textChanged.connect(self._on_question_edit)
         self.question_counter.line_edit.setStyleSheet(
@@ -160,6 +181,7 @@ class QuestionEditor(QWidget):
                 counter.line_edit.setPlaceholderText(
                     f"Answer '{data['letter']}' {'(optional)' if not data['required'] else ''}"
                 )
+                counter.line_edit.setDisabled(self.read_only)
                 counter.line_edit.setFixedHeight(60)
                 counter.line_edit.setFont(answer_input_font)
                 counter.line_edit.textChanged.connect(
@@ -172,6 +194,9 @@ class QuestionEditor(QWidget):
                         padding: 8px;
                     }}
                 """)
+
+                if self.read_only:
+                    counter.setToolTip("Cannot edit read-only quiz")
 
                 self.answer_counters.append(counter)
                 btn_grid.addWidget(counter, i, j)
@@ -194,11 +219,15 @@ class QuestionEditor(QWidget):
             data = ANSWER_DATA[i]
 
             correct_radio = QRadioButton(f"Answer '{data['letter']}'")
+            correct_radio.setDisabled(self.read_only)
             correct_radio.setStyleSheet(f"""
                 QRadioButton {{
                     font-size: 18px; font-weight: 600; color: {data['color']};
                 }}                  
             """)
+
+            if self.read_only:
+                self.setToolTip("Cannot edit read-only quiz")
 
             self.correct_group.addButton(correct_radio, i)
             self.correct_radios.append(correct_radio)
@@ -225,6 +254,7 @@ class QuestionEditor(QWidget):
         self.time_combo = QComboBox()
         self.time_combo.setFixedSize(250, 40)
         self.time_combo.setEditable(False)
+        self.time_combo.setDisabled(self.read_only)
         self.time_combo.setFont(extra_data_font)
 
         for seconds, value in TIME_DATA.items():
@@ -233,8 +263,9 @@ class QuestionEditor(QWidget):
         self.set_time_limit(self.question.time_limit)
         self.time_combo.currentIndexChanged.connect(self._on_time_changed)
 
-        self.apply_global_time = ClickableLabel("Apply to all questions")
+        self.apply_global_time = ClickableLabel("Apply to all questions", self)
         self.apply_global_time.clicked.connect(self._on_apply_global_time)
+        self.apply_global_time.setHidden(self.read_only)
         self.apply_global_time.setStyleSheet(
             "font-size: 14px;" "text-decoration: underline;" "color: #9A9A9A;"
         )
@@ -296,16 +327,18 @@ class QuestionEditor(QWidget):
         pass
 
     def disable_delete(self) -> None:
-        delete_disabled_icon = self.icons_path / "delete_disabled.png"
-        self.delete_btn.setIcon(QIcon(str(delete_disabled_icon)))
-        self.delete_btn.setToolTip("Cannot delete the only question")
-        self.delete_btn.setDisabled(True)
+        if not self.read_only:
+            delete_disabled_icon = self.icons_path / "delete_disabled.png"
+            self.delete_btn.setIcon(QIcon(str(delete_disabled_icon)))
+            self.delete_btn.setToolTip("Cannot delete the only question")
+            self.delete_btn.setDisabled(True)
 
     def enable_delete(self) -> None:
-        delete_icon = self.icons_path / "delete.png"
-        self.delete_btn.setIcon(QIcon(str(delete_icon)))
-        self.delete_btn.setToolTip("Delete")
-        self.delete_btn.setDisabled(False)
+        if not self.read_only:
+            delete_icon = self.icons_path / "delete.png"
+            self.delete_btn.setIcon(QIcon(str(delete_icon)))
+            self.delete_btn.setToolTip("Delete")
+            self.delete_btn.setDisabled(False)
 
     def set_time_limit(self, seconds: int) -> None:
         index = self.time_combo.findData(seconds)
@@ -355,43 +388,15 @@ class QuestionEditor(QWidget):
             )
             return
 
-        if QuestionValidationError.MISSING_QUESTION in self.question_validation_results:
-            issues.append("The question is blank.")
-
-        if (
-            QuestionValidationError.QUESTION_TOO_LONG
-            in self.question_validation_results
-        ):
-            issues.append(
-                f"The question exceeds the character limit of {MAX_QUESTION_LENGTH} characters."
-            )
-
-        if (
-            QuestionValidationError.MISSING_REQUIRED_ANSWERS
-            in self.question_validation_results
-        ):
-            issues.append("The first two answers are blank.")
-
-        if QuestionValidationError.ANSWER_TOO_LONG in self.question_validation_results:
-            issues.append(
-                f"An answer, or answers, exceed the character limit of {MAX_ANSWER_LENGTH} characters."
-            )
-
-        if QuestionValidationError.DUPLICATE_ANSWER in self.question_validation_results:
-            issues.append("Two or more answers are the same.")
-
-        if (
-            QuestionValidationError.NO_CORRECT_ANSWER
-            in self.question_validation_results
-        ):
-            issues.append("No correct answer is selected.")
-
-        issues = ["- " + issue for issue in issues]
+        # Iterate over dict to preserve order in UI, as sets do not
+        for error in QUESTION_ERROR_MESSAGES:
+            if error in self.question_validation_results:
+                issues.append(QUESTION_ERROR_MESSAGES[error])
 
         QMessageBox.warning(
             self,
             "Question Issues",
-            f"The following issue(s) were detected in this question. These must be fixed before the quiz can be saved.\n\n{'\n'.join(issues)}",
+            f"The following issue(s) were detected in this question. These must be fixed before the quiz can be saved.\n\n{format_errors(issues)}",
         )
 
     def _on_preview_clicked(self) -> None:
@@ -486,10 +491,10 @@ class QuestionEditor(QWidget):
             has_text = bool(self.answer_counters[i].line_edit.text().strip())
 
             # A and B are always enabled
-            if i < 2:
+            if i < 2 and not self.read_only:
                 radio.setEnabled(True)
             else:
-                radio.setEnabled(has_text)
+                radio.setEnabled(has_text and not self.read_only)
 
                 # If C or D were selected and is now disabled, unselect it
                 if not has_text and radio.isChecked():

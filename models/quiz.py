@@ -3,7 +3,7 @@ from datetime import datetime
 import random
 import secrets
 
-from core.app.enums import QuizValidationResult
+from core.app.enums import QuizValidationError
 from models.question import Question
 
 
@@ -65,60 +65,56 @@ class Quiz:
         question = questions.pop(old_index)
         questions.insert(new_index, question)
 
-    def validate_quiz(self) -> tuple[bool, QuizValidationResult, int | None]:
+    def validate_quiz(self) -> set[QuizValidationError]:
         """
-        Validates the quiz and its questions.
+        Validates the quiz and its questions. Returns a set containing all the errors
+        as a `QuizValidationError`.
+        """
 
-        Return format is `(success, error, answer_index)`. If the error is with the quiz
-        in general, `answer_index` is None. The error type is of `QuizValidationResult`.
-        """
+        errors = set()
+        seen_question_ids = set()
 
         # General quiz metadata information validation
         if not self.quiz_id or not isinstance(self.quiz_id, str):
-            return False, QuizValidationResult.EMPTY_ID, None
+            errors.add(QuizValidationError.MISSING_ID)
 
         if not self.quiz_title or not isinstance(self.quiz_title, str):
-            return False, QuizValidationResult.EMPTY_TITLE, None
+            errors.add(QuizValidationError.MISSING_TITLE)
 
         if not self.questions:
-            return False, QuizValidationResult.EMPTY_QUESTIONS, None
+            errors.add(QuizValidationError.MISSING_QUESTIONS)
 
         if not isinstance(self.do_shuffle, bool):
-            return False, QuizValidationResult.NO_SHUFFLE_INFO, None
+            errors.add(QuizValidationError.NO_SHUFFLE_INFO)
 
         if not isinstance(self.is_premade, bool):
-            return False, QuizValidationResult.NO_PREMADE_INFO, None
+            errors.add(QuizValidationError.NO_PREMADE_INFO)
 
         if self.updated_at is not None and self.updated_at > datetime.now():
-            return False, QuizValidationResult.INVALID_UPDATED_AT, None
-
-        # Store all IDs that were currently used
-        # Set used to increase lookup speed
-        seen_ids = set()
+            errors.add(QuizValidationError.UPDATED_FUTURE)
 
         # Individual question validation
-        for index, question in enumerate(self.questions):
-            if question.question_id in seen_ids:
-                return False, QuizValidationResult.ID_USED, index
+        for question in self.questions:
+            if question.question_id in seen_question_ids:
+                errors.add(QuizValidationError.DUPLICATED_ID)
 
-            seen_ids.add(question.question_id)
-
-            if not question.question_text.strip():
-                return False, QuizValidationResult.EMPTY_QUESTION, index
+            seen_question_ids.add(question.question_id)
 
             if (
                 not isinstance(question.answer_options, list)
                 or not 2 <= len(question.answer_options) <= 4
             ):
-                return False, QuizValidationResult.INVALID_ANSWERS, index
+                errors.add(QuizValidationError.INVALID_ANSWERS)
 
-            if not (0 <= question.correct_answer_index < len(question.answer_options)):
-                return False, QuizValidationResult.INVALID_CORRECT_ANSWER, index
+            if not isinstance(question.correct_answer_index, int) or not 0 <= int(
+                question.correct_answer_index
+            ) < len(question.answer_options):
+                errors.add(QuizValidationError.INVALID_CORRECT_ANSWER)
 
-            if question.time_limit <= 0:
-                return False, QuizValidationResult.INVALID_TIME, index
+            if not isinstance(question.time_limit, int) or question.time_limit <= 0:
+                errors.add(QuizValidationError.INVALID_TIME)
 
-        return True, QuizValidationResult.OK, None
+        return errors
 
     def to_dict(self) -> dict:
         """Convert to a dictionary for serialization."""

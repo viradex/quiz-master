@@ -26,6 +26,9 @@ class QuizManager:
         """Load the quiz to run the game off of, and shuffle the questions if needed."""
         self.quiz = quiz
 
+        if not self.quiz.questions:
+            raise ValueError("The quiz loaded has no questions")
+
         if self.quiz.do_shuffle:
             self.quiz.shuffle_questions()
 

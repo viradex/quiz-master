@@ -272,26 +272,19 @@ class GameServer(QObject):
             self._kick_client(client, "Game has already started")
             return
 
-        success, reason = self.registry.add(nickname, client)
+        reason = self.registry.add(nickname, client)
 
         # Validation checks before adding new player
         # Provided by registry; registry does not add player if any of these conditions are True
-        if not success:
-            if reason == AddPlayerResult.LOBBY_FULL:
-                self._kick_client(client, "Server is full")
-                return
-            elif reason == AddPlayerResult.DUPLICATE_NICKNAME:
-                self._kick_client(
-                    client, f'The nickname "{nickname}" is already in use'
-                )
-                return
-            elif reason == AddPlayerResult.LONG_NICKNAME:
-                self._kick_client(client, "The nickname is too long")
-                return
-            else:
-                # Should never happen
-                self._kick_client(client, "Unknown error while adding player")
-                return
+        if reason == AddPlayerResult.LOBBY_FULL:
+            self._kick_client(client, "Server is full")
+            return
+        elif reason == AddPlayerResult.DUPLICATE_NICKNAME:
+            self._kick_client(client, f'The nickname "{nickname}" is already in use')
+            return
+        elif reason == AddPlayerResult.LONG_NICKNAME:
+            self._kick_client(client, "The nickname is too long")
+            return
 
         # The Big Harsh is like Jupiter ;)
         # and Jupiter can't fit in the server, obviously

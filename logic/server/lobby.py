@@ -6,6 +6,11 @@ from core.game.game_controller import GameController
 from data.quiz_repo import QuizRepository
 
 from utils.networking import get_hostname
+from utils.error_messages import (
+    format_errors,
+    QUIZ_ERROR_MESSAGES,
+    QUESTION_ERROR_MESSAGES,
+)
 from core.config.constants import MIN_PLAYERS_FOR_GAME
 
 
@@ -76,10 +81,33 @@ class ServerLobbyLogic(BaseLogic):
                 "There are not enough players to start the game.",
             )
             return
-        elif not quiz.questions:
+
+        issues: list[str] = []
+        validation_errors = quiz.validate_quiz()
+
+        if validation_errors:
+            for error in QUIZ_ERROR_MESSAGES:
+                if error in validation_errors:
+                    issues.append(QUIZ_ERROR_MESSAGES[error])
+
             self.screen.show_error(
-                "Invalid Conditions for Start",
-                "The quiz selected has no questions.",
+                "Quiz Errors",
+                f"The quiz selected has critical errors that prevent it from being played.\n\n{format_errors(issues)}",
+            )
+            return
+
+        question_errors = set()
+        for question in quiz.questions:
+            question_errors.update(question.validate_question())
+
+        if question_errors:
+            for error in QUESTION_ERROR_MESSAGES:
+                if error in question_errors:
+                    issues.append(QUIZ_ERROR_MESSAGES[error])
+
+            self.screen.show_error(
+                "Quiz Errors",
+                f"The quiz selected has errors that prevent it from being played. These issues can be fixed by using the quiz editor.\n\n{format_errors(issues)}",
             )
             return
 
@@ -101,7 +129,7 @@ class ServerLobbyLogic(BaseLogic):
         sorted_quizzes = dict(
             sorted(
                 quizzes.items(),
-                key=lambda quiz: (quiz[1].is_premade, quiz[1].quiz_title),
+                key=lambda quiz: (bool(quiz[1].is_premade), str(quiz[1].quiz_title)),
             )
         )
 

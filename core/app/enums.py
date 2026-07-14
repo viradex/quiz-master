@@ -41,26 +41,25 @@ class AnswerValidationResult(Enum):
     OK = "ok"
 
 
-class QuizValidationResult(Enum):
-    """Errors relating to quiz validation."""
+class QuizValidationError(Enum):
+    """
+    Errors relating to quiz validation. For questions, contains illegal states rather
+    than states that the user can create (which are defined in `QuestionValidationError`).
+    """
 
     # Global quiz errors
-    EMPTY_ID = "empty_id"
-    EMPTY_TITLE = "empty_title"
-    EMPTY_QUESTIONS = "empty_questions"
+    MISSING_ID = "missing_id"
+    MISSING_TITLE = "missing_title"
+    MISSING_QUESTIONS = "missing_questions"
     NO_SHUFFLE_INFO = "no_shuffle_info"
     NO_PREMADE_INFO = "no_premade_info"
-    INVALID_UPDATED_AT = "invalid_updated_at"
+    UPDATED_FUTURE = "updated_future"
 
     # Individual question errors
-    ID_USED = "id_used"
-    EMPTY_QUESTION = "empty_question"
+    DUPLICATED_ID = "id_used"
     INVALID_ANSWERS = "invalid_answers"
     INVALID_CORRECT_ANSWER = "invalid_correct_answer"
     INVALID_TIME = "invalid_time"
-
-    # Success
-    OK = "ok"
 
 
 class QuestionValidationError(Enum):

@@ -48,6 +48,7 @@ class CommonQuizSetupScreen(BaseScreen):
         title_lbl.setFont(form_font)
 
         self.title_counter = CharacterCountInput(MAX_QUIZ_TITLE_LENGTH)
+        self.title_counter.line_edit.returnPressed.connect(self.on_enter_pressed)
         self.title_counter.line_edit.setFont(form_font)
 
         self.shuffle_check = QCheckBox("Shuffle questions")
@@ -173,7 +174,13 @@ class CommonQuizSetupScreen(BaseScreen):
 
         self.save_requested.emit(data, True)
 
-    def on_enter(self, payload: dict | None = None):
+    def on_enter_pressed(self) -> None:
+        if self.quiz_id is None:
+            self.on_create()
+        else:
+            self.on_save()
+
+    def on_enter(self, payload: dict):
         self.quiz_id = payload.get("quiz_id")
 
         if self.quiz_id is None:
