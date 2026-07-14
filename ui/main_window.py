@@ -17,7 +17,6 @@ from core.app.screen_ids import Screens
 from core.services.app_context import Services
 from logic.app_controller.client import ClientAppController
 from logic.app_controller.server import ServerAppController
-from logic.app_controller.common import CommonAppController
 from logic.base_logic import BaseLogic
 from ui.screens.base_screen import BaseScreen
 
@@ -115,7 +114,6 @@ class MainWindow(QMainWindow):
         """Set up app controllers (global logic)."""
         self.client_app_controller = ClientAppController(self, self.services)
         self.server_app_controller = ServerAppController(self, self.services)
-        self.common_app_controller = CommonAppController(self, self.services)
 
     def build_screens(self) -> None:
         """Initialize screen widgets and logic dictionary and build all eager screens."""
@@ -190,8 +188,15 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, title, desc)
 
     def closeEvent(self, event: QCloseEvent) -> None:
-        if self.current_screen is not None:
+        self.client_app_controller.on_window_close(event)
+        self.server_app_controller.on_window_close(event)
+
+        if event.isAccepted() and self.current_screen is not None:
             self.current_screen.on_window_close(event)
+            self.current_logic.on_window_close(event)
+
+        if event.isAccepted():
+            super().closeEvent(event)
 
     def _build_screen(self, screen: Screens) -> None:
         """Build an individual screen and its respective logic."""

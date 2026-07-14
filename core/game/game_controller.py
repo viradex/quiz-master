@@ -178,7 +178,7 @@ class GameController(QObject):
 
     def is_answer_legal(
         self, answer_index: int, timestamp: float
-    ) -> tuple[bool, AnswerValidationResult]:
+    ) -> AnswerValidationResult:
         """Checks if a client's answer was legal within the game. Does not check answer correctness."""
         is_time_valid = self.question_start_time <= timestamp <= self.question_deadline
         is_answer_valid = self.quiz_manager.is_answer_valid(
@@ -186,11 +186,11 @@ class GameController(QObject):
         )
 
         if not is_time_valid:
-            return False, AnswerValidationResult.TIME
+            return AnswerValidationResult.TIME
         elif not is_answer_valid:
-            return False, AnswerValidationResult.ANSWER
+            return AnswerValidationResult.ANSWER
 
-        return True, AnswerValidationResult.OK
+        return AnswerValidationResult.OK
 
     def finish_quiz(self) -> None:
         """Finishes the quiz. Sends final results data to the server and clients."""

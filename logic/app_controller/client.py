@@ -1,6 +1,10 @@
+from PyQt6.QtGui import QCloseEvent
+
 from core.app.screen_ids import Screens
 from core.services.game_client import GameClient
 from models.payloads import QuestionPayload
+
+from ui.components.dialogs import confirm_warning
 
 from typing import TYPE_CHECKING
 
@@ -62,3 +66,17 @@ class ClientAppController:
             Screens.CLIENT_MULTI_QUESTION, QuestionPayload.from_dict(data)
         )
         self.window.set_status("Waiting for answer")
+
+    def on_window_close(self, event: QCloseEvent) -> None:
+        if self.client.is_connected:
+            confirm = confirm_warning(
+                self.window,
+                "Confirm Leaving",
+                "Are you sure you want to disconnect from the server?",
+            )
+
+            if confirm:
+                self.client.disconnect_client()
+                event.accept()
+            else:
+                event.ignore()

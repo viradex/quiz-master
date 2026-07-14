@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
+    QApplication,
     QLabel,
     QPushButton,
-    QMessageBox,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -12,7 +12,7 @@ from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from ui.screens.base_screen import BaseScreen
-from ui.components.input import SearchableCombobox
+from ui.components.input import SearchableCombobox, ClickableLabel
 from ui.components.spinner import Spinner
 
 from ui.components.button import create_return_button
@@ -32,6 +32,8 @@ class ServerLobbyScreen(BaseScreen):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+
+        self.ip: str = ""
 
         self.setup_ui()
 
@@ -107,7 +109,9 @@ class ServerLobbyScreen(BaseScreen):
         lobby_btn_hbox.addWidget(self.kick_btn)
 
         # Right side
-        self.ip_address = QLabel("Server IP: Unable to determine")
+        self.ip_address = ClickableLabel("Server IP: Unable to determine")
+        self.ip_address.setToolTip("Click to copy to clipboard")
+        self.ip_address.clicked.connect(self._on_ip_copy)
         self.ip_address.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.ip_address.setFont(ip_font)
 
@@ -271,6 +275,10 @@ class ServerLobbyScreen(BaseScreen):
     def on_start_game(self) -> None:
         self.game_started.emit(self.quiz_combo.currentData())
 
+    def _on_ip_copy(self) -> None:
+        if self.ip:
+            QApplication.clipboard().setText(self.ip)
+
     def _get_selected_player_item(self) -> QTableWidgetItem | None:
         """Get the selected player item from the lobby table."""
         selected_items = self.lobby_table.selectedItems()
@@ -306,10 +314,10 @@ class ServerLobbyScreen(BaseScreen):
 
     def on_enter(self, payload=None) -> None:
         self.spinner.start()
+        self.ip = get_ip_address()
 
-        ip = get_ip_address()
-        if ip:
-            self.ip_address.setText(f"Server IP: {ip}")
+        if self.ip:
+            self.ip_address.setText(f"Server IP: {self.ip}")
         else:
             self.ip_address.setText("Server IP: Unable to determine")
 

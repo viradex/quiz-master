@@ -34,18 +34,17 @@ class ServerMultiQuestionLogic(BaseLogic):
         self, player_id: str, selected_index: int, received_time: float
     ) -> None:
         """When the server reports a player submitted an answer."""
-        is_valid, reason = self.controller.is_answer_legal(
-            selected_index, received_time
-        )
+        reason = self.controller.is_answer_legal(selected_index, received_time)
 
         # If answer is invalid, sends info back to client about why it was so
-        if not is_valid:
-            if reason == AnswerValidationResult.TIME:
-                message = "Answer submitted at invalid time"
-            elif reason == AnswerValidationResult.ANSWER:
-                message = "Invalid answer submitted"
+        if reason == AnswerValidationResult.TIME:
+            self.server.send_invalid_action(
+                player_id, "Answer submitted at invalid time"
+            )
+            return
 
-            self.server.send_invalid_action(player_id, message)
+        elif reason == AnswerValidationResult.ANSWER:
+            self.server.send_invalid_action(player_id, "Invalid answer submitted")
             return
 
         # If answer is valid, adds it to count and lets controller read it

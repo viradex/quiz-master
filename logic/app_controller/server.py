@@ -1,8 +1,12 @@
+from PyQt6.QtGui import QCloseEvent
+
 from core.app.screen_ids import Screens
 from core.services.game_server import GameServer
 from core.game.game_controller import GameController
 from data.quiz_repo import QuizRepository
 from models.payloads import QuestionPayload
+
+from ui.components.dialogs import confirm_warning
 
 from typing import TYPE_CHECKING
 
@@ -68,3 +72,17 @@ class ServerAppController:
         )
 
         self.window.go_to(Screens.COMMON_MENU)
+
+    def on_window_close(self, event: QCloseEvent) -> None:
+        if self.server.is_running:
+            confirm = confirm_warning(
+                self.window,
+                "Confirm Closing",
+                "Are you sure you want to close the server? All players in the server will be disconnected.",
+            )
+
+            if confirm:
+                self.server.stop()
+                event.accept()
+            else:
+                event.ignore()

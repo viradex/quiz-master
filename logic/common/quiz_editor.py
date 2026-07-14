@@ -1,4 +1,5 @@
 from copy import deepcopy
+from PyQt6.QtWidgets import QMessageBox
 
 from ui.screens.common.quiz_editor import CommonQuizEditorScreen
 from logic.base_logic import BaseLogic
@@ -6,6 +7,8 @@ from data.quiz_repo import QuizRepository
 from core.app.screen_ids import Screens
 from models.quiz import Quiz
 from models.question import Question
+
+from ui.components.dialogs import confirm_warning
 
 
 class CommonQuizEditorLogic(BaseLogic):
@@ -15,7 +18,8 @@ class CommonQuizEditorLogic(BaseLogic):
         self.quiz_repo: QuizRepository = services.quiz_repo
 
         self.quiz: Quiz | None = None
-        self.mode: str | None = None
+        self.original_quiz: Quiz | None = None
+        self.read_only: bool = False
 
         self.screen.blank_question_requested.connect(self.on_blank_question_requested)
         self.screen.duplicate_requested.connect(self.on_duplicate_requested)
@@ -23,7 +27,11 @@ class CommonQuizEditorLogic(BaseLogic):
         self.screen.question_reorder_requested.connect(
             self.on_question_reorder_requested
         )
+        self.screen.discard_requested.connect(self.on_discard_requested)
         self.screen.save_requested.connect(self.on_save_requested)
+
+    def quiz_changed(self) -> bool:
+        return self.quiz != self.original_quiz
 
     def on_blank_question_requested(self) -> None:
         question = Question(Question.generate_random_id(), "", [], None, 20)
@@ -47,7 +55,7 @@ class CommonQuizEditorLogic(BaseLogic):
     def on_delete_requested(self, question: Question) -> None:
         if len(self.quiz.get_all_questions()) == 1:
             # Ordinarily, this should never happen
-            self.show_error(
+            self.screen.show_error(
                 "Cannot Delete Question", "Cannot delete the only question."
             )
             return
@@ -72,7 +80,26 @@ class CommonQuizEditorLogic(BaseLogic):
         self.quiz.move_question(question.question_id, new_question_num - 1)
         self.screen.update_question_order()
 
+    def on_discard_requested(self) -> None:
+        if self.quiz_changed() and not self.read_only:
+            confirm = confirm_warning(
+                self.screen,
+                "Discard Quiz?",
+                "Are you sure you want to discard your unsaved work?",
+            )
+        else:
+            confirm = True
+
+        if confirm:
+            self.screen.clear_questions()
+            self.screen.go_to(Screens.COMMON_QUIZ_MANAGER)
+
     def on_save_requested(self) -> None:
+        if not self.quiz_changed() or self.read_only:
+            self.screen.clear_questions()
+            self.screen.go_to(Screens.COMMON_QUIZ_MANAGER)
+            return
+
         for question in self.quiz.questions:
             errors = question.validate_question()
 
@@ -86,14 +113,53 @@ class CommonQuizEditorLogic(BaseLogic):
         self.quiz_repo.edit(self.quiz.quiz_id, self.quiz.to_dict())
         self.screen.go_to(Screens.COMMON_QUIZ_MANAGER)
 
-    def on_enter(self, payload=None):
+    def on_enter(self, payload: dict | None = None):
         if self.screen.returning_from_preview:
+            self.screen.returning_from_preview = False
             return
 
         self.quiz = payload["quiz"]
-        self.mode = "edit" if self.quiz.get_all_questions() else "create"
+        self.original_quiz = deepcopy(self.quiz)
+        self.read_only = self.quiz.is_premade  # If pre-made quiz, view-only mode
 
-        self.screen.set_quiz(self.quiz, deepcopy(self.quiz), self.mode)
+        self.screen.set_quiz(self.quiz, self.read_only)
 
-        if self.mode == "create":
+        if not self.read_only and not self.quiz.questions:
             self.on_blank_question_requested()
+
+    def on_window_close(self, event):
+        if self.quiz_changed() and not self.read_only:
+            for question in self.quiz.questions:
+                errors = question.validate_question()
+
+                if errors:
+                    confirm = confirm_warning(
+                        self.screen,
+                        "Discard Changes?",
+                        "The quiz cannot be saved as it has errors. Would you like to quit and discard your changes?",
+                    )
+
+                    if confirm:
+                        event.accept()
+                    else:
+                        event.ignore()
+
+                    return
+
+            action = QMessageBox.question(
+                self.screen,
+                "Save Changes?",
+                "Would you like to save your changes made to this quiz?",
+                buttons=QMessageBox.StandardButton.Save
+                | QMessageBox.StandardButton.Discard
+                | QMessageBox.StandardButton.Cancel,
+                defaultButton=QMessageBox.StandardButton.Save,
+            )
+
+            if action == QMessageBox.StandardButton.Save:
+                self.quiz_repo.edit(self.quiz.quiz_id, self.quiz.to_dict())
+                event.accept()
+            elif action == QMessageBox.StandardButton.Discard:
+                event.accept()
+            else:
+                event.ignore()

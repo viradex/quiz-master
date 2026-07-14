@@ -20,39 +20,19 @@ class PlayerRegistry:
         # Beware of deadlocks, however!
         self.lock = threading.Lock()
 
-    def add(
-        self, nickname: str, client: ConnectedClient
-    ) -> tuple[bool, AddPlayerResult]:
-        """
-        Add a client/player to the registry.
-
-        Return values:
-            `(False, "lobby_full")`
-                Registry has reached the maximum player count.
-
-            `(False, "duplicate_nickname")`
-                Nickname is already in use.
-
-            `(False, "long_nickname")`
-                Nickname exceeds maximum character length.
-
-            `(True, "ok")`
-                Player was added successfully.
-
-        Returns:
-            Return format is a (success, reason) for values discussed above.
-        """
+    def add(self, nickname: str, client: ConnectedClient) -> AddPlayerResult:
+        """Add a client/player to the registry."""
 
         with self.lock:
             # Lobby full if player was added
             if len(self.sessions) + 1 > self.max_players:
-                return False, AddPlayerResult.LOBBY_FULL
+                return AddPlayerResult.LOBBY_FULL
 
             if self.has_nickname(nickname):
-                return False, AddPlayerResult.DUPLICATE_NICKNAME
+                return AddPlayerResult.DUPLICATE_NICKNAME
 
             if len(nickname) > MAX_NICKNAME_LENGTH:
-                return False, AddPlayerResult.LONG_NICKNAME
+                return AddPlayerResult.LONG_NICKNAME
 
             # Create player
             player_id = client.player_id
@@ -60,7 +40,7 @@ class PlayerRegistry:
 
             # Save session
             self.sessions[player_id] = Session(player, client)
-            return True, AddPlayerResult.OK
+            return AddPlayerResult.OK
 
     def remove(self, player_id: str) -> bool:
         """Remove a client/player from the registry. Returns True if the player existed."""

@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect,
     QMessageBox,
 )
-from PyQt6.QtGui import QColor, QPixmap
+from PyQt6.QtGui import QColor, QIcon, QPixmap
 from PyQt6.QtCore import Qt, pyqtSignal
 
 from ui.components.input import ClickableLabel
@@ -339,7 +339,9 @@ class QuizCard(QFrame):
             lambda: self.delete_quiz_requested.emit(self.quiz_id, self.quiz_title)
         )
 
-        self.edit_btn = create_tool_icon_button(edit_icon, "Edit", icon_size=24)
+        self.edit_btn = create_tool_icon_button(
+            edit_icon, "Edit", icon_size=24, parent=self
+        )
         self.edit_btn.clicked.connect(
             lambda: self.edit_quiz_requested.emit(self.quiz_id, self.quiz_title)
         )
@@ -364,7 +366,12 @@ class QuizCard(QFrame):
 
         if self.is_premade:
             self.delete_btn.hide()
-            self.edit_btn.hide()
+
+            view_icon = self.icons_path / "preview.png"
+            self.edit_btn.setIcon(QIcon(str(view_icon)))
+            self.edit_btn.setToolTip("View as read-only")
+
+            self.edit_btn.show()
             self.default_lbl.setHidden(False)
 
         vbox = QVBoxLayout()

@@ -67,13 +67,6 @@ class CommonQuizManagerLogic(BaseLogic):
         self.screen.remove_all_quizzes()
         self.screen.add_quizzes(quizzes, do_default_spacing=True)
 
-    def is_default_quiz(self, quiz_id: str) -> bool:
-        quiz = self.quizzes.get(quiz_id)
-        if quiz is None:
-            return False
-
-        return quiz.is_premade
-
     def on_edit_requested(self, quiz_id: str) -> None:
         self.quiz_repo.refresh_cache()
         quiz = self.quiz_repo.get(quiz_id)
@@ -84,21 +77,18 @@ class CommonQuizManagerLogic(BaseLogic):
             )
             self.refresh_quizzes()
             return
-        elif self.is_default_quiz(quiz_id):
-            self.screen.show_error(
-                "Cannot Edit Default Quiz",
-                "Default quizzes cannot be edited. Only custom quizzes may be modified.",
-            )
-            return
 
-        self.screen.go_to(
-            Screens.COMMON_QUIZ_SETUP,
-            {
-                "quiz_id": quiz_id,
-                "quiz_title": quiz.quiz_title,
-                "do_shuffle": quiz.do_shuffle,
-            },
-        )
+        if not quiz.is_premade:
+            self.screen.go_to(
+                Screens.COMMON_QUIZ_SETUP,
+                {
+                    "quiz_id": quiz_id,
+                    "quiz_title": quiz.quiz_title,
+                    "do_shuffle": quiz.do_shuffle,
+                },
+            )
+        else:
+            self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
 
     def on_delete_requested(self, quiz_id: str) -> None:
         self.quiz_repo.refresh_cache()
@@ -108,7 +98,7 @@ class CommonQuizManagerLogic(BaseLogic):
             self.screen.show_error(
                 "Quiz Not Found", "The quiz selected no longer exists."
             )
-        elif self.is_default_quiz(quiz_id):
+        elif quiz.is_premade:
             self.screen.show_error(
                 "Cannot Delete Default Quiz",
                 "Default quizzes cannot be deleted. Only custom quizzes may be modified.",

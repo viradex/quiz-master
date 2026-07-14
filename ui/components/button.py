@@ -1,5 +1,5 @@
 from pathlib import Path
-from PyQt6.QtWidgets import QPushButton, QToolButton
+from PyQt6.QtWidgets import QWidget, QPushButton, QToolButton
 from PyQt6.QtGui import QIcon
 from PyQt6.QtCore import Qt, QSize
 
@@ -44,9 +44,9 @@ def create_return_button(
 
 
 def create_tool_icon_button(
-    icon: Path | str, tooltip: str, icon_size: int
+    icon: Path | str, tooltip: str, icon_size: int, parent: QWidget | None = None
 ) -> QToolButton:
-    tool_button = QToolButton()
+    tool_button = QToolButton(parent)
     tool_button.setToolTip(tooltip)
 
     tool_button.setIcon(QIcon(str(icon)))
