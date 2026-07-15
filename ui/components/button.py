@@ -1,7 +1,8 @@
 from pathlib import Path
-from PyQt6.QtWidgets import QWidget, QPushButton, QToolButton
-from PyQt6.QtGui import QIcon
+
 from PyQt6.QtCore import Qt, QSize
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QWidget, QPushButton, QToolButton
 
 
 def create_return_button(
@@ -46,11 +47,14 @@ def create_return_button(
 def create_tool_icon_button(
     icon: Path | str, tooltip: str, icon_size: int, parent: QWidget | None = None
 ) -> QToolButton:
+    """Create an icon-only tool button."""
     tool_button = QToolButton(parent)
     tool_button.setToolTip(tooltip)
 
     tool_button.setIcon(QIcon(str(icon)))
     tool_button.setIconSize(QSize(icon_size, icon_size))
+
+    # Click area is 4x4 pixels larger than the icon
     tool_button.setFixedSize(icon_size + 4, icon_size + 4)
 
     tool_button.setCursor(Qt.CursorShape.PointingHandCursor)

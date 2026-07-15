@@ -1,8 +1,9 @@
+import errno
 import socket
 import threading
 import time
-import errno
-from collections.abc import Callable  # For type checking
+from collections.abc import Callable
+
 from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.app.enums import ClientConnectionError
@@ -11,10 +12,10 @@ from core.services.network.types import ClientMessageType, ServerMessageType
 
 from utils.networking import is_valid_ipv4
 from core.config.constants import (
-    PORT,
-    MAX_NICKNAME_LENGTH,
     CLIENT_CONNECTION_TIMEOUT,
     CLIENT_PING_INTERVAL,
+    MAX_NICKNAME_LENGTH,
+    PORT,
     RESPONSE_TIMEOUT,
 )
 
@@ -22,18 +23,18 @@ from core.config.constants import (
 class GameClient(QObject):
     """Manages the networking relating to the game client."""
 
-    # Define signals for communicating from service to logic
-    connected = pyqtSignal(list)
-    connection_failed = pyqtSignal(object)
+    connected = pyqtSignal(list)  # Player list
+    connection_failed = pyqtSignal(ClientConnectionError)
 
-    player_joined = pyqtSignal(str)
-    player_left = pyqtSignal(str)
+    player_joined = pyqtSignal(str)  # Player name
+    player_left = pyqtSignal(str)  # Player name
 
-    countdown_started = pyqtSignal(int)
-    question_received = pyqtSignal(dict)
-    results_received = pyqtSignal(dict)
-    final_results_received = pyqtSignal(dict)
+    countdown_started = pyqtSignal(int)  # Countdown duration (seconds)
+    question_received = pyqtSignal(dict)  # Question payload
+    results_received = pyqtSignal(dict)  # Results payload
+    final_results_received = pyqtSignal(dict)  # Final results payload
 
+    # Reason (for all below)
     kicked = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     invalid_action_occurred = pyqtSignal(str)
@@ -135,7 +136,7 @@ class GameClient(QObject):
                 break
             except ValueError:
                 # Invalid JSON data
-                self.error_occurred.emit("Invalid data message from server")
+                self.error_occurred.emit("Invalid message data from server")
                 self.disconnect_client()
                 break
 
@@ -147,7 +148,7 @@ class GameClient(QObject):
             if msg is False:
                 continue
 
-            # Any message from server means connection is still stable
+            # Any message from server means connection is still alive
             self.last_server_response_time = time.monotonic()
             self.handle_message(msg)
 
@@ -258,68 +259,126 @@ class GameClient(QObject):
             print(f"Missing field: {e}")
             return
 
+    def get_data_fields(self, msg: dict, field_names: list[str]) -> dict | None:
+        """Get fields from the 'data' of a message from the server, validating it.
+        If `field_names` is empty, returns the data dictionary itself."""
+        data = msg.get("data")
+
+        if not isinstance(data, dict):
+            self.error_occurred.emit("Invalid message data from server")
+            self.disconnect_client()
+            return None
+
+        if not field_names:
+            return data
+
+        fields = {}
+
+        for field_name in field_names:
+            field = data.get(field_name)
+
+            if field is None:
+                self.error_occurred.emit(
+                    f"Missing required field from server: {field_name}"
+                )
+                self.disconnect_client()
+                return None
+
+            fields[field_name] = field
+
+        return fields
+
     def handle_connection_successful(self, msg: dict) -> None:
         """Handles the `CONNECTION_SUCCESSFUL` message type. Sets player ID."""
-        player_id = msg["data"]["player_id"]
-        player_list = msg["data"]["player_list"]
-        self.player_id = player_id
+        data_fields = self.get_data_fields(msg, ["player_id", "player_list"])
+        if data_fields is None:
+            return
 
+        player_id = data_fields.get("player_id")
+        player_list = data_fields.get("player_list")
+
+        self.player_id = player_id
         self.connected.emit(player_list)
 
     def handle_player_joined(self, msg: dict) -> None:
         """Handles the `PLAYER_JOINED` message type."""
-        nickname = msg["data"]["nickname"]
+        data_fields = self.get_data_fields(msg, ["nickname"])
+        if data_fields is None:
+            return
+
+        nickname = data_fields.get("nickname")
         self.player_joined.emit(nickname)
 
     def handle_player_left(self, msg: dict) -> None:
         """Handles the `PLAYER_LEFT` message type."""
-        nickname = msg["data"]["nickname"]
+        data_fields = self.get_data_fields(msg, ["nickname"])
+        if data_fields is None:
+            return
+
+        nickname = data_fields.get("nickname")
         self.player_left.emit(nickname)
 
     def handle_countdown_started(self, msg: dict) -> None:
         """Handles the `COUNTDOWN_STARTED` message type."""
-        duration = msg["data"]["duration"]
+        data_fields = self.get_data_fields(msg, ["duration"])
+        if data_fields is None:
+            return
+
+        duration = data_fields.get("duration")
         self.countdown_started.emit(duration)
 
     def handle_question_data(self, msg: dict) -> None:
         """Handles the `QUESTION_DATA` message type."""
-        self.question_received.emit(msg["data"])
+        data = self.get_data_fields(msg, [])
+        self.question_received.emit(data)
 
     def handle_results(self, msg: dict) -> None:
         """Handles the `RESULTS` message type."""
-        self.results_received.emit(msg["data"])
+        data = self.get_data_fields(msg, [])
+        self.results_received.emit(data)
 
     def handle_final_results(self, msg: dict) -> None:
         """Handles the `FINAL_RESULTS` message type. Disconnects the client from the server."""
-        self.final_results_received.emit(msg["data"])
+        data = self.get_data_fields(msg, [])
+        self.final_results_received.emit(data)
+
         self.disconnect_client()
 
     def handle_kick(self, msg: dict) -> None:
         """Handles the `KICK` message type. Disconnects the client."""
-        reason = msg["data"]["reason"]
+        data_fields = self.get_data_fields(msg, ["reason"])
+        if data_fields is None:
+            return
+
+        reason = data_fields.get("reason")
         self.kicked.emit(reason)
 
         self.disconnect_client()
 
     def handle_error(self, msg: dict) -> None:
         """Handles the `ERROR` message type. Disconnects the client."""
-        reason = msg["data"]["reason"]
+        data_fields = self.get_data_fields(msg, ["reason"])
+        if data_fields is None:
+            return
+
+        reason = data_fields.get("reason")
         self.error_occurred.emit(reason)
 
         self.disconnect_client()
 
     def handle_invalid_action(self, msg: dict) -> None:
         """Handles the `INVALID_ACTION` message type."""
-        reason = msg["data"]["reason"]
+        data_fields = self.get_data_fields(msg, ["reason"])
+        if data_fields is None:
+            return
+
+        reason = data_fields.get("reason")
         self.invalid_action_occurred.emit(reason)
 
     def send_join(self) -> None:
         """Sends a `JOIN_LOBBY` message type. Sends nickname to server."""
         self.jsock.send(
-            {
-                "type": ClientMessageType.JOIN_LOBBY,
-                "data": {"nickname": self.nickname},
-            }
+            {"type": ClientMessageType.JOIN_LOBBY, "data": {"nickname": self.nickname}}
         )
 
     def send_answer_submit(self, index: int) -> None:

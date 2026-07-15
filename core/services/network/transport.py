@@ -6,8 +6,9 @@ class JSONSocket:
     """Allows sending/receiving JSON messages over the network."""
 
     def __init__(self, sock: socket.socket | None = None) -> None:
-        """Initialize the JSONSocket instance."""
         self.sock = sock
+
+        # Buffer is of bytes type, not str
         self.buffer = b""
 
     def send(self, data: dict) -> None:
@@ -20,6 +21,7 @@ class JSONSocket:
         except (TypeError, ValueError) as e:
             raise ValueError("Invalid JSON data") from e
 
+        # sendall() to automatically send all bytes
         self.sock.sendall(msg.encode())
 
     def recv(self) -> dict | bool | None:
@@ -35,13 +37,11 @@ class JSONSocket:
 
             `dict`
                 Deserialized data, if transport was successful.
-
-        Returns:
-            Return format is discussed above.
         """
         self._validate_socket()
 
         # Keeps reading until reaching end of message
+        # TODO Protect against huge messages (these can spike memory and CPU usage)
         while b"\n" not in self.buffer:
             try:
                 chunk = self.sock.recv(4096)

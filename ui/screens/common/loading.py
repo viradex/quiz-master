@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QWidget
-from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor, QFont
+from PyQt6.QtWidgets import QWidget, QLabel, QHBoxLayout, QVBoxLayout
 
-from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
+from ui.screens.base_screen import BaseScreen
 
 DEFAULT_LOADING_TEXT = "Loading..."
 
@@ -58,7 +58,7 @@ class CommonLoadingScreen(BaseScreen):
     def on_enter(self, payload=None) -> None:
         self.spinner.start()
 
-        if payload:
+        if payload is not None:
             loading_msg = payload.get("loading_msg", DEFAULT_LOADING_TEXT)
             self.set_loading_status(loading_msg, payload.get("status_msg", ""))
 

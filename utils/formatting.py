@@ -19,13 +19,22 @@ def to_ordinal(num: int) -> str:
 
 
 def format_datetime(dt: datetime, start_lower: bool = False) -> str:
-    now = datetime.now(dt.tzinfo) if dt.tzinfo else datetime.now()
+    """
+    Format the datetime given into one of the following formats, respective of current timezone:
+    - Today at 9:45 pm
+    - Yesterday at 12:34 pm
+    - 4 Jun 2026 at 11:31 am
+    """
+    now = datetime.now()
 
     if dt.date() == now.date():
+        # Date is today in this timezone
         day = "today" if start_lower else "Today"
     elif dt.date() == (now.date() - timedelta(days=1)):
+        # Date was yesterday in this timezone (1 day ago)
         day = "yesterday" if start_lower else "Yesterday"
     else:
+        # Every other date
         day = f"{dt.day} {dt.strftime('%b %Y')}"
 
     # 12-hour format without leading zero

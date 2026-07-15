@@ -28,7 +28,8 @@ class AddPlayerResult(Enum):
     """Errors relating to adding a player to the server registry."""
 
     LOBBY_FULL = "lobby_full"
-    DUPLICATE_NICKNAME = "dupe_nickname"
+    DUPLICATE_NICKNAME = "duplicate_nickname"
+    EMPTY_NICKNAME = "empty_nickname"
     LONG_NICKNAME = "long_nickname"
     OK = "ok"
 
@@ -53,10 +54,10 @@ class QuizValidationError(Enum):
     MISSING_QUESTIONS = "missing_questions"
     NO_SHUFFLE_INFO = "no_shuffle_info"
     NO_PREMADE_INFO = "no_premade_info"
-    UPDATED_FUTURE = "updated_future"
+    NO_COMPLETENESS_INFO = "no_completeness_info"
 
     # Individual question errors
-    DUPLICATED_ID = "id_used"
+    DUPLICATED_ID = "duplicated_id"
     INVALID_ANSWERS = "invalid_answers"
     INVALID_CORRECT_ANSWER = "invalid_correct_answer"
     INVALID_TIME = "invalid_time"

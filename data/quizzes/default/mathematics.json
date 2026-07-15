@@ -3,6 +3,7 @@
   "quiz_title": "Mathematics Quiz",
   "do_shuffle": false,
   "is_premade": true,
+  "is_complete": true,
   "questions": [
     {
       "question_id": "a1f3c9d7",

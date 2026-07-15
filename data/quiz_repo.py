@@ -10,7 +10,6 @@ class QuizRepository:
     """Discovers and loads quizzes from disk."""
 
     def __init__(self) -> None:
-        """Initialize the quiz repo by setting paths and empty cache."""
         self.data_path = Path(__file__).resolve().parent
 
         self.custom_quiz_path = self.data_path / "quizzes" / "custom"
@@ -33,37 +32,9 @@ class QuizRepository:
 
         return self.quiz_cache.copy()
 
-    def edit(self, quiz_id: str, data: dict) -> bool:
-        """Edit a quiz save file on disk based on ID."""
-        if not self.quiz_cache:
-            self._load_cache()
-
-        quiz = self.get(quiz_id)
-        if quiz is None:
-            return False
-
-        # Set preferable for membership tests due to uniqueness
-        # and faster performance (though negligible here)
-        protected = {"quiz_id", "is_premade"}
-        changed = False
-
-        for key, value in data.items():
-            if key in protected:
-                continue
-
-            # Checks if the quiz has an attribute with same name
-            if hasattr(quiz, key):
-                if getattr(quiz, key) != value:
-                    setattr(quiz, key, value)
-                    changed = True
-
-        if changed:
-            self.save(quiz)
-
-        return True
-
     def save(self, quiz: Quiz) -> None:
-        """Save a quiz instance to disk in the custom quiz directory, with the quiz ID as the filename."""
+        """Save a quiz instance to disk in the custom quiz directory, with the quiz ID as the filename.
+        Overwrites the file if it exists."""
         quiz.updated_at = datetime.now()
 
         file_path = self.custom_quiz_path / f"{quiz.quiz_id}.json"
@@ -102,9 +73,11 @@ class QuizRepository:
             if not directory.exists():
                 continue
 
+            # Only reads .json files in the directory
             for file in directory.glob("*.json"):
                 with open(file, mode="r", encoding="utf-8") as f:
                     data = json.load(f)
 
+                # Deserialize the data and store it in cache
                 quiz = Quiz.from_dict(data)
                 self.quiz_cache[quiz.quiz_id] = quiz

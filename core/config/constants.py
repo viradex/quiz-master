@@ -51,6 +51,19 @@ CLIENT_PING_INTERVAL = 6
 # Time in seconds for no response until the client is disconnected
 RESPONSE_TIMEOUT = 15
 
+####################
+## GENERIC CONFIG ##
+####################
+
+# Minimum players needed to start the quiz game, and for there to be during the game
+MIN_PLAYERS_FOR_GAME = 2
+
+# Time in seconds for the countdown between each question
+COUNTDOWN_TIME = 3
+
+# Interval in seconds for when a quiz will autosave in the quiz editor
+QUIZ_AUTOSAVE_INTERVAL = 10
+
 ###############################
 ## GENERIC VALIDATION CONFIG ##
 ###############################
@@ -66,9 +79,3 @@ MAX_QUESTION_LENGTH = 120
 
 # Maximum single answer text length in characters
 MAX_ANSWER_LENGTH = 75
-
-# Minimum players needed to start the quiz game, and for there to be during the game
-MIN_PLAYERS_FOR_GAME = 2
-
-# Time in seconds for the countdown between each question
-COUNTDOWN_TIME = 3

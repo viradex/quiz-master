@@ -1,28 +1,27 @@
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
-    QMessageBox,
-    QStackedLayout,
     QAbstractItemView,
     QHeaderView,
+    QTableWidget,
+    QTableWidgetItem,
+    QGridLayout,
+    QHBoxLayout,
+    QVBoxLayout,
+    QStackedLayout,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QColor
 
-from ui.screens.base_screen import BaseScreen
+from models.payloads import ServerResultsPayload
 from ui.components.answer_bar_chart import AnswerBarChart
 from ui.components.answer_button_grid import AnswerButtonGrid
 from ui.components.card import Card
-from models.payloads import ServerResultsPayload
+from ui.screens.base_screen import BaseScreen
 
-from ui.components.dialogs import confirm_warning
-from ui.components.button import create_return_button
 from utils.color import darken_color
+from ui.components.button import create_return_button
+from ui.components.dialogs import confirm_warning
 
 
 class ServerMultiResultScreen(BaseScreen):
@@ -31,6 +30,7 @@ class ServerMultiResultScreen(BaseScreen):
     next_question_requested = pyqtSignal()
     end_game_requested = pyqtSignal()
 
+    # All player-related actions use the player ID
     player_info_requested = pyqtSignal(str)
     player_kicked = pyqtSignal(str)
 
@@ -268,6 +268,7 @@ class ServerMultiResultScreen(BaseScreen):
         return False
 
     def on_selection_changed(self) -> None:
+        """Called when a different player is selected, or no player. Changes state of player buttons."""
         # If player is selected, enable player buttons
         if self._get_selected_player_item() is not None:
             self.get_info_btn.setDisabled(False)
@@ -277,6 +278,7 @@ class ServerMultiResultScreen(BaseScreen):
             self.kick_btn.setDisabled(True)
 
     def on_next_question(self) -> None:
+        """Starts the next question."""
         self.next_question_requested.emit()
 
     def on_end_game(self) -> None:
@@ -333,7 +335,7 @@ class ServerMultiResultScreen(BaseScreen):
 
         return self.leaderboard_table.item(row, 1)
 
-    def _update_ranks(self):
+    def _update_ranks(self) -> None:
         """Refresh ranks when a player is removed from the leaderboard."""
         for row in range(self.leaderboard_table.rowCount()):
             rank_item = self.leaderboard_table.item(row, 0)

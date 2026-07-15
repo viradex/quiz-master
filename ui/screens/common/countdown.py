@@ -1,7 +1,8 @@
 import math
-from PyQt6.QtWidgets import QLabel, QProgressBar, QVBoxLayout
-from PyQt6.QtGui import QFont
+
 from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QLabel, QProgressBar, QVBoxLayout
 
 from ui.screens.base_screen import BaseScreen
 
@@ -52,7 +53,7 @@ class CommonCountdownScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def on_timeout(self):
+    def on_timeout(self) -> None:
         """Decreases the elapsed time and decreases visual timer, and the visual seconds counter if needed.
         The timer always stops at 1, not 0 (visually)."""
         self.elapsed_ms += INTERVAL
@@ -69,8 +70,8 @@ class CommonCountdownScreen(BaseScreen):
         if remaining <= 0:
             self.timer.stop()
 
-    def on_enter(self, payload=None):
-        duration = payload["duration"]
+    def on_enter(self, payload=None) -> None:
+        duration = payload.get("duration")
 
         self.total_ms = duration
         self.elapsed_ms = 0

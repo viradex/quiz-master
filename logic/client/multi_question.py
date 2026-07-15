@@ -1,8 +1,8 @@
-from ui.screens.client.multi_question import ClientMultiQuestionScreen
-from logic.base_logic import BaseLogic
-from core.services.game_client import GameClient
 from core.app.screen_ids import Screens
+from core.services.game_client import GameClient
 from models.payloads import ClientResultsPayload
+from logic.base_logic import BaseLogic
+from ui.screens.client.multi_question import ClientMultiQuestionScreen
 
 
 class ClientMultiQuestionLogic(BaseLogic):

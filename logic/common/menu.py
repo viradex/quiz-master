@@ -1,8 +1,8 @@
-from ui.screens.common.menu import CommonMenuScreen
-from logic.base_logic import BaseLogic
-from core.services.game_server import GameServer
-from core.app.screen_ids import Screens
 from core.app.enums import ServerStartingError
+from core.app.screen_ids import Screens
+from core.services.game_server import GameServer
+from logic.base_logic import BaseLogic
+from ui.screens.common.menu import CommonMenuScreen
 
 
 class CommonMenuLogic(BaseLogic):

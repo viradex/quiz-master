@@ -6,9 +6,9 @@ from models.payloads import QuestionPayload
 
 from ui.components.dialogs import confirm_warning
 
+# Needed to avoid circular imports
 from typing import TYPE_CHECKING
 
-# Needed to avoid circular imports
 if TYPE_CHECKING:
     from ui.main_window import MainWindow
 

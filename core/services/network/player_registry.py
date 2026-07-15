@@ -1,7 +1,7 @@
 import threading
 
-from core.services.network.connected_client import ConnectedClient
 from core.app.enums import AddPlayerResult
+from core.services.network.connected_client import ConnectedClient
 from models.player import Player
 from models.session import Session
 
@@ -15,21 +15,26 @@ class PlayerRegistry:
         self.sessions: dict[str, Session] = {}
         self.max_players = MAX_PLAYERS
 
-        # When doing data manipulation relating to self.sessions,
-        # you must use self.lock to prevent race conditions.
-        # Beware of deadlocks, however!
+        # When doing data manipulation relating to self.sessions, you must use self.lock
+        # to prevent race conditions. To avoid deadlocks, make a private 'unlocked' version
+        # when needed and call that in the method which already holds the lock.
         self.lock = threading.Lock()
 
     def add(self, nickname: str, client: ConnectedClient) -> AddPlayerResult:
         """Add a client/player to the registry."""
+        nickname = nickname.strip()
 
         with self.lock:
             # Lobby full if player was added
             if len(self.sessions) + 1 > self.max_players:
                 return AddPlayerResult.LOBBY_FULL
 
-            if self.has_nickname(nickname):
+            # Must use unlocked version of has_nickname() to avoid deadlock
+            if self._has_nickname_unlocked(nickname):
                 return AddPlayerResult.DUPLICATE_NICKNAME
+
+            if not nickname:
+                return AddPlayerResult.EMPTY_NICKNAME
 
             if len(nickname) > MAX_NICKNAME_LENGTH:
                 return AddPlayerResult.LONG_NICKNAME
@@ -66,10 +71,16 @@ class PlayerRegistry:
 
     def has_id(self, player_id: str) -> bool:
         """Whether the registry contains a matching player ID."""
-        return player_id in self.sessions
+        with self.lock:
+            return player_id in self.sessions
 
     def has_nickname(self, nickname: str) -> bool:
         """Whether the registry contains a matching player nickname in players."""
+        with self.lock:
+            return self._has_nickname_unlocked(nickname)
+
+    def _has_nickname_unlocked(self, nickname: str) -> bool:
+        """Unlocked version of `has_nickname()`. Only call this method if `self.lock` has been aquired."""
         for session in self.sessions.values():
             if session.player.nickname == nickname:
                 return True

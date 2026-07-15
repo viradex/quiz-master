@@ -3,6 +3,7 @@
   "quiz_title": "Science Quiz",
   "do_shuffle": false,
   "is_premade": true,
+  "is_complete": true,
   "questions": [
     {
       "question_id": "a8c1f3d9",

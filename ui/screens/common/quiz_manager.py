@@ -1,37 +1,45 @@
 from pathlib import Path
+
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtWidgets import (
     QWidget,
     QFrame,
     QLabel,
     QPushButton,
-    QLineEdit,
     QComboBox,
-    QVBoxLayout,
-    QHBoxLayout,
+    QLineEdit,
     QGridLayout,
+    QHBoxLayout,
+    QVBoxLayout,
     QScrollArea,
 )
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QIcon
 
-from core.app.screen_ids import Screens
 from core.app.enums import QuizSortingOrder
-from ui.screens.base_screen import BaseScreen
-from ui.components.card import Card, QuizCard
+from core.app.screen_ids import Screens
 from models.quiz import Quiz
+from ui.components.card import Card, QuizCard
+from ui.screens.base_screen import BaseScreen
 
 from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning
+
+SORT_BY_DATA: dict[QuizSortingOrder, str] = {
+    QuizSortingOrder.NEWEST: "Newest",
+    QuizSortingOrder.OLDEST: "Oldest",
+    QuizSortingOrder.NAME_ASC: "Name (A-Z)",
+    QuizSortingOrder.NAME_DESC: "Name (Z-A)",
+}
 
 
 class CommonQuizManagerScreen(BaseScreen):
     title_text = "Quiz Master – Manage Quizzes"
 
-    edit_requested = pyqtSignal(str)
-    delete_requested = pyqtSignal(str)
+    edit_requested = pyqtSignal(Quiz)
+    delete_requested = pyqtSignal(Quiz)
 
     search_requested = pyqtSignal(str)
-    sort_requested = pyqtSignal(object)
+    sort_requested = pyqtSignal(QuizSortingOrder)
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -97,6 +105,7 @@ class CommonQuizManagerScreen(BaseScreen):
         self.sort_by_combo.activated.connect(self.on_sort_changed)
         self.sort_by_combo.setFont(list_mod_font)
 
+        # Must add custom chevron icon as styling the combobox removes it
         chevron_down_icon = self.icons_path / "chevron_down.png"
         self.sort_by_combo.setStyleSheet(f"""
             QComboBox {{
@@ -118,10 +127,9 @@ class CommonQuizManagerScreen(BaseScreen):
             }}
         """)
 
-        self.sort_by_combo.addItem("Newest", QuizSortingOrder.NEWEST)
-        self.sort_by_combo.addItem("Oldest", QuizSortingOrder.OLDEST)
-        self.sort_by_combo.addItem("Name (A-Z)", QuizSortingOrder.NAME_ASC)
-        self.sort_by_combo.addItem("Name (Z-A)", QuizSortingOrder.NAME_DESC)
+        # Add all values to combobox
+        for order, text in SORT_BY_DATA.items():
+            self.sort_by_combo.addItem(text, order)
 
         sort_by_hbox = QHBoxLayout()
         sort_by_hbox.addStretch()
@@ -133,12 +141,12 @@ class CommonQuizManagerScreen(BaseScreen):
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         scroll.setFrameShape(QScrollArea.Shape.NoFrame)
 
         scroll_contents = QWidget()
         scroll.setWidget(scroll_contents)
 
+        # Empty quizzes card setup (when no quizzes are shown)
         self.empty_quizzes = QFrame()
         self.empty_quizzes.hide()
         self.empty_quizzes.setObjectName("empty")
@@ -201,10 +209,10 @@ class CommonQuizManagerScreen(BaseScreen):
 
         self.setLayout(vbox)
 
-    def add_quizzes(
-        self, quizzes: list[Quiz], do_default_spacing: bool = False
-    ) -> None:
+    def add_quizzes(self, quizzes: list[Quiz]) -> None:
+        """Add all quizzes to the UI."""
         if not quizzes:
+            # Show empty quizzes card
             self.empty_quizzes.setHidden(False)
             self.quiz_vbox.addStretch()
             return
@@ -215,12 +223,9 @@ class CommonQuizManagerScreen(BaseScreen):
         starts_with_default = quizzes[0].is_premade
 
         for quiz in quizzes:
-            if (
-                quiz.is_premade
-                and not default_started
-                and not starts_with_default
-                and do_default_spacing
-            ):
+            # If this is the first default quiz and the list doesn't start with a default quiz,
+            # add a separator between defaults and custom quizzes
+            if quiz.is_premade and not default_started and not starts_with_default:
                 default_started = True
 
                 divider = QFrame()
@@ -232,14 +237,9 @@ class CommonQuizManagerScreen(BaseScreen):
                 self.quiz_vbox.addWidget(divider)
                 self.quiz_vbox.addSpacing(10)
 
-            quiz_card = QuizCard(
-                quiz.quiz_id,
-                quiz.quiz_title,
-                len(quiz.questions),
-                quiz.is_premade,
-                quiz.updated_at,
-            )
+            quiz_card = QuizCard(quiz)
 
+            # Connect signals from the card
             quiz_card.edit_quiz_requested.connect(self.on_edit_quiz)
             quiz_card.delete_quiz_requested.connect(self.on_delete_quiz)
 
@@ -248,6 +248,7 @@ class CommonQuizManagerScreen(BaseScreen):
         self.quiz_vbox.addStretch()
 
     def remove_all_quizzes(self) -> None:
+        """Remove all quizzes from the GUI."""
         # Doing in reversed order as removing indicies while iterating starting from 0
         # can cause some to be skipped. Starting from the end prevents that.
         for i in reversed(range(self.quiz_vbox.count())):
@@ -265,29 +266,31 @@ class CommonQuizManagerScreen(BaseScreen):
                 widget.deleteLater()
 
     def on_search_change(self, query: str) -> None:
+        """When the search input query has changed."""
         self.search_requested.emit(query)
 
     def on_sort_changed(self, index: int) -> None:
+        """When a different sort was selected."""
         sort_order = self.sort_by_combo.currentData()
         self.sort_requested.emit(sort_order)
 
-    def on_edit_quiz(self, quiz_id: str, quiz_title: str) -> None:
-        self.edit_requested.emit(quiz_id)
+    def on_edit_quiz(self, quiz: Quiz) -> None:
+        """When a quiz has been requested to be edited."""
+        self.edit_requested.emit(quiz)
 
-    def on_delete_quiz(self, quiz_id: str, quiz_title: str) -> None:
+    def on_delete_quiz(self, quiz: Quiz) -> None:
+        """When a quiz has been requested to be deleted."""
         confirm = confirm_warning(
             self,
             "Confirm Deleting Quiz",
-            f'Are you sure you want to permanently delete the quiz "{quiz_title}"? This cannot be undone!',
+            f'Are you sure you want to permanently delete the quiz "{quiz.quiz_title}"? This cannot be undone!',
         )
 
         if confirm:
-            self.delete_requested.emit(quiz_id)
+            self.delete_requested.emit(quiz)
 
     def on_leave(self) -> None:
         self.search_input.setText("")
-
-        # TODO should we also reset sorting upon leaving screen?
         self.sort_by_combo.setCurrentIndex(0)
 
         self.remove_all_quizzes()

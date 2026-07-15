@@ -1,4 +1,5 @@
 import sys
+
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 from core.services.app_context import Services

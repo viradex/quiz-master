@@ -1,13 +1,14 @@
 from dataclasses import dataclass
+
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
-    QPushButton,
     QWidget,
+    QPushButton,
     QGridLayout,
     QSizePolicy,
     QGraphicsDropShadowEffect,
 )
-from PyQt6.QtGui import QColor
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from utils.color import darken_color
 

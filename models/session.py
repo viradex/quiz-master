@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
-from models.player import Player
 from core.services.network.connected_client import ConnectedClient
+from models.player import Player
 
 
 @dataclass

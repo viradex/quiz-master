@@ -1,9 +1,9 @@
-from ui.screens.common.quiz_manager import CommonQuizManagerScreen
-from logic.base_logic import BaseLogic
-from data.quiz_repo import QuizRepository
-from core.app.screen_ids import Screens
 from core.app.enums import QuizSortingOrder
+from core.app.screen_ids import Screens
+from data.quiz_repo import QuizRepository
 from models.quiz import Quiz
+from logic.base_logic import BaseLogic
+from ui.screens.common.quiz_manager import CommonQuizManagerScreen
 
 
 class CommonQuizManagerLogic(BaseLogic):
@@ -12,17 +12,20 @@ class CommonQuizManagerLogic(BaseLogic):
         self.screen: CommonQuizManagerScreen = screen
         self.quiz_repo: QuizRepository = services.quiz_repo
 
+        # Values for logic
         self.quizzes: dict[str, Quiz] | None = None
-
         self.current_search = ""
         self.current_sort = QuizSortingOrder.NEWEST
 
+        # Screen
         self.screen.edit_requested.connect(self.on_edit_requested)
         self.screen.delete_requested.connect(self.on_delete_requested)
         self.screen.search_requested.connect(self.on_search_requested)
         self.screen.sort_requested.connect(self.on_sort_requested)
 
-    def refresh_quizzes(self):
+    def refresh_quizzes(self) -> None:
+        """Refresh the quiz list in the UI. Applies filter and search as defined in
+        `self.current_sort` and `self.current_search`, respectively."""
         self.quiz_repo.refresh_cache()
         self.quizzes = self.quiz_repo.get_all()
 
@@ -64,55 +67,49 @@ class CommonQuizManagerLogic(BaseLogic):
 
         quizzes = custom_quizzes + default_quizzes
 
+        # Refresh UI
         self.screen.remove_all_quizzes()
-        self.screen.add_quizzes(quizzes, do_default_spacing=True)
+        self.screen.add_quizzes(quizzes)
 
-    def on_edit_requested(self, quiz_id: str) -> None:
+    def on_edit_requested(self, quiz: Quiz) -> None:
+        """Open the setup screen in Edit mode. If the quiz is a default quiz,
+        directly opens the editor in read-only mode."""
         self.quiz_repo.refresh_cache()
-        quiz = self.quiz_repo.get(quiz_id)
-
-        if quiz is None:
-            self.screen.show_error(
-                "Quiz Not Found", "The quiz selected no longer exists."
-            )
-            self.refresh_quizzes()
-            return
 
         if not quiz.is_premade:
             self.screen.go_to(
                 Screens.COMMON_QUIZ_SETUP,
                 {
-                    "quiz_id": quiz_id,
+                    "quiz_id": quiz.quiz_id,
                     "quiz_title": quiz.quiz_title,
                     "do_shuffle": quiz.do_shuffle,
                 },
             )
         else:
+            # Skips setup screen if default quiz
             self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
 
-    def on_delete_requested(self, quiz_id: str) -> None:
+    def on_delete_requested(self, quiz: Quiz) -> None:
+        """Deletes a quiz from disk and removes it from the UI. Default quizzes cannot be deleted."""
         self.quiz_repo.refresh_cache()
-        quiz = self.quiz_repo.get(quiz_id)
 
-        if quiz is None:
-            self.screen.show_error(
-                "Quiz Not Found", "The quiz selected no longer exists."
-            )
-        elif quiz.is_premade:
+        if quiz.is_premade:
             self.screen.show_error(
                 "Cannot Delete Default Quiz",
                 "Default quizzes cannot be deleted. Only custom quizzes may be modified.",
             )
             return
 
-        self.quiz_repo.remove(quiz_id)
+        self.quiz_repo.remove(quiz.quiz_id)
         self.refresh_quizzes()
 
     def on_search_requested(self, query: str) -> None:
+        """Applies the search query and refreshes UI."""
         self.current_search = query
         self.refresh_quizzes()
 
     def on_sort_requested(self, sort_order: QuizSortingOrder) -> None:
+        """Applies the sort order and refreshes UI."""
         self.current_sort = sort_order
         self.refresh_quizzes()
 

@@ -1,16 +1,16 @@
 from PyQt6.QtGui import QCloseEvent
 
 from core.app.screen_ids import Screens
-from core.services.game_server import GameServer
 from core.game.game_controller import GameController
+from core.services.game_server import GameServer
 from data.quiz_repo import QuizRepository
 from models.payloads import QuestionPayload
 
 from ui.components.dialogs import confirm_warning
 
+# Needed to avoid circular imports
 from typing import TYPE_CHECKING
 
-# Needed to avoid circular imports
 if TYPE_CHECKING:
     from ui.main_window import MainWindow
 
@@ -36,9 +36,12 @@ class ServerAppController:
 
     def on_player_joined(self, player_id: str, nickname: str) -> None:
         """When a player joins. Adds player to the game controller."""
-        player = self.server.registry.get(player_id).player
-        self.controller.add_player(player)
+        player = self.server.get_player(player_id)
 
+        if player is None:
+            return
+
+        self.controller.add_player(player)
         self.window.set_status(f"{nickname} joined the game", 5000)
 
     def on_player_left(self, player_id: str, nickname: str) -> None:
@@ -74,7 +77,7 @@ class ServerAppController:
         self.window.go_to(Screens.COMMON_MENU)
 
     def on_window_close(self, event: QCloseEvent) -> None:
-        if self.server.is_running:
+        if self.server.is_running and self.server.get_total_players() > 0:
             confirm = confirm_warning(
                 self.window,
                 "Confirm Closing",

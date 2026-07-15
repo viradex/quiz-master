@@ -1,10 +1,9 @@
-from ui.screens.server.multi_result import ServerMultiResultScreen
-from logic.base_logic import BaseLogic
-from core.services.game_server import GameServer
 from core.app.screen_ids import Screens
 from core.game.game_controller import GameController
-from data.quiz_repo import QuizRepository
+from core.services.game_server import GameServer
 from models.payloads import ClientFinalResultsPayload, ServerFinalResultsPayload
+from logic.base_logic import BaseLogic
+from ui.screens.server.multi_result import ServerMultiResultScreen
 
 from utils.networking import get_hostname
 
@@ -15,7 +14,6 @@ class ServerMultiResultLogic(BaseLogic):
         self.screen: ServerMultiResultScreen = screen
         self.server: GameServer = services.server
         self.controller: GameController = services.controller
-        self.quiz_repo: QuizRepository = services.quiz_repo
 
         # Screen
         self.screen.next_question_requested.connect(self.on_next_question_requested)
@@ -43,9 +41,7 @@ class ServerMultiResultLogic(BaseLogic):
 
     def on_player_info_requested(self, player_id: str) -> None:
         """When player info is requested by the UI. Returns player info to user."""
-        # TODO Same issue as lobby logic. In fact, the code is so similar it
-        # doesn't even follow DRY principles anymore, so many fix that too :P
-        nickname = self.server.registry.get(player_id).player.nickname
+        nickname = self.server.get_player(player_id).nickname
 
         ip, port = self.server.get_player_address(player_id)
         hostname = get_hostname(ip)
@@ -56,12 +52,9 @@ class ServerMultiResultLogic(BaseLogic):
         )
 
     def on_player_kicked(self, player_id: str) -> None:
-        """When a player is requested to be kicked by the UI.
-        Sends a request to kick the player to the server."""
+        """When a player is requested to be kicked by the UI. Sends a request to kick the player to the server."""
         self.server.kick_player(player_id, "Kicked by host")
-
         self.screen.set_status("Kicked player", 2000)
-        self.screen.remove_player(player_id)
 
     def on_final_results_ready(
         self,
@@ -76,7 +69,7 @@ class ServerMultiResultLogic(BaseLogic):
         for player_id, data in individual_data.items():
             self.server.send_final_results(player_id, data.to_dict())
 
-        # Disconnect users, since no more data is needed to be transferred
-        # The clients should've been disconnected by themselves at this point,
-        # so this should happen silently
+        # Disconnect users, since no more data is needed to be transferred now
+        # The clients should've disconnected themselves at this point,
+        # so this should happen silently and they shouldn't get the disconnection screen
         self.server.stop("Game over")

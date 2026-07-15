@@ -1,9 +1,9 @@
-from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout
-from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QLabel, QPushButton, QVBoxLayout
 
-from ui.screens.base_screen import BaseScreen
 from core.app.screen_ids import Screens
+from ui.screens.base_screen import BaseScreen
 
 
 class ClientDisconnectScreen(BaseScreen):
@@ -57,7 +57,7 @@ class ClientDisconnectScreen(BaseScreen):
         self.setLayout(vbox)
 
     def on_enter(self, payload: dict | None = None) -> None:
-        if payload:
+        if payload is not None:
             reason = payload.get("reason", "Unknown")
             self.reason.setText(f"Reason: {reason}")
 

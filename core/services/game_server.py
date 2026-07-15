@@ -1,35 +1,40 @@
+import errno
+import secrets
 import socket
 import threading
-import secrets
 import time
-import errno
-from collections.abc import Callable  # For type checking
+from collections.abc import Callable
+
 from PyQt6.QtCore import QObject, pyqtSignal
 
+from core.app.enums import AddPlayerResult, ServerStartingError
 from core.services.network.connected_client import ConnectedClient
 from core.services.network.player_registry import PlayerRegistry
 from core.services.network.types import ClientMessageType, ServerMessageType
-from core.app.enums import ServerStartingError, AddPlayerResult
+from models.player import Player
+
 from core.config.constants import PORT, RESPONSE_TIMEOUT
 
 
 class GameServer(QObject):
     """Manages the networking relating to the game server."""
 
-    # Define signals for communicating from service to logic
-    start_failed = pyqtSignal(object)
+    start_failed = pyqtSignal(ServerStartingError)
     started = pyqtSignal()
 
+    # Player ID, nickname
     player_joined = pyqtSignal(str, str)
     player_left = pyqtSignal(str, str)
 
+    # Player ID, answer index, time submitted (monotonic server-side)
     answer_submitted = pyqtSignal(str, int, float)
 
     def __init__(self) -> None:
         """Initialize server attributes and handlers for client messages."""
         super().__init__()
 
-        self.host_ip = "0.0.0.0"  # Listens to all network interfaces
+        # Listens to all network interfaces
+        self.host_ip = "0.0.0.0"
         self.port = PORT
         self.is_running = False
         self.game_started = False
@@ -49,26 +54,40 @@ class GameServer(QObject):
 
     def get_player_address(self, player_id: str) -> tuple[str, int] | None:
         """Get IP address and port of a certain player."""
-        client = self.registry.get(player_id).client
+        session = self.registry.get(player_id)
 
-        if client:
-            return client.socket.getpeername()
+        if session is not None:
+            return session.client.socket.getpeername()
 
         # Player does not exist
         return None
 
-    def create_random_player_id(self) -> str:
+    def get_player(self, player_id: str) -> Player | None:
+        """Get the player instance from the registry."""
+        session = self.registry.get(player_id)
+
+        if session is not None:
+            return session.player
+
+        # Player does not exist
+        return None
+
+    def get_total_players(self) -> int:
+        """Gets the numer of players connected to the server."""
+        return len(self.registry.get_all())
+
+    def generate_player_id(self) -> str:
         """Generate a random unique player ID."""
         return secrets.token_hex(4)
 
     def start(self) -> None:
         """Starts the server and accepts clients."""
-        # Usually this wouldn't be in it's own function due to only running a thread,
+        # Usually this wouldn't be in it's own function due to only starting a thread,
         # but it provides a cleaner API
         threading.Thread(target=self._start_and_listen, daemon=True).start()
 
     def stop(self, reason: str = "Server closed") -> None:
-        """Stops the server clearnly, notifying and disconnecting all clients."""
+        """Stops the server cleanly, notifying and disconnecting all clients."""
         if self.server_socket is None:
             return
 
@@ -82,10 +101,7 @@ class GameServer(QObject):
         for session in sessions:
             try:
                 session.client.send(
-                    {
-                        "type": ServerMessageType.KICK,
-                        "data": {"reason": reason},
-                    }
+                    {"type": ServerMessageType.KICK, "data": {"reason": reason}}
                 )
 
                 # Informs client that server has no more data to send,
@@ -206,7 +222,7 @@ class GameServer(QObject):
         """Handles an individual client by assigning a player ID and ConnectedClient.
         Receives requests from the server and handles messages.
         """
-        client = ConnectedClient(sock, self.create_random_player_id())
+        client = ConnectedClient(sock, self.generate_player_id())
 
         try:
             while self.is_running:
@@ -223,7 +239,7 @@ class GameServer(QObject):
             pass
         except ValueError:
             # Invalid JSON received
-            self._fail_and_disconnect(client, "Invalid data message from client")
+            self._kick_error(client, "Invalid message data from client")
         finally:
             self.remove_client(client.player_id)
 
@@ -233,7 +249,7 @@ class GameServer(QObject):
 
         # No message type; server cannot delegate it
         if msg_type is None:
-            self._fail_and_disconnect(client, "Message type missing")
+            self._kick_error(client, "Message type missing")
             return
 
         handler = self.handlers.get(msg_type)
@@ -241,10 +257,39 @@ class GameServer(QObject):
         # Message type does not have a respective handler
         if handler is None:
             print(f"Unknown message type: {msg_type}")
-            self._fail_and_disconnect(client, "Unknown message type")
+            self._kick_error(client, "Unknown message type")
             return
 
         handler(client, msg)
+
+    def get_data_fields(
+        self, client: ConnectedClient, msg: dict, field_names: list[str]
+    ) -> dict | None:
+        """Get fields from the 'data' of a message from the client, validating it.
+        If `field_names` is empty, returns the data dictionary itself."""
+        data = msg.get("data")
+
+        if not isinstance(data, dict):
+            self._kick_error(client, "Invalid message data from client")
+            return None
+
+        if not field_names:
+            return data
+
+        fields = {}
+
+        for field_name in field_names:
+            field = data.get(field_name)
+
+            if field is None:
+                self._kick_error(
+                    client, f"Missing required field from client: {field_name}"
+                )
+                return None
+
+            fields[field_name] = field
+
+        return fields
 
     def handle_ping(self, client: ConnectedClient, msg: dict) -> None:
         """Handles the `PONG` message type."""
@@ -252,20 +297,19 @@ class GameServer(QObject):
 
     def handle_join_lobby(self, client: ConnectedClient, msg: dict) -> None:
         """Handles the `JOIN_LOBBY` message type. Validates player data and adds them."""
-        try:
-            nickname = msg["data"]["nickname"]
-        except KeyError:
-            self._fail_and_disconnect(client, "Missing player nickname")
+        data_fields = self.get_data_fields(client, msg, ["nickname"])
+        if data_fields is None:
             return
 
-        # Client sent join request twice
+        nickname = data_fields.get("nickname")
+
+        if not isinstance(nickname, str):
+            self._kick_error(client, "The nickname is not a string")
+            return
+
+        # Client sent join request after already joining
         if self.registry.has_id(client.player_id):
-            client.send(
-                {
-                    "type": ServerMessageType.INVALID_ACTION,
-                    "data": {"reason": "Cannot join again"},
-                }
-            )
+            self.send_invalid_action(client.player_id, "Cannot join again")
             return
 
         if self.game_started:
@@ -275,12 +319,14 @@ class GameServer(QObject):
         reason = self.registry.add(nickname, client)
 
         # Validation checks before adding new player
-        # Provided by registry; registry does not add player if any of these conditions are True
         if reason == AddPlayerResult.LOBBY_FULL:
             self._kick_client(client, "Server is full")
             return
         elif reason == AddPlayerResult.DUPLICATE_NICKNAME:
             self._kick_client(client, f'The nickname "{nickname}" is already in use')
+            return
+        elif reason == AddPlayerResult.EMPTY_NICKNAME:
+            self._kick_client(client, "The nickname is empty")
             return
         elif reason == AddPlayerResult.LONG_NICKNAME:
             self._kick_client(client, "The nickname is too long")
@@ -320,24 +366,24 @@ class GameServer(QObject):
 
     def handle_answer_submit(self, client: ConnectedClient, msg: dict) -> None:
         """Handles the `ANSWER_SUBMIT` message type. Also records the time the data was received."""
-        try:
-            selected_index = msg["data"]["selected_index"]
-        except KeyError:
-            self._fail_and_disconnect(client, "Missing answer index")
+        data_fields = self.get_data_fields(client, msg, ["selected_index"])
+        if data_fields is None:
+            return
+
+        selected_index = data_fields.get("selected_index")
+
+        if not isinstance(selected_index, int):
+            self._kick_error(client, "The selected answer is not an integer")
             return
 
         if not self.game_started:
-            client.send(
-                {
-                    "type": ServerMessageType.INVALID_ACTION,
-                    "data": {
-                        "reason": "Cannot submit an answer when a game is not running"
-                    },
-                }
+            self.send_invalid_action(
+                client.player_id, "Cannot submit an answer when a game is not running"
             )
             return
 
         # Record the time the message was received for points calculations
+        # Don't trust client ;)
         received_time = time.monotonic()
         self.answer_submitted.emit(client.player_id, selected_index, received_time)
 
@@ -397,7 +443,7 @@ class GameServer(QObject):
 
         client.close()
 
-    def _fail_and_disconnect(self, client: ConnectedClient, reason: str) -> None:
+    def _kick_error(self, client: ConnectedClient, reason: str) -> None:
         """Sends an `ERROR` message type to the client, then disconnects them."""
         self._send_and_disconnect(
             client,
