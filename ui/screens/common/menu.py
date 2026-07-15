@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QApplication, QLabel, QPushButton, QVBoxLayout, QHBoxLayout
-from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QApplication, QLabel, QPushButton, QHBoxLayout, QVBoxLayout
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
@@ -41,7 +41,7 @@ class CommonMenuScreen(BaseScreen):
         self.server_btn = QPushButton("Start as Server")
         self.server_btn.setFixedSize(275, 60)
         self.server_btn.setStyleSheet("font-size: 22px;")
-        self.server_btn.clicked.connect(self.on_start_server)
+        self.server_btn.clicked.connect(lambda: self.started_server.emit())
 
         self.manage_quizzes_btn = QPushButton("Manage Quizzes")
         self.manage_quizzes_btn.setFixedSize(275, 45)
@@ -84,6 +84,3 @@ class CommonMenuScreen(BaseScreen):
         vbox.addStretch(2)
 
         self.setLayout(vbox)
-
-    def on_start_server(self) -> None:
-        self.started_server.emit()

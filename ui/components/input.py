@@ -1,17 +1,19 @@
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFocusEvent, QKeyEvent, QMouseEvent, QWheelEvent
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QLineEdit,
     QComboBox,
     QSpinBox,
-    QCompleter,
     QGridLayout,
+    QCompleter,
 )
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtCore import Qt, pyqtSignal
 
 
 class ClickableLabel(QLabel):
+    """Create a clickable QLabel, which emits a 'clicked' signal when pressed."""
+
     clicked = pyqtSignal()
 
     def __init__(self, text: str = "", parent=None) -> None:
@@ -19,6 +21,7 @@ class ClickableLabel(QLabel):
         self.setCursor(Qt.CursorShape.PointingHandCursor)
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Called automatically by PyQt when the widget is clicked."""
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
 
@@ -26,18 +29,29 @@ class ClickableLabel(QLabel):
 
 
 class FocusLineEdit(QLineEdit):
+    """Create a QLineEdit, which emits a 'focused' signal when its focus state is toggled (True if focus given, else False)."""
+
     focused = pyqtSignal(bool)
 
-    def focusInEvent(self, event) -> None:
+    def focusInEvent(self, event: QFocusEvent) -> None:
+        """Called automatically by PyQt when the widget is focused."""
         self.focused.emit(True)
         super().focusInEvent(event)
 
-    def focusOutEvent(self, event) -> None:
+    def focusOutEvent(self, event: QFocusEvent) -> None:
+        """Called automatically by PyQt when the widget is unfocused."""
         self.focused.emit(False)
         super().focusOutEvent(event)
 
 
 class CharacterCountInput(QWidget):
+    """
+    Create an input box with a character counter at the top-right corner, showing a live counter
+    of characters entered out of maximum characters. If the characters entered exceeds the maximum characters,
+    the label turns red, but the user is still allowed to continue typing. This does not enforce the number of characters
+    through validation; this must be done separately.
+    """
+
     def __init__(self, max_length: int, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.max_length = max_length
@@ -48,7 +62,7 @@ class CharacterCountInput(QWidget):
         self.line_edit = FocusLineEdit()
         self.line_edit.focused.connect(self._on_focus_changed)
 
-        self.counter = QLabel(f"0/{self.max_length}")
+        self.counter = QLabel()
         self.counter.hide()
         self.counter.setProperty("state", "normal")
         self.counter.setStyleSheet("""
@@ -69,6 +83,7 @@ class CharacterCountInput(QWidget):
             }
         """)
 
+        # Put both widgets on same cell in grid to overlap
         grid = QGridLayout(self)
         grid.setContentsMargins(0, 0, 0, 0)
         grid.setSpacing(0)
@@ -80,10 +95,12 @@ class CharacterCountInput(QWidget):
             alignment=Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignRight,
         )
 
-        self.line_edit.textChanged.connect(self.update_count)
-        self.update_count(self.line_edit.text())
+        self.line_edit.textChanged.connect(self._update_count)
+        self._update_count(self.line_edit.text())
 
-    def update_count(self, text: str) -> None:
+    def _update_count(self, text: str) -> None:
+        """Update the counter at the top-right corner with the total characters in the input field
+        out of the maximum characters allowed. Turns red if it exceeds the limit."""
         length = len(text.strip())
 
         self.counter.setText(f"{length}/{self.max_length}")
@@ -92,14 +109,14 @@ class CharacterCountInput(QWidget):
             "error" if length > self.max_length else "normal",
         )
 
+        # Update styles
         self.counter.style().unpolish(self.counter)
         self.counter.style().polish(self.counter)
         self.counter.update()
 
     def _on_focus_changed(self, focused: bool) -> None:
-        if focused:
-            self.counter.show()
-        elif len(self.line_edit.text().strip()) > self.max_length:
+        """Shows the counter label if the input is focused or the character count exceeds the max, else hides it."""
+        if focused or len(self.line_edit.text().strip()) > self.max_length:
             self.counter.show()
         else:
             self.counter.hide()
@@ -141,11 +158,18 @@ class SearchableCombobox(QComboBox):
         self.clear()
         self.addItems(self.items)
 
+        # Deselect everything
         self.setCurrentIndex(-1)
 
 
 class ReversedSpinBox(QSpinBox):
-    def keyPressEvent(self, event) -> None:
+    """
+    Reverses the effects of normally using the keyboard keys or mouse scroll wheel to change the
+    value of a spin box. Pressing down, or scrolling down, increases the value, and vice versa for upwards.
+    """
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Called automatically by PyQt when a keyboard key is pressed."""
         # Pressing up goes down instead and vice versa
         if event.key() == Qt.Key.Key_Up:
             self.setValue(min(self.value() - 1, self.maximum()))
@@ -156,7 +180,8 @@ class ReversedSpinBox(QSpinBox):
         else:
             super().keyPressEvent(event)
 
-    def wheelEvent(self, event) -> None:
+    def wheelEvent(self, event: QWheelEvent) -> None:
+        """Called automatically by PyQt when the mouse scroll wheel is used."""
         # Scrolling up acts as if it scrolls down and vice versa
         if event.angleDelta().y() > 0:
             self.setValue(max(self.minimum(), self.value() - 1))

@@ -1,7 +1,7 @@
-from ui.screens.client.lobby import ClientLobbyScreen
-from logic.base_logic import BaseLogic
-from core.services.game_client import GameClient
 from core.app.screen_ids import Screens
+from core.services.game_client import GameClient
+from logic.base_logic import BaseLogic
+from ui.screens.client.lobby import ClientLobbyScreen
 
 
 class ClientLobbyLogic(BaseLogic):

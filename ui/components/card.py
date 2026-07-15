@@ -1,19 +1,20 @@
 from pathlib import Path
-from datetime import datetime
+
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QColor, QIcon, QPixmap, QMouseEvent
 from PyQt6.QtWidgets import (
     QWidget,
-    QLabel,
     QFrame,
-    QVBoxLayout,
+    QLabel,
     QHBoxLayout,
+    QVBoxLayout,
     QGraphicsDropShadowEffect,
     QMessageBox,
 )
-from PyQt6.QtGui import QColor, QIcon, QPixmap
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from ui.components.input import ClickableLabel
 from models.question import Question
+from models.quiz import Quiz
+from ui.components.input import ClickableLabel
 
 from ui.components.button import create_tool_icon_button
 from utils.formatting import format_datetime
@@ -158,7 +159,9 @@ class StatCard(QFrame):
 
 
 class QuestionCard(QFrame):
-    clicked = pyqtSignal(object)
+    """Create a card for showing a preview of a question in the quiz editor sidebar."""
+
+    clicked = pyqtSignal(Question)
 
     def __init__(
         self, question: Question, question_num: int | str, parent=None
@@ -169,7 +172,6 @@ class QuestionCard(QFrame):
 
         self.selected = False
 
-        # TODO add max height with ellipsis for question text if needed
         self.setup_component()
 
     def setup_component(self) -> None:
@@ -227,38 +229,46 @@ class QuestionCard(QFrame):
         """)
         self.setLayout(hbox)
 
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event: QMouseEvent) -> None:
+        """Called automatically by PyQt when the widget is clicked."""
+        # Inform window to switch to the question
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.question)
 
         super().mousePressEvent(event)
 
     def select(self) -> None:
+        """Change card style to show the card is currently selected."""
         self.setProperty("state", "selected")
         self.selected = True
 
         self._update_styles()
 
     def deselect(self) -> None:
+        """Change card style to show the card is currently not selected."""
         self.setProperty("state", "deselected")
         self.selected = False
 
         self._update_styles()
 
     def error(self) -> None:
+        """Change card style to show the card is currently not selected and the question has an error."""
         self.setProperty("state", "error")
         self.selected = False
 
         self._update_styles()
 
     def update_question_text(self, text: str) -> None:
+        """Update question text on the preview of the card."""
         self.question_lbl.setText(text)
 
     def update_question_num(self, question_num: int | str) -> None:
+        """Update question number on the preview of the card."""
         self.question_num = question_num
         self.question_num_lbl.setText(str(self.question_num))
 
     def _update_styles(self) -> None:
+        """Update styles so changes from selection, unselection, etc. are applied visually."""
         self.style().unpolish(self)
         self.style().polish(self)
         self.update()
@@ -267,24 +277,12 @@ class QuestionCard(QFrame):
 class QuizCard(QFrame):
     """Creates a quiz card, which is for the quiz manager and contains information and actions for a single quiz."""
 
-    edit_quiz_requested = pyqtSignal(str, str)
-    delete_quiz_requested = pyqtSignal(str, str)
+    edit_quiz_requested = pyqtSignal(Quiz)
+    delete_quiz_requested = pyqtSignal(Quiz)
 
-    def __init__(
-        self,
-        quiz_id: str,
-        quiz_title: str,
-        total_questions: str | int,
-        is_premade: bool,
-        last_updated: datetime | None = None,
-        parent: QWidget | None = None,
-    ) -> None:
+    def __init__(self, quiz: Quiz, parent: QWidget | None = None) -> None:
         super().__init__(parent)
-        self.quiz_id = quiz_id
-        self.quiz_title = quiz_title
-        self.total_questions = total_questions
-        self.is_premade = is_premade
-        self.last_updated = last_updated
+        self.quiz = quiz
 
         self.base_dir = Path(__file__).resolve().parent.parent
         self.icons_path = self.base_dir / "assets" / "icons"
@@ -302,49 +300,49 @@ class QuizCard(QFrame):
             }
         """)
 
-        self.title_lbl = QLabel(self.quiz_title)
-        self.title_lbl.setStyleSheet("font-size: 20px;" "font-weight: 600;")
-
-        no_questions = int(self.total_questions) <= 0
-
-        self.questions_lbl = QLabel(
-            f"{self.total_questions} {'question' if int(self.total_questions) == 1 else 'questions'}",
-        )
-        self.questions_lbl.setStyleSheet(f"""
+        self.title_lbl = QLabel(self.quiz.quiz_title)
+        self.title_lbl.setStyleSheet(f"""
             QLabel {{
-                font-size: 14px;
-                color: {'#C75A5A' if no_questions else '#8A8A8A'};
+                font-size: 20px;
+                font-weight: 600;
+                color: {'#D86B6B' if not self.quiz.is_complete else 'white'};
             }}
         """)
 
-        if no_questions:
-            self.questions_lbl.setToolTip("This quiz cannot be played")
+        if not self.quiz.is_complete:
+            self.title_lbl.setToolTip("This quiz cannot be played")
 
-        if self.last_updated is not None:
-            formatted_date = format_datetime(self.last_updated, start_lower=True)
+        # Shows number of questions
+        total_questions = len(self.quiz.questions)
+
+        self.questions_lbl = QLabel(
+            f"{total_questions} {'question' if total_questions == 1 else 'questions'}",
+        )
+        self.questions_lbl.setStyleSheet("font-size: 14px;" "color: #8A8A8A;")
+
+        if self.quiz.updated_at is not None:
+            formatted_date = format_datetime(self.quiz.updated_at, start_lower=True)
         else:
             formatted_date = "-"
 
-        self.updated_lbl = QLabel(f"Updated {formatted_date}")
+        # This label is hidden if the quiz is a default quiz, therefore must explicitely set parent=self
+        self.updated_lbl = QLabel(f"Updated {formatted_date}", self)
+        self.updated_lbl.setHidden(self.quiz.is_premade)
         self.updated_lbl.setStyleSheet("font-size: 12px;" "color: #8A8A8A;")
-
-        if self.is_premade:
-            self.updated_lbl.hide()
 
         delete_icon = self.icons_path / "delete.png"
         edit_icon = self.icons_path / "edit.png"
 
         self.delete_btn = create_tool_icon_button(delete_icon, "Delete", icon_size=24)
         self.delete_btn.clicked.connect(
-            lambda: self.delete_quiz_requested.emit(self.quiz_id, self.quiz_title)
+            lambda: self.delete_quiz_requested.emit(self.quiz)
         )
 
+        # Must be explicitely made a child of 'self' otherwise it will briefly appear as a pop-up window
         self.edit_btn = create_tool_icon_button(
             edit_icon, "Edit", icon_size=24, parent=self
         )
-        self.edit_btn.clicked.connect(
-            lambda: self.edit_quiz_requested.emit(self.quiz_id, self.quiz_title)
-        )
+        self.edit_btn.clicked.connect(lambda: self.edit_quiz_requested.emit(self.quiz))
 
         # Must add parent=self, otherwise it will appear as a top-level window temporarily
         self.default_lbl = ClickableLabel("Default Quiz", self)
@@ -364,15 +362,16 @@ class QuizCard(QFrame):
             }
         """)
 
-        if self.is_premade:
+        if self.quiz.is_premade:
             self.delete_btn.hide()
 
+            # Change edit button to a preview button
             view_icon = self.icons_path / "preview.png"
             self.edit_btn.setIcon(QIcon(str(view_icon)))
             self.edit_btn.setToolTip("View as read-only")
 
             self.edit_btn.show()
-            self.default_lbl.setHidden(False)
+            self.default_lbl.show()
 
         vbox = QVBoxLayout()
         vbox.addWidget(self.title_lbl)
@@ -394,11 +393,13 @@ class QuizCard(QFrame):
         self.setLayout(hbox)
 
     def _on_default_clicked(self) -> None:
-        if not self.is_premade:
+        """When the default label is clicked."""
+        if not self.quiz.is_premade:
             return
 
         self.default_clicked_counter += 1
 
+        # Labels have feelings too <3
         if self.default_clicked_counter == 10:
             QMessageBox.information(
                 self,

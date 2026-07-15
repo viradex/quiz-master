@@ -1,16 +1,16 @@
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QLabel,
+    QAbstractItemView,
     QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
     QHBoxLayout,
-    QAbstractItemView,
+    QVBoxLayout,
 )
-from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from ui.screens.base_screen import BaseScreen
 from ui.components.spinner import Spinner
+from ui.screens.base_screen import BaseScreen
 
 from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning

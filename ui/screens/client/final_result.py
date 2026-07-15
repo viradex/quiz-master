@@ -1,27 +1,28 @@
 import random
 from pathlib import Path
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
     QAbstractItemView,
     QHeaderView,
+    QTableWidget,
+    QTableWidgetItem,
+    QGridLayout,
+    QHBoxLayout,
+    QVBoxLayout,
 )
-from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
 
 from core.app.screen_ids import Screens
-from ui.screens.base_screen import BaseScreen
-from ui.components.card import Card, StatCard
 from models.payloads import ClientFinalResultsPayload
+from ui.components.card import Card, StatCard
+from ui.screens.base_screen import BaseScreen
 
 from utils.color import darken_color
-from utils.formatting import to_ordinal
 from utils.feedback_generator import feedback_generator
+from utils.formatting import to_ordinal
 
 
 class ClientFinalResultScreen(BaseScreen):

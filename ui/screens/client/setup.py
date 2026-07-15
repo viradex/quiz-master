@@ -1,23 +1,23 @@
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
     QPushButton,
+    QFormLayout,
+    QHBoxLayout,
     QLineEdit,
     QSpacerItem,
     QVBoxLayout,
-    QHBoxLayout,
-    QFormLayout,
 )
-from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.screen_ids import Screens
-from ui.screens.base_screen import BaseScreen
 from ui.components.input import CharacterCountInput
+from ui.screens.base_screen import BaseScreen
 
-from ui.components.button import create_return_button
 from utils.networking import is_valid_ipv4
-from core.config.constants import DEFAULT_IP_ADDRESS, PORT, MAX_NICKNAME_LENGTH
+from ui.components.button import create_return_button
+from core.config.constants import DEFAULT_IP_ADDRESS, MAX_NICKNAME_LENGTH, PORT
 
 
 class ClientSetupScreen(BaseScreen):
@@ -152,7 +152,7 @@ class ClientSetupScreen(BaseScreen):
 
         return True
 
-    def on_enter(self, payload: dict | None = None):
+    def on_enter(self, payload: dict | None = None) -> None:
         # Keeps fields populated if an error occurred while connecting
-        if not payload.get("error_occurred"):
+        if payload is not None and not payload.get("error_occurred"):
             self.clear_fields()

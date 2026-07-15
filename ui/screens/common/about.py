@@ -1,13 +1,14 @@
 from pathlib import Path
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QKeyEvent
 from PyQt6.QtWidgets import (
     QLabel,
-    QPushButton,
     QPlainTextEdit,
-    QVBoxLayout,
+    QPushButton,
     QHBoxLayout,
+    QVBoxLayout,
 )
-from PyQt6.QtGui import QFont
-from PyQt6.QtCore import Qt
 
 from core.app.screen_ids import Screens
 from ui.screens.base_screen import BaseScreen
@@ -96,7 +97,8 @@ class CommonAboutScreen(BaseScreen):
 
         return license_text
 
-    def keyPressEvent(self, event) -> None:
+    def keyPressEvent(self, event: QKeyEvent) -> None:
+        """Called automatically by PyQt when a keyboard key is pressed."""
         key = event.text().lower()
         if not key:
             return
@@ -134,6 +136,6 @@ Meow."""
             self.license_area.setPlainText(self.license_text)
             self.showing_license = True
 
-    def on_leave(self):
+    def on_leave(self) -> None:
         self.license_area.setPlainText(self.license_text)
         self.showing_license = True

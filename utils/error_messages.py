@@ -9,7 +9,7 @@ QUIZ_ERROR_MESSAGES: dict[QuizValidationError, str] = {
     QuizValidationError.MISSING_QUESTIONS: "The quiz does not contain any questions.",
     QuizValidationError.NO_SHUFFLE_INFO: "The quiz does not contain information about shuffling questions.",
     QuizValidationError.NO_PREMADE_INFO: "The quiz does not contain information for if the quiz is a default.",
-    QuizValidationError.UPDATED_FUTURE: "The quiz's updated at date is in the future.",
+    QuizValidationError.NO_COMPLETENESS_INFO: "The quiz does not contain information for if it is completed.",
     # Individual question errors
     QuizValidationError.DUPLICATED_ID: "Two or more questions have the same question ID.",
     QuizValidationError.INVALID_ANSWERS: "One or more questions contain too few or too many answers.",
@@ -28,5 +28,6 @@ QUESTION_ERROR_MESSAGES: dict[QuestionValidationError, str] = {
 
 
 def format_errors(errors: list) -> str:
+    """Format the errors into a list and join them into a string with newline separators."""
     errors = ["- " + error for error in errors]
     return "\n".join(errors)

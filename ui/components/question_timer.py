@@ -1,6 +1,7 @@
 import math
-from PyQt6.QtWidgets import QLabel, QWidget, QProgressBar, QVBoxLayout
+
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtWidgets import QWidget, QLabel, QVBoxLayout, QProgressBar
 
 from utils.color import darken_color
 

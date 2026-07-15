@@ -1,10 +1,11 @@
-from ui.screens.client.disconnect import ClientDisconnectScreen
+from core.services.app_context import Services
 from logic.base_logic import BaseLogic
-from core.services.game_client import GameClient
+from ui.screens.client.disconnect import ClientDisconnectScreen
 
 
+# This logic class must exist, despite it being blank, else the screen-logic factory will fail
 class ClientDisconnectLogic(BaseLogic):
     def __init__(self, screen, services) -> None:
         super().__init__()
         self.screen: ClientDisconnectScreen = screen
-        self.game_client: GameClient = services.client
+        self.services: Services = services

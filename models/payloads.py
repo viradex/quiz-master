@@ -1,8 +1,8 @@
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 
 
 # Payloads should only be used for data transfer that has multiple data fields.
-# If it's 1-3 fields, it can and should just be a plain old dictionary
+# If it's just 1-3 fields, it can and should be a plain old dictionary
 class BasePayload:
     """Base payload for all payloads."""
 
@@ -11,7 +11,7 @@ class BasePayload:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> "BasePayload":
         """Convert dictionary to a payload. Useful for deserializing data from a network transfer."""
         try:
             return cls(**data)
@@ -85,7 +85,7 @@ class ServerFinalResultsPayload(BasePayload):
 
     winner: str
     highest_points: int
-    fastest_answer: float
+    fastest_answer: float | None
     average_accuracy: float
     total_players: int
     total_questions: int

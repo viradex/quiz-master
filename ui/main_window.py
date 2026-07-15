@@ -1,17 +1,18 @@
-import sys
 import ctypes
+import sys
 from pathlib import Path
+
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QCloseEvent, QFontMetrics, QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QMainWindow,
     QWidget,
-    QHBoxLayout,
     QStackedWidget,
-    QMessageBox,
     QStatusBar,
+    QHBoxLayout,
+    QMessageBox,
 )
-from PyQt6.QtGui import QIcon, QFontMetrics, QCloseEvent
-from PyQt6.QtCore import Qt, QTimer
 
 from core.app.screen_ids import Screens
 from core.services.app_context import Services
@@ -22,11 +23,11 @@ from ui.screens.base_screen import BaseScreen
 
 from core.app.screen_factory import create_screen_bundle
 from core.config.constants import (
+    DEFAULT_STATUS_BAR_MESSAGE,
     EAGER_SCREENS,
     STARTUP_SCREEN,
-    WINDOW_WIDTH,
     WINDOW_HEIGHT,
-    DEFAULT_STATUS_BAR_MESSAGE,
+    WINDOW_WIDTH,
 )
 
 
@@ -188,6 +189,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(self, title, desc)
 
     def closeEvent(self, event: QCloseEvent) -> None:
+        """Called automatically by PyQt when the window is about to be closed (e.g. if user pressed close button)."""
         self.client_app_controller.on_window_close(event)
         self.server_app_controller.on_window_close(event)
 

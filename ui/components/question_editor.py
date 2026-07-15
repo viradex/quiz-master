@@ -1,37 +1,38 @@
 from pathlib import Path
+
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QIcon
 from PyQt6.QtWidgets import (
     QWidget,
     QLabel,
-    QSpinBox,
     QRadioButton,
     QButtonGroup,
     QComboBox,
-    QVBoxLayout,
-    QHBoxLayout,
+    QSpinBox,
     QGridLayout,
+    QHBoxLayout,
+    QVBoxLayout,
     QMessageBox,
 )
-from PyQt6.QtGui import QFont, QIcon
-from PyQt6.QtCore import Qt, pyqtSignal
 
 from core.app.enums import QuestionValidationError
-from ui.components.input import ClickableLabel, CharacterCountInput, ReversedSpinBox
-from models.question import Question
 from models.payloads import QuestionPayload
+from models.question import Question
+from ui.components.input import CharacterCountInput, ClickableLabel, ReversedSpinBox
 
 from ui.components.button import create_tool_icon_button
 from ui.components.dialogs import confirm_warning
 from utils.error_messages import format_errors, QUESTION_ERROR_MESSAGES
-from core.config.constants import MAX_QUESTION_LENGTH, MAX_ANSWER_LENGTH
+from core.config.constants import MAX_ANSWER_LENGTH, MAX_QUESTION_LENGTH
 
-ANSWER_DATA = [
+ANSWER_DATA: list[dict[str, str | bool]] = [
     {"color": "#C94F4F", "letter": "A", "required": True},
     {"color": "#4A78C2", "letter": "B", "required": True},
     {"color": "#B89B2E", "letter": "C", "required": False},
     {"color": "#3E9B68", "letter": "D", "required": False},
 ]
 
-TIME_DATA = {
+TIME_DATA: dict[int, str] = {
     5: "5 seconds",
     10: "10 seconds",
     15: "15 seconds",
@@ -45,10 +46,15 @@ TIME_DATA = {
 
 
 class QuestionEditor(QWidget):
+    """Editor for a single question of a quiz."""
+
+    # bool is for whether question has error
     error_results = pyqtSignal(Question, bool)
 
-    question_reordered = pyqtSignal(Question, int)
+    question_reordered = pyqtSignal(Question, int)  # New question number
     question_text_changed = pyqtSignal(Question)
+
+    # New time (secs) and display name for time
     global_time_requested = pyqtSignal(int, str)
     preview_requested = pyqtSignal(QuestionPayload)
     duplicate_requested = pyqtSignal(Question)
@@ -69,7 +75,7 @@ class QuestionEditor(QWidget):
         self.read_only = read_only
 
         self.question_validation_results: set[QuestionValidationError] = set()
-        self.is_first = True
+        self.is_first: bool = True
 
         self.base_dir = Path(__file__).resolve().parent.parent
         self.icons_path = self.base_dir / "assets" / "icons"
@@ -92,6 +98,8 @@ class QuestionEditor(QWidget):
         question_num_lbl = QLabel("Question ")
         question_num_lbl.setFont(question_num_font)
 
+        # Spinbox to allow moving question
+        # Reversed spinbox is more natural due to sidebar
         self.question_num_input = ReversedSpinBox()
         self.question_num_input.setToolTip(
             "Move question position"
@@ -117,7 +125,7 @@ class QuestionEditor(QWidget):
         self.issues_btn = create_tool_icon_button(
             warning_icon, "This question has issues. Click to learn more", icon_size=28
         )
-        self.issues_btn.hide()
+        self.issues_btn.hide()  # Hidden by default
         self.issues_btn.clicked.connect(self._show_issues)
 
         self.preview_btn = create_tool_icon_button(
@@ -135,6 +143,7 @@ class QuestionEditor(QWidget):
         self.delete_btn = create_tool_icon_button(delete_icon, "Delete", icon_size=28)
         self.delete_btn.clicked.connect(self._on_delete_clicked)
 
+        # If read-only, disable editing-related buttons
         if self.read_only:
             duplicate_disabled_icon = self.icons_path / "duplicate_disabled.png"
             self.duplicate_btn.setIcon(QIcon(str(duplicate_disabled_icon)))
@@ -142,10 +151,10 @@ class QuestionEditor(QWidget):
             delete_disabled_icon = self.icons_path / "delete_disabled.png"
             self.delete_btn.setIcon(QIcon(str(delete_disabled_icon)))
 
-            self.duplicate_btn.setDisabled(self.read_only)
+            self.duplicate_btn.setDisabled(True)
             self.duplicate_btn.setToolTip("Cannot edit read-only quiz")
 
-            self.delete_btn.setDisabled(self.read_only)
+            self.delete_btn.setDisabled(True)
             self.delete_btn.setToolTip("Cannot edit read-only quiz")
 
         # Question input
@@ -165,6 +174,7 @@ class QuestionEditor(QWidget):
 
         self.answer_counters = []
 
+        # Dynamically create grid of answer buttons
         for i in range(2):
             for j in range(2):
                 index = i * 2 + j
@@ -184,6 +194,8 @@ class QuestionEditor(QWidget):
                 counter.line_edit.setDisabled(self.read_only)
                 counter.line_edit.setFixedHeight(60)
                 counter.line_edit.setFont(answer_input_font)
+
+                # index=index required, otherwise index passed will be statically set to 3
                 counter.line_edit.textChanged.connect(
                     lambda text, index=index: self._on_answer_edit(index, text)
                 )
@@ -215,6 +227,7 @@ class QuestionEditor(QWidget):
 
         self.correct_radios = []
 
+        # Dynamically create radio buttons
         for i in range(4):
             data = ANSWER_DATA[i]
 
@@ -235,11 +248,14 @@ class QuestionEditor(QWidget):
             correct_answer_vbox.addWidget(correct_radio)
             correct_answer_vbox.addSpacing(5)
 
+        # Enable/disable last two radio buttons if needed
         self._update_correct_answer_buttons()
 
+        # Change radio button text to answer text, if needed
         for i, answer in enumerate(self.question.answer_options):
             self._on_answer_edit(i, answer)
 
+        # Set correct answer set to a radio button if editing pre-existing quiz
         if self.question.correct_answer_index is not None:
             self.correct_group.button(self.question.correct_answer_index).setChecked(
                 True
@@ -260,6 +276,7 @@ class QuestionEditor(QWidget):
         for seconds, value in TIME_DATA.items():
             self.time_combo.addItem(value, seconds)
 
+        # Pre-set the time limit
         self.set_time_limit(self.question.time_limit)
         self.time_combo.currentIndexChanged.connect(self._on_time_changed)
 
@@ -315,6 +332,8 @@ class QuestionEditor(QWidget):
     def update_question_num(
         self, question_num: int | str, total_questions: int | str | None = None
     ) -> None:
+        """Update the question number spin box display, and the total questions if provided. If the total
+        questions are not provided, assumes the previous value."""
         self.question_num = question_num
         if total_questions is not None:
             self.total_questions = total_questions
@@ -323,17 +342,18 @@ class QuestionEditor(QWidget):
         self.question_num_input.setMaximum(int(self.total_questions))
         self.total_question_lbl.setText(f"/ {self.total_questions}")
 
-    def get_all_data(self) -> None:
-        pass
-
     def disable_delete(self) -> None:
+        """Disable the delete button (typically for if this question is the last remaining)."""
         if not self.read_only:
             delete_disabled_icon = self.icons_path / "delete_disabled.png"
             self.delete_btn.setIcon(QIcon(str(delete_disabled_icon)))
+
+            # TODO This tooltip message should be customizable
             self.delete_btn.setToolTip("Cannot delete the only question")
             self.delete_btn.setDisabled(True)
 
     def enable_delete(self) -> None:
+        """Enable the delete button."""
         if not self.read_only:
             delete_icon = self.icons_path / "delete.png"
             self.delete_btn.setIcon(QIcon(str(delete_icon)))
@@ -341,6 +361,7 @@ class QuestionEditor(QWidget):
             self.delete_btn.setDisabled(False)
 
     def set_time_limit(self, seconds: int) -> None:
+        """Set the time limit on the dropdown and within the question's internal data."""
         index = self.time_combo.findData(seconds)
 
         if index != -1:
@@ -350,9 +371,16 @@ class QuestionEditor(QWidget):
         self.validate_question()
 
     def validate_question(self) -> None:
+        """
+        Validate the question for question-specific errors. If errors are found, with the exception
+        of a few, the preview button will be enabled or disabled. If this is not the first time this editor
+        is shown, the warning icon will be shown, which can be clicked to gain information for why this
+        question has errors.
+        """
         self.question_validation_results = self.question.validate_question()
 
         # Preview button will be disabled regardless of first time
+        # Correct answer is not needed to preview
         if self.question_validation_results - {
             QuestionValidationError.NO_CORRECT_ANSWER
         }:
@@ -366,16 +394,19 @@ class QuestionEditor(QWidget):
             self.preview_btn.setToolTip("Preview")
             self.preview_btn.setDisabled(False)
 
+        # Do not show warning icon if this screen is shown for the first time
         if self.is_first:
             return
 
-        # Issues warning button will not show on the first time
+        # Show issues button if there are errors to help user identify them
         if self.question_validation_results:
             self.issues_btn.show()
         else:
             self.issues_btn.hide()
 
     def _show_issues(self) -> None:
+        """If there are validation issues, groups all errors in the question and displays
+        them in a warning modal box as a user-friendly list."""
         self.validate_question()
         issues: list[str] = []
 
@@ -386,20 +417,25 @@ class QuestionEditor(QWidget):
                 "No Issues Detected",
                 "No issues were detected with this question.",
             )
+            self.issues_btn.hide()
             return
 
-        # Iterate over dict to preserve order in UI, as sets do not
+        # Iterate over dict to preserve order in UI, as sets do not preverse order
         for error in QUESTION_ERROR_MESSAGES:
             if error in self.question_validation_results:
                 issues.append(QUESTION_ERROR_MESSAGES[error])
 
+        # Show errors in a list-like format
         QMessageBox.warning(
             self,
             "Question Issues",
-            f"The following issue(s) were detected in this question. These must be fixed before the quiz can be saved.\n\n{format_errors(issues)}",
+            f"The following issue(s) were detected in this question. These must be fixed before the quiz can be played.\n\n{format_errors(issues)}",
         )
 
     def _on_preview_clicked(self) -> None:
+        """Emits a signal containing a QuestionPayload so the screen knows how to display the question.
+        Only works if there are no validation errors, except for a select few."""
+        # Correct answer is not needed to preview a question
         if self.question_validation_results - {
             QuestionValidationError.NO_CORRECT_ANSWER
         }:
@@ -411,6 +447,7 @@ class QuestionEditor(QWidget):
             )
             return
 
+        # Temporarily remove blank questions (should only ever remove C and/or D due to validation)
         answers = [a for a in self.question.answer_options if a.strip() != ""]
 
         question_payload = QuestionPayload(
@@ -424,6 +461,7 @@ class QuestionEditor(QWidget):
         self.preview_requested.emit(question_payload)
 
     def _on_delete_clicked(self) -> None:
+        """Shows a confirmation prompt for deleting the current question before delegating it."""
         confirm = confirm_warning(
             self,
             "Confirm Deleting Question",
@@ -434,12 +472,14 @@ class QuestionEditor(QWidget):
             self.delete_requested.emit(self.question)
 
     def _on_apply_global_time(self) -> None:
+        """Gets seconds requested before delegating it. Does not show the confirmation prompt."""
         seconds = self.time_combo.currentData()
         text = self.time_combo.currentText()
 
         self.global_time_requested.emit(seconds, text)
 
     def _on_question_reorder(self, new_question_num: int) -> None:
+        """Request the reorder of this question, if it is within a valid range 1-total questions, inclusive."""
         if not 0 < new_question_num <= int(self.total_questions):
             # Should ordinarily never happen
             QMessageBox.critical(
@@ -452,20 +492,27 @@ class QuestionEditor(QWidget):
         self.question_reordered.emit(self.question, new_question_num)
 
     def _on_question_edit(self, text: str) -> None:
+        """Whenever the question text changes. Saves a stripped version of the text."""
         self.question.question_text = text.strip()
 
         self.question_text_changed.emit(self.question)
         self.validate_question()
 
     def _on_answer_edit(self, index: int, text: str) -> None:
+        """Whenever an answer is edited. Saves a stripped version and updates the respective radio
+        button with the answer text, enabling it if necessary. If the answer is cleared, resets the
+        radio button text."""
         text = text.strip()
 
+        # Fills in answers before the edited one with a blank string
+        # to ensure the answer is not saved at the wrong index
         while len(self.question.answer_options) <= index:
             self.question.answer_options.append("")
 
         self.question.answer_options[index] = text
         answer_radio = self.correct_group.button(index)
 
+        # Changes respective radio button text to reflect answer text, if not empty
         if answer_radio is not None:
             if text:
                 answer_radio.setText(text)
@@ -477,26 +524,35 @@ class QuestionEditor(QWidget):
         self.validate_question()
 
     def _on_correct_answer_changed(self, index: int) -> None:
+        """Whenever a different correct answer radio button is selected."""
         self.question.correct_answer_index = index
         self.validate_question()
 
     def _on_time_changed(self, index: int) -> None:
+        """Whenever the time selection changed."""
         seconds = self.time_combo.currentData()
         self.question.time_limit = seconds
 
         self.validate_question()
 
-    def _update_correct_answer_buttons(self):
+    def _update_correct_answer_buttons(self) -> None:
+        """
+        Update the enabled/disabled state of the correct answer radio buttons.
+        The first two buttons are always enabled, while the last two are only enabled
+        if their respective answers have text. If in read-only mode, all buttons are disabled.
+        """
         for i, radio in enumerate(self.correct_radios):
+            # Checks if the respective answer input field has text
             has_text = bool(self.answer_counters[i].line_edit.text().strip())
 
-            # A and B are always enabled
+            # A and B are always enabled, unless in read-only mode
             if i < 2 and not self.read_only:
                 radio.setEnabled(True)
             else:
+                # Only enable if respective answer has text and not in read-only mode
                 radio.setEnabled(has_text and not self.read_only)
 
-                # If C or D were selected and is now disabled, unselect it
+                # If C or D was selected and is now disabled, unselect it
                 if not has_text and radio.isChecked():
                     # Must set exclusive to False and then reset it to ensure the radio button can be unchecked
                     self.correct_group.setExclusive(False)
@@ -506,6 +562,8 @@ class QuestionEditor(QWidget):
                     self.question.correct_answer_index = None
 
     def on_enter(self, total_questions: int, is_first: bool) -> None:
+        """Called when this editor is shown. `is_first` is True if the screen is shown
+        upon creating the question for the first time."""
         self.total_questions = total_questions
 
         self.update_question_num(self.question_num, self.total_questions)
@@ -514,7 +572,10 @@ class QuestionEditor(QWidget):
         self.validate_question()
 
     def on_leave(self) -> None:
+        """Called when this editor is hidden."""
         self.question_validation_results = self.question.validate_question()
+
+        # Informs parent if there are any errors in this question to show that to the user
         self.error_results.emit(
             self.question, len(self.question_validation_results) > 0
         )

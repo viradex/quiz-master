@@ -1,11 +1,11 @@
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout
-from PyQt6.QtGui import QFont
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QLabel, QHBoxLayout, QVBoxLayout
 
-from ui.screens.base_screen import BaseScreen
-from ui.components.question_timer import QuestionTimer
-from ui.components.answer_button_grid import AnswerButtonGrid
 from models.payloads import QuestionPayload
+from ui.components.answer_button_grid import AnswerButtonGrid
+from ui.components.question_timer import QuestionTimer
+from ui.screens.base_screen import BaseScreen
 
 from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning

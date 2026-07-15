@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QWidget
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QPainter, QPen, QColor
+from PyQt6.QtGui import QColor, QPainter, QPen, QPaintEvent
+from PyQt6.QtWidgets import QWidget
 
 
 class Spinner(QWidget):
@@ -34,8 +34,8 @@ class Spinner(QWidget):
         the spinner is no longer visible to reduce lag."""
         self.timer.stop()
 
-    def paintEvent(self, event) -> None:
-        # Run automatically by PyQt
+    def paintEvent(self, event: QPaintEvent) -> None:
+        """Called automatically by PyQt when the widget needs repainting."""
         # Antialiasing to remove jagged edges
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -54,6 +54,7 @@ class Spinner(QWidget):
         painter.drawArc(rect, int(self.angle * 16), int(self.arc_length * 16))
 
     def _rotate(self) -> None:
+        """Rotate the spinner by 6 degrees every time it is called."""
         # Every frame, minus 6 degrees from angle (within range 0-359)
         self.angle = (self.angle - 6) % 360
         self.update()

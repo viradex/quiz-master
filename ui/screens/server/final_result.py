@@ -1,23 +1,24 @@
 import random
 from pathlib import Path
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtWidgets import (
     QLabel,
     QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QHBoxLayout,
-    QGridLayout,
     QAbstractItemView,
     QHeaderView,
+    QTableWidget,
+    QTableWidgetItem,
+    QGridLayout,
+    QHBoxLayout,
+    QVBoxLayout,
 )
-from PyQt6.QtGui import QFont, QColor
-from PyQt6.QtCore import Qt
 
 from core.app.screen_ids import Screens
-from ui.screens.base_screen import BaseScreen
-from ui.components.card import Card, StatCard
 from models.payloads import ServerFinalResultsPayload
+from ui.components.card import Card, StatCard
+from ui.screens.base_screen import BaseScreen
 
 from utils.color import darken_color
 
@@ -213,6 +214,7 @@ class ServerFinalResultScreen(BaseScreen):
         self.leaderboard_table.setRowCount(0)
 
     def on_return(self) -> None:
+        """Returns to Main Menu screen."""
         self.reset_status()
         self.go_to(Screens.COMMON_MENU)
 

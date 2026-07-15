@@ -1,16 +1,13 @@
-from ui.screens.server.lobby import ServerLobbyScreen
-from logic.base_logic import BaseLogic
-from core.services.game_server import GameServer
 from core.app.screen_ids import Screens
 from core.game.game_controller import GameController
+from core.services.game_server import GameServer
 from data.quiz_repo import QuizRepository
+from logic.base_logic import BaseLogic
+from ui.screens.server.lobby import ServerLobbyScreen
 
+from ui.components.dialogs import confirm_warning
 from utils.networking import get_hostname
-from utils.error_messages import (
-    format_errors,
-    QUIZ_ERROR_MESSAGES,
-    QUESTION_ERROR_MESSAGES,
-)
+from utils.error_messages import format_errors, QUIZ_ERROR_MESSAGES
 from core.config.constants import MIN_PLAYERS_FOR_GAME
 
 
@@ -42,10 +39,7 @@ class ServerLobbyLogic(BaseLogic):
 
     def on_player_info_requested(self, player_id: str) -> None:
         """When player info is requested by the UI. Returns player info to user."""
-        # TODO The logic reaches too deep into the server and knows too much about the registry
-        # and where the nickname is stored. The server should instead have its own method to
-        # expose the registry.
-        nickname = self.server.registry.get(player_id).player.nickname
+        nickname = self.server.get_player(player_id).nickname
 
         ip, port = self.server.get_player_address(player_id)
         hostname = get_hostname(ip)
@@ -63,7 +57,7 @@ class ServerLobbyLogic(BaseLogic):
     def on_game_started(self, quiz_id: str) -> None:
         """When the UI requests to start a game."""
         # Get number of players in server
-        players = len(self.server.registry.get_all())
+        players = self.server.get_total_players()
 
         # Get all quiz names
         self.quiz_repo.refresh_cache()
@@ -81,6 +75,12 @@ class ServerLobbyLogic(BaseLogic):
                 "There are not enough players to start the game.",
             )
             return
+        elif not quiz.is_complete:
+            self.screen.show_error(
+                "Invalid Conditions for Start",
+                "The quiz is incomplete and cannot be used to host a game yet.",
+            )
+            return
 
         issues: list[str] = []
         validation_errors = quiz.validate_quiz()
@@ -92,24 +92,13 @@ class ServerLobbyLogic(BaseLogic):
 
             self.screen.show_error(
                 "Quiz Errors",
-                f"The quiz selected has critical errors that prevent it from being played.\n\n{format_errors(issues)}",
+                f"The program has found critical errors with this quiz that prevent it from being played.\n\n{format_errors(issues)}",
             )
             return
 
-        question_errors = set()
+        # Remove any empty C and D answers, if not already done
         for question in quiz.questions:
-            question_errors.update(question.validate_question())
-
-        if question_errors:
-            for error in QUESTION_ERROR_MESSAGES:
-                if error in question_errors:
-                    issues.append(QUIZ_ERROR_MESSAGES[error])
-
-            self.screen.show_error(
-                "Quiz Errors",
-                f"The quiz selected has errors that prevent it from being played. These issues can be fixed by using the quiz editor.\n\n{format_errors(issues)}",
-            )
-            return
+            question.remove_empty_answers(mutate_answers=True)
 
         self.controller.load_quiz(quiz)
         self.controller.start_game()
@@ -117,6 +106,19 @@ class ServerLobbyLogic(BaseLogic):
 
     def on_server_closed(self) -> None:
         """When the UI requests to stop the server."""
+        # Do not show the confirmation if there aren't any players in the server
+        if self.server.get_total_players() > 0:
+            confirm = confirm_warning(
+                self.screen,
+                "Confirm Closing",
+                "Are you sure you want to close the server and return to menu? All players in the server will be disconnected.",
+            )
+        else:
+            confirm = True
+
+        if not confirm:
+            return
+
         self.server.stop()
         self.screen.go_to(Screens.COMMON_MENU)
 
@@ -126,17 +128,19 @@ class ServerLobbyLogic(BaseLogic):
     def on_enter(self, payload=None) -> None:
         # Show all quiz names in dropdown screen in UI
         quizzes = self.quiz_repo.get_all()
+
+        # Index 1 is the key of the dict, therefore look at index 1 for quiz data
         sorted_quizzes = dict(
             sorted(
                 quizzes.items(),
-                key=lambda quiz: (bool(quiz[1].is_premade), str(quiz[1].quiz_title)),
+                key=lambda quiz: (quiz[1].is_premade, quiz[1].quiz_title),
             )
         )
 
         quiz_names = {
             quiz_id: quiz.quiz_title
             for quiz_id, quiz in sorted_quizzes.items()
-            if quiz.questions
+            if quiz.is_complete
         }
 
         for quiz_id, quiz in sorted_quizzes.items():

@@ -1,7 +1,7 @@
-from dataclasses import dataclass, asdict
-from datetime import datetime
 import random
 import secrets
+from dataclasses import asdict, dataclass
+from datetime import datetime
 
 from core.app.enums import QuizValidationError
 from models.question import Question
@@ -16,6 +16,7 @@ class Quiz:
     questions: list[Question]
     do_shuffle: bool
     is_premade: bool
+    is_complete: bool
     updated_at: datetime | None = None
 
     @staticmethod
@@ -41,6 +42,7 @@ class Quiz:
         return self.questions[index]
 
     def get_question_index(self, question_id: str) -> int | None:
+        """Get the index of a specified question by ID, or None if it doesn't exist."""
         for i, question in enumerate(self.questions):
             if question.question_id == question_id:
                 return i
@@ -56,19 +58,25 @@ class Quiz:
         random.shuffle(self.questions)
 
     def move_question(self, question_id: str, new_index: int) -> None:
+        """Move a question to the new specified index, pushing questions in front of it one index down."""
         questions = self.questions
 
+        # Get the question index on the first question ID match
         old_index = next(
-            i for i, q in enumerate(questions) if q.question_id == question_id
+            (i for i, q in enumerate(questions) if q.question_id == question_id), None
         )
+
+        if old_index is None:
+            return
 
         question = questions.pop(old_index)
         questions.insert(new_index, question)
 
     def validate_quiz(self) -> set[QuizValidationError]:
         """
-        Validates the quiz and its questions. Returns a set containing all the errors
-        as a `QuizValidationError`.
+        Validates the quiz and its questions. Does validation ensuring the quiz is legal and can be
+        safely used in a quiz game. Some question-specific validation is not included; for that, use
+        `Question.validate_question()`. Returns a set containing all the errors as a `QuizValidationError`.
         """
 
         errors = set()
@@ -90,8 +98,8 @@ class Quiz:
         if not isinstance(self.is_premade, bool):
             errors.add(QuizValidationError.NO_PREMADE_INFO)
 
-        if self.updated_at is not None and self.updated_at > datetime.now():
-            errors.add(QuizValidationError.UPDATED_FUTURE)
+        if not isinstance(self.is_complete, bool):
+            errors.add(QuizValidationError.NO_COMPLETENESS_INFO)
 
         # Individual question validation
         for question in self.questions:
@@ -100,12 +108,15 @@ class Quiz:
 
             seen_question_ids.add(question.question_id)
 
+            # Ensures there are between 2-4 questions inclusive
             if (
                 not isinstance(question.answer_options, list)
                 or not 2 <= len(question.answer_options) <= 4
             ):
                 errors.add(QuizValidationError.INVALID_ANSWERS)
 
+            # If the correct answer index is out of the range for the amount of answers
+            # (e.g. correct answer index is 4 when question indexes are only 0-3)
             if not isinstance(question.correct_answer_index, int) or not 0 <= int(
                 question.correct_answer_index
             ) < len(question.answer_options):
@@ -132,6 +143,7 @@ class Quiz:
         updated_at = data.get("updated_at")
 
         try:
+            # Try converting the saved date, if valid
             if updated_at is not None:
                 updated_at = datetime.fromisoformat(updated_at)
         except (TypeError, ValueError):
@@ -144,6 +156,7 @@ class Quiz:
                 questions=[Question.from_dict(q) for q in data["questions"]],
                 do_shuffle=data["do_shuffle"],
                 is_premade=data["is_premade"],
+                is_complete=data["is_complete"],
                 updated_at=updated_at,
             )
         except TypeError as e:

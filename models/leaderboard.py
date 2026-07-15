@@ -34,6 +34,7 @@ class Leaderboard:
             snapshot_scores()  # Snapshot old scores first
             update_scores()  # Then update with new scores
         """
+
         for player_id, player in self.players.items():
             self.previous_points[player_id] = player.total_points
 
@@ -44,8 +45,11 @@ class Leaderboard:
         self.previous_points.clear()
 
     def sort_players(self) -> None:
-        """Sort players by score in descending order. If scores are tied, they
-        are broken by alphabetically sorting the nicknames in ascending order."""
+        """
+        Sort players by score in descending order. If scores are tied, they
+        are broken by alphabetically sorting the nicknames in ascending order.
+        """
+
         # Use negative score to mimic reverse=True
         # score is priority, then nickname if scores are same
         self.sorted_players = sorted(
@@ -99,6 +103,7 @@ class Leaderboard:
 
         Otherwise, `("player_name", points)` is returned.
         """
+
         index = self._get_player_index(player_id)
         if index is None:
             return None, None
@@ -130,6 +135,7 @@ class Leaderboard:
         When the start or end exceeds a boundary so as to cause an `IndexError`, it
         is moved down to ensure the "window" size remains the same.
         """
+
         index = self._get_player_index(player_id)
         if index is None:
             return None
@@ -151,10 +157,13 @@ class Leaderboard:
 
     def get_leaderboard(
         self, players: list[Player], delta: dict[str, int] | None = None
-    ) -> list[dict[str, str | int]]:
-        """Get leaderboard information from a list of players, optionally giving delta information
+    ) -> list[dict[str, str | int | None]]:
+        """
+        Get leaderboard information from a list of players, optionally giving delta information
         to provide the points gained since last question (for the live leaderboard), or leaving
-        it empty (for the final leaderboard)."""
+        it empty (for the final leaderboard).
+        """
+
         leaderboard = []
 
         for player in players:
@@ -186,7 +195,7 @@ class Leaderboard:
 
     def get_global_leaderboard(
         self, include_delta: bool = False
-    ) -> list[dict[str, str | int]]:
+    ) -> list[dict[str, str | int | None]]:
         """Get leaderboard information for all players that are stored in the leaderboard data."""
         players = self.get_players()
         delta = self.get_points_delta() if include_delta else None

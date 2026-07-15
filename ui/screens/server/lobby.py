@@ -1,29 +1,31 @@
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtGui import QFont, QColor
 from PyQt6.QtWidgets import (
     QApplication,
     QLabel,
     QPushButton,
+    QAbstractItemView,
     QTableWidget,
     QTableWidgetItem,
-    QVBoxLayout,
     QHBoxLayout,
-    QAbstractItemView,
+    QVBoxLayout,
 )
-from PyQt6.QtGui import QFont, QColor
-from PyQt6.QtCore import Qt, pyqtSignal
 
-from ui.screens.base_screen import BaseScreen
-from ui.components.input import SearchableCombobox, ClickableLabel
+from ui.components.input import ClickableLabel, SearchableCombobox
 from ui.components.spinner import Spinner
+from ui.screens.base_screen import BaseScreen
 
 from ui.components.button import create_return_button
-from ui.components.dialogs import confirm_warning
 from utils.networking import get_ip_address
+
 from core.config.constants import MAX_PLAYERS, MIN_PLAYERS_FOR_GAME
 
 
 class ServerLobbyScreen(BaseScreen):
     title_text = "Quiz Master – Lobby"
 
+    # All player-related actions use the player ID
+    # The game_started signal has the quiz ID
     player_info_requested = pyqtSignal(str)
     player_kicked = pyqtSignal(str)
     game_started = pyqtSignal(str)
@@ -65,14 +67,14 @@ class ServerLobbyScreen(BaseScreen):
 
         self.spinner = Spinner(size=20, color=QColor(255, 255, 255), interval_ms=20)
 
-        loading_lbl = QLabel("Waiting for players...")
-        loading_lbl.setFont(loading_font)
+        self.loading_lbl = QLabel("Waiting for players...")
+        self.loading_lbl.setFont(loading_font)
 
         # Hbox layout for loading above (not in layouts section for easier readability)
         hbox_loading = QHBoxLayout()
         hbox_loading.addWidget(self.spinner)
         hbox_loading.addSpacing(2)
-        hbox_loading.addWidget(loading_lbl)
+        hbox_loading.addWidget(self.loading_lbl)
 
         self.lobby_table = QTableWidget()
         self.lobby_table.setFont(table_font)
@@ -135,7 +137,7 @@ class ServerLobbyScreen(BaseScreen):
         self.start_status.setStyleSheet("font-size: 14px;" "color: #A7A7A7;")
 
         leave_btn = create_return_button("Close Lobby", btn_width=100)
-        leave_btn.clicked.connect(self.close_lobby)
+        leave_btn.clicked.connect(lambda: self.server_closed.emit())
 
         ## LAYOUTS SETUP ##
         vbox_left = QVBoxLayout()
@@ -175,6 +177,7 @@ class ServerLobbyScreen(BaseScreen):
         self.setLayout(hbox)
 
     def on_selection_changed(self) -> None:
+        """Called when a different player is selected, or no player. Changes state of player buttons."""
         # If player is selected, enable player buttons
         if self._get_selected_player_item() is not None:
             self.get_info_btn.setDisabled(False)
@@ -182,6 +185,15 @@ class ServerLobbyScreen(BaseScreen):
         else:
             self.get_info_btn.setDisabled(True)
             self.kick_btn.setDisabled(True)
+
+    def check_spinner_visibility(self) -> None:
+        """Hides the 'waiting for players' spinner if the lobby is full, else shows it."""
+        if self.lobby_table.rowCount() >= MAX_PLAYERS:
+            self.spinner.hide()
+            self.loading_lbl.hide()
+        else:
+            self.spinner.show()
+            self.loading_lbl.show()
 
     def set_player_count(self) -> None:
         """Set player counter to reflect the players in the lobby table."""
@@ -193,28 +205,19 @@ class ServerLobbyScreen(BaseScreen):
         """Adds a player to the lobby table and increases the player counter."""
         self._add_player(player_id, nickname)
         self.set_player_count()
+        self.check_spinner_visibility()
 
     def remove_player_lobby(self, player_id: str) -> None:
         """Removes a player from the lobby table and decreases the player counter."""
         self._remove_player(player_id)
         self.set_player_count()
+        self.check_spinner_visibility()
 
     def reset_lobby(self) -> None:
         """Resets the player counter to `0`, and removes all values from the lobby table."""
         self.lobby_table.setRowCount(0)
         self.set_player_count()
         self.quiz_combo.clear()
-
-    def close_lobby(self) -> None:
-        """Displays a warning modal box before closing the server."""
-        confirm = confirm_warning(
-            self,
-            "Confirm Closing",
-            "Are you sure you want to close the server and return to menu? All players in the server will be disconnected.",
-        )
-
-        if confirm:
-            self.server_closed.emit()
 
     def set_quizzes(self, quizzes: dict[str, str]) -> None:
         """Set the quizzes that can be selected from the dropdown."""
@@ -273,9 +276,11 @@ class ServerLobbyScreen(BaseScreen):
             self.player_kicked.emit(player_id)
 
     def on_start_game(self) -> None:
+        """Gets the quiz ID and requests to start the game."""
         self.game_started.emit(self.quiz_combo.currentData())
 
     def _on_ip_copy(self) -> None:
+        """Copies the IP address to the clipboard."""
         if self.ip:
             QApplication.clipboard().setText(self.ip)
 
@@ -319,6 +324,7 @@ class ServerLobbyScreen(BaseScreen):
         if self.ip:
             self.ip_address.setText(f"Server IP: {self.ip}")
         else:
+            # On some systems, the DNS lookup fails
             self.ip_address.setText("Server IP: Unable to determine")
 
     def on_leave(self) -> None:

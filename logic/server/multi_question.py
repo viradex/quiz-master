@@ -1,11 +1,10 @@
-from ui.screens.server.multi_question import ServerMultiQuestionScreen
-from logic.base_logic import BaseLogic
-from core.services.game_server import GameServer
+from core.app.enums import AnswerValidationResult
 from core.app.screen_ids import Screens
 from core.game.game_controller import GameController
-from data.quiz_repo import QuizRepository
-from core.app.enums import AnswerValidationResult
+from core.services.game_server import GameServer
 from models.payloads import ClientResultsPayload, ServerResultsPayload
+from logic.base_logic import BaseLogic
+from ui.screens.server.multi_question import ServerMultiQuestionScreen
 
 
 class ServerMultiQuestionLogic(BaseLogic):
@@ -14,7 +13,6 @@ class ServerMultiQuestionLogic(BaseLogic):
         self.screen: ServerMultiQuestionScreen = screen
         self.server: GameServer = services.server
         self.controller: GameController = services.controller
-        self.quiz_repo: QuizRepository = services.quiz_repo
 
         # Screen
         self.screen.question_skipped.connect(self.on_question_skipped)
@@ -36,7 +34,7 @@ class ServerMultiQuestionLogic(BaseLogic):
         """When the server reports a player submitted an answer."""
         reason = self.controller.is_answer_legal(selected_index, received_time)
 
-        # If answer is invalid, sends info back to client about why it was so
+        # If answer submission is invalid, sends info back to client about why it was so
         if reason == AnswerValidationResult.TIME:
             self.server.send_invalid_action(
                 player_id, "Answer submitted at invalid time"
@@ -51,7 +49,7 @@ class ServerMultiQuestionLogic(BaseLogic):
         self.screen.update_submission_count(1)
         self.controller.receive_answer(player_id, selected_index, received_time)
 
-        nickname = self.server.registry.get(player_id).player.nickname
+        nickname = self.server.get_player(player_id).nickname
         self.screen.set_status(f"{nickname} submitted an answer", 2000)
 
     def on_question_results_ready(

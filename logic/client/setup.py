@@ -1,8 +1,8 @@
-from ui.screens.client.setup import ClientSetupScreen
-from logic.base_logic import BaseLogic
-from core.services.game_client import GameClient
-from core.app.screen_ids import Screens
 from core.app.enums import ClientConnectionError
+from core.app.screen_ids import Screens
+from core.services.game_client import GameClient
+from logic.base_logic import BaseLogic
+from ui.screens.client.setup import ClientSetupScreen
 
 from core.config.constants import CLIENT_CONNECTION_TIMEOUT
 

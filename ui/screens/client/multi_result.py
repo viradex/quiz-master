@@ -1,10 +1,10 @@
-from PyQt6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
 from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import QLabel, QGridLayout, QHBoxLayout, QVBoxLayout
 
-from ui.screens.base_screen import BaseScreen
-from ui.components.card import Card, StatCard
-from ui.components.answer_button_grid import AnswerButtonGrid
 from models.payloads import ClientResultsPayload
+from ui.components.answer_button_grid import AnswerButtonGrid
+from ui.components.card import Card, StatCard
+from ui.screens.base_screen import BaseScreen
 
 from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning
@@ -124,7 +124,7 @@ class ClientMultiResultScreen(BaseScreen):
         if confirm:
             self.left_server.emit()
 
-    def on_enter(self, payload: ClientResultsPayload):
+    def on_enter(self, payload: ClientResultsPayload) -> None:
         # Correct: #3DDC84
         # Incorrect: #FF5C5C
         theme_color = "#3DDC84" if payload.is_correct else "#FF5C5C"

@@ -1,5 +1,5 @@
 import secrets
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 
 from core.app.enums import QuestionValidationError
 
@@ -32,12 +32,29 @@ class Question:
 
         return self.answer_options[self.correct_answer_index]
 
+    def remove_empty_answers(self, mutate_answers: bool = True) -> list[str]:
+        """
+        Removes empty answers from `self.answer_options` (if wanted) and returns the list.
+        This should only be run once it is confirmed the first two answers are filled in to avoid shifting positions.
+        """
+        non_empty_answers = [a for a in self.answer_options if a != ""]
+
+        if mutate_answers:
+            self.answer_options = non_empty_answers
+
+        return non_empty_answers
+
     def validate_question(self) -> set[QuestionValidationError]:
+        """
+        Validates this individual question for any issues. It does not check if issues
+        that are not possible to be done directly through the app by the user are done
+        (e.g. invalid type). All errors are added to a set and are a `QuestionValidationError`.
+        """
         errors = set()
 
         question_text = self.question_text.strip()
         answer_options = [a.strip() for a in self.answer_options]
-        non_empty_answers = [a for a in answer_options if a != ""]
+        non_empty_answers = self.remove_empty_answers(mutate_answers=False)
 
         if not question_text:
             errors.add(QuestionValidationError.MISSING_QUESTION)
@@ -45,6 +62,7 @@ class Question:
         if len(question_text) > MAX_QUESTION_LENGTH:
             errors.add(QuestionValidationError.QUESTION_TOO_LONG)
 
+        # At least two answers, and the first two answers, are required
         if len(answer_options) < 2 or not answer_options[0] or not answer_options[1]:
             errors.add(QuestionValidationError.MISSING_REQUIRED_ANSWERS)
 

@@ -1,6 +1,6 @@
-from PyQt6.QtWidgets import QWidget
-from PyQt6.QtGui import QPainter, QColor, QFont
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QColor, QPainter, QPaintEvent
+from PyQt6.QtWidgets import QWidget
 
 from utils.color import darken_color
 
@@ -33,8 +33,8 @@ class AnswerBarChart(QWidget):
 
         self.correct_index = correct_index
 
-    def paintEvent(self, event) -> None:
-        """Automatically called whenever the widget needs repainting (e.g. due to resizing)."""
+    def paintEvent(self, event: QPaintEvent) -> None:
+        """Called automatically by PyQt when the widget needs repainting."""
         if not self.values:
             return
 

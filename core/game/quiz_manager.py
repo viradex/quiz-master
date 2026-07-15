@@ -1,16 +1,16 @@
 import math
 
-from models.player import Player
 from models.leaderboard import Leaderboard
-from models.quiz import Quiz
-from models.question import Question
 from models.payloads import (
-    QuestionPayload,
-    ClientResultsPayload,
     ClientFinalResultsPayload,
-    ServerResultsPayload,
+    ClientResultsPayload,
+    QuestionPayload,
     ServerFinalResultsPayload,
+    ServerResultsPayload,
 )
+from models.player import Player
+from models.question import Question
+from models.quiz import Quiz
 
 
 class QuizManager:
@@ -44,11 +44,20 @@ class QuizManager:
 
     def get_question(self, index: int) -> Question:
         """Get a Question from an index (not question number, therefore zero-based).
-        Raises an IndexError if the question does not exist."""
+        Raises an IndexError if the question index is out of range."""
+        if self.quiz is None:
+            raise RuntimeError("No quiz loaded")
+
+        if index < 0 or index >= len(self.quiz.questions):
+            raise IndexError(f"Question index {index} is out of range")
+
         return self.quiz.questions[index]
 
     def get_total_questions(self) -> int:
         """Gets the total questions in the quiz (not the highest question index)."""
+        if self.quiz is None:
+            raise RuntimeError("No quiz loaded")
+
         return len(self.quiz.questions)
 
     def prepare_for_question(self) -> None:
@@ -63,8 +72,7 @@ class QuizManager:
         time_taken: float,
         is_correct: bool,
     ) -> None:
-        """Submit an answer from the player. The data is assumed to have been pre-validated
-        and is not automatically validated in this layer."""
+        """Submit an answer from the player. The data is assumed to have been already validated."""
         player = self.players[player_id]
         player.submit_answer(points, selected_answer, time_taken, is_correct)
 
@@ -166,6 +174,7 @@ class QuizManager:
         answers_frequency = []
         selected_answers = [player.selected_answer for player in self.players.values()]
 
+        # Add number of answer submissions for each answer option
         for answer in range(num_answers):
             answers_frequency.append(selected_answers.count(answer))
 
