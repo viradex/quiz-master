@@ -179,10 +179,10 @@ class CommonQuizEditorLogic(BaseLogic):
             confirm = confirm_warning(
                 self.screen,
                 "Question Issues",
-                "Some questions have issues that prevent the quiz from being played. The quiz has been saved, but you cannot play it until the issues are fixed.\n\nQuestions with errors are highlighted with a red outline. Would you like to fix them now?",
+                "Some questions have issues that prevent the quiz from being played. The quiz has been saved, but you cannot play it until the issues are fixed.\n\nQuestions with errors are highlighted with a red outline. Would you like to ignore the issues and go to the quiz manager?",
             )
 
-            if confirm:
+            if not confirm:
                 # Return to editor without saving
                 return
 

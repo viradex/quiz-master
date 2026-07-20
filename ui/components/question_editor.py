@@ -457,6 +457,7 @@ class QuestionEditor(QWidget):
             answers,
             self.question.time_limit,
             is_preview=True,
+            read_only_quiz=self.read_only,
         )
         self.preview_requested.emit(question_payload)
 

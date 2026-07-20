@@ -1,0 +1,149 @@
+{
+  "quiz_id": "4b7db3ae",
+  "quiz_title": "Geography Quiz",
+  "questions": [
+    {
+      "question_id": "1569ce06",
+      "question_text": "Which is the largest continent?",
+      "answer_options": ["Africa", "Asia", "Europe", "North America"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "28b8b46d",
+      "question_text": "Which country has the largest population?",
+      "answer_options": ["India", "China", "United States", "Indonesia"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "6814dc14",
+      "question_text": "What is the capital of Japan?",
+      "answer_options": ["Kyoto", "Osaka", "Tokyo", "Nagoya"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "016af626",
+      "question_text": "Which desert is the largest hot desert?",
+      "answer_options": ["Gobi", "Kalahari", "Sahara", "Mojave"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "92d4831d",
+      "question_text": "Which Australian state is Melbourne in?",
+      "answer_options": ["Victoria", "Queensland", "Tasmania", "New South Wales"],
+      "correct_answer_index": 0,
+      "time_limit": 15
+    },
+    {
+      "question_id": "c212fce8",
+      "question_text": "Mount Everest is located in which mountain range?",
+      "answer_options": ["Andes", "Rockies", "Himalayas", "Alps"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "461802ed",
+      "question_text": "Australia is both a country and a continent.",
+      "answer_options": ["True", "False"],
+      "correct_answer_index": 0,
+      "time_limit": 10
+    },
+    {
+      "question_id": "3edb2f1b",
+      "question_text": "Which river flows through London?",
+      "answer_options": ["Seine", "Daunbe", "Thames", "Rhine"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "a34ac9e5",
+      "question_text": "Which country is shaped like a boot?",
+      "answer_options": ["Spain", "Italy", "Portugal", "Greece"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "551f60b5",
+      "question_text": "Which ocean lies east of Australia?",
+      "answer_options": ["Atlantic Ocean", "Indian Ocean", "Pacific Ocean", "Arctic Ocean"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "e799bb55",
+      "question_text": "Which country is immediately north of the United States?",
+      "answer_options": ["Mexico", "Canada", "Russia"],
+      "correct_answer_index": 1,
+      "time_limit": 15
+    },
+    {
+      "question_id": "7a396a29",
+      "question_text": "Which continent is the Sahara Desert located on?",
+      "answer_options": ["Asia", "Australia", "Africa", "South America"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "1c1f6193",
+      "question_text": "What is the capital city of Brazil?",
+      "answer_options": ["Rio de Janeiro", "S\u00e3o Paulo", "Bras\u00edlia", "Salvador"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "05538b3e",
+      "question_text": "Which country has the most time zones?",
+      "answer_options": ["Russia", "France", "USA", "United Kingdom"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "50a207d6",
+      "question_text": "Which is the longest river in South America?",
+      "answer_options": ["Amazon", "Paran\u00e1", "Orinoco", "Madeira"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "bf6bce42",
+      "question_text": "Which is the smallest continent?",
+      "answer_options": ["Europe", "Australia", "Antarctica", "South America"],
+      "correct_answer_index": 1,
+      "time_limit": 15
+    },
+    {
+      "question_id": "defedb91",
+      "question_text": "Which pole is located in Antarctica?",
+      "answer_options": ["North Pole", "South Pole"],
+      "correct_answer_index": 1,
+      "time_limit": 10
+    },
+    {
+      "question_id": "ed6cbc01",
+      "question_text": "Which country borders both Germany and Italy?",
+      "answer_options": ["Austria", "Switzerland", "France", "Belgium"],
+      "correct_answer_index": 0,
+      "time_limit": 30
+    },
+    {
+      "question_id": "d6612ccb",
+      "question_text": "Which U.S. state is known as the \"Sunshine State\"?",
+      "answer_options": ["California", "Texas", "Florida", "Arizona"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "71a54879",
+      "question_text": "Which African country has the capital city Nairobi?",
+      "answer_options": ["Uganda", "Kenya", "Tanzania", "Ethiopia"],
+      "correct_answer_index": 1,
+      "time_limit": 30
+    }
+  ],
+  "do_shuffle": true,
+  "is_premade": true,
+  "is_complete": true
+}

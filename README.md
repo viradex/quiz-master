@@ -4,4 +4,10 @@ Play quizzes against your friends to learn in a competitive and engaging way!
 
 ## Architecture Guide
 
+The application contains three high-level parts:
+
+- Game Client
+- Game Server
+- Quiz Editor
+
 If you are a developer or interested in understanding how the code works high-level, see `ARCHITECTURE.md`.

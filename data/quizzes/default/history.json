@@ -1,0 +1,169 @@
+{
+  "quiz_id": "11542b05",
+  "quiz_title": "History Quiz",
+  "questions": [
+    {
+      "question_id": "d70add56",
+      "question_text": "Who was the first President of the United States?",
+      "answer_options": ["Thomas Jefferson", "George Washington", "Abraham Lincoln", "John Adams"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "18f03157",
+      "question_text": "Which ancient civilization built the pyramids?",
+      "answer_options": ["Romans", "Greeks", "Egyptians", "Mayans"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "2361c8ed",
+      "question_text": "World War II ended in which year?",
+      "answer_options": ["1944", "1945", "1946", "1947"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "0b0edd5b",
+      "question_text": "Which Japanese city was the second to be hit by an atomic bomb in 1945?",
+      "answer_options": ["Hiroshima", "Kyoto", "Osaka", "Nagasaki"],
+      "correct_answer_index": 3,
+      "time_limit": 20
+    },
+    {
+      "question_id": "893c4898",
+      "question_text": "Who discovered Australia for Britain in 1770?",
+      "answer_options": ["James Cook", "Christopher Columbus", "Edmund Barton", "Marco Polo"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "ce3e087e",
+      "question_text": "Which event brought the US and Soviet Union closest to nuclear war?",
+      "answer_options": ["Korean War", "Vietnam War", "Cuban Missile Crisis", "Berlin Airlift"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "74ef6075",
+      "question_text": "In what year did the Berlin Wall fall?",
+      "answer_options": ["1961", "1979", "1989", "1991"],
+      "correct_answer_index": 2,
+      "time_limit": 30
+    },
+    {
+      "question_id": "77569972",
+      "question_text": "Julius Caesar was a Roman leader.",
+      "answer_options": ["True", "False"],
+      "correct_answer_index": 0,
+      "time_limit": 10
+    },
+    {
+      "question_id": "c96b1fbb",
+      "question_text": "The Olympic Games began in which country?",
+      "answer_options": ["Italy", "Egypt", "Greece"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "e9747b6c",
+      "question_text": "Who was the first human to walk on the Moon?",
+      "answer_options": ["Buzz Aldrin", "Neil Armstrong", "Yuri Gagarin", "Michael Collins"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "36e9602d",
+      "question_text": "Which empire was ruled by Genghis Khan?",
+      "answer_options": ["Roman", "Ottoman", "Mongol", "British"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "d271fe04",
+      "question_text": "Which event began in 1789?",
+      "answer_options": [
+        "Industrial Revolution",
+        "French Revolution",
+        "American Revolution",
+        "Renaissance"
+      ],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "882ef1ab",
+      "question_text": "Who wrote the Declaration of Independence?",
+      "answer_options": [
+        "George Washington",
+        "Thomas Jefferson",
+        "Benjamin Franklin",
+        "John Hancock"
+      ],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "af89e80c",
+      "question_text": "What event sparked the start of World War I?",
+      "answer_options": [
+        "The Russian Revolution",
+        "The attack on Pearl Harbor",
+        "The German invasion of Poland",
+        "The assassination of Archduke Franz Ferdinand"
+      ],
+      "correct_answer_index": 3,
+      "time_limit": 20
+    },
+    {
+      "question_id": "cdc9f427",
+      "question_text": "Which alliance was Britain a member of during World War I?",
+      "answer_options": ["Triple Entente", "Triple Alliance", "Axis Powers", "Warsaw Pact"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "f468938d",
+      "question_text": "The Roman Empire came before the Middle Ages.",
+      "answer_options": ["True", "False"],
+      "correct_answer_index": 0,
+      "time_limit": 10
+    },
+    {
+      "question_id": "9af01cdf",
+      "question_text": "Which battle marked Napoleon's final defeat?",
+      "answer_options": ["Waterloo", "Trafalgar", "Leipzig", "Austerlitz"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "2c90af28",
+      "question_text": "Who was the British Prime Minister for most of World War II?",
+      "answer_options": [
+        "Neville Chamberlain",
+        "Winston Chruchill",
+        "Margaret Thatcher",
+        "Tony Blair"
+      ],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "06121ecd",
+      "question_text": "When did the Great Depression start?",
+      "answer_options": ["1928", "1929", "1930", "1931"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "16dd5389",
+      "question_text": "When did the Soviet Union dissolve?",
+      "answer_options": ["1985", "1989", "1991", "1993"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    }
+  ],
+  "do_shuffle": true,
+  "is_premade": true,
+  "is_complete": true
+}

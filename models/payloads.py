@@ -2,7 +2,7 @@ from dataclasses import asdict, dataclass
 
 
 # Payloads should only be used for data transfer that has multiple data fields.
-# If it's just 1-3 fields, it can and should be a plain old dictionary
+# If it's just 1-3 fields, it can and should just be a plain old dictionary
 class BasePayload:
     """Base payload for all payloads."""
 
@@ -29,6 +29,7 @@ class QuestionPayload(BasePayload):
     answer_options: list[str]
     time_limit: int
     is_preview: bool = False
+    read_only_quiz: bool = False
 
 
 @dataclass

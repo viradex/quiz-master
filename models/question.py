@@ -37,7 +37,7 @@ class Question:
         Removes empty answers from `self.answer_options` (if wanted) and returns the list.
         This should only be run once it is confirmed the first two answers are filled in to avoid shifting positions.
         """
-        non_empty_answers = [a for a in self.answer_options if a != ""]
+        non_empty_answers = [a.strip() for a in self.answer_options if a.strip() != ""]
 
         if mutate_answers:
             self.answer_options = non_empty_answers

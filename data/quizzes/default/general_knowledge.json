@@ -1,79 +1,149 @@
 {
-  "quiz_id": "d971be3d",
+  "quiz_id": "37f2d8ac",
   "quiz_title": "General Knowledge Quiz",
-  "do_shuffle": false,
-  "is_premade": true,
-  "is_complete": true,
   "questions": [
     {
-      "question_id": "a3f91c7d",
-      "question_text": "What is the capital city of Australia?",
-      "answer_options": ["Sydney", "Melbourne", "Canberra", "Perth"],
+      "question_id": "bb44e99c",
+      "question_text": "What is the capital of Australia?",
+      "answer_options": ["Sydney", "Canberra", "Melbourne", "Perth"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "e196ad28",
+      "question_text": "Which planet is known as the Red Planet?",
+      "answer_options": ["Mars", "Jupiter", "Venus"],
+      "correct_answer_index": 0,
+      "time_limit": 20
+    },
+    {
+      "question_id": "387d6151",
+      "question_text": "How many continents are there?",
+      "answer_options": ["5", "6", "7", "8"],
+      "correct_answer_index": 2,
+      "time_limit": 15
+    },
+    {
+      "question_id": "b080b253",
+      "question_text": "Which ocean is the largest?",
+      "answer_options": ["Atlantic", "Indian", "Arctic", "Pacific"],
+      "correct_answer_index": 3,
+      "time_limit": 20
+    },
+    {
+      "question_id": "b1eb234a",
+      "question_text": "Who painted the Mona Lisa?",
+      "answer_options": ["Van Gogh", "Picasso", "Leonardo da Vinci", "Michelangelo"],
       "correct_answer_index": 2,
       "time_limit": 20
     },
     {
-      "question_id": "7b2e4f18",
-      "question_text": "Which planet is known as the Red Planet?",
-      "answer_options": ["Mars", "Jupiter", "Venus"],
-      "correct_answer_index": 0,
+      "question_id": "e413c910",
+      "question_text": "Which country is home to the pyramids of Giza?",
+      "answer_options": ["Greeze", "Egypt", "Mexico", "India"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "e6433c3b",
+      "question_text": "How many days are in a leap year?",
+      "answer_options": ["365", "366"],
+      "correct_answer_index": 1,
       "time_limit": 10
     },
     {
-      "question_id": "c84d9a21",
-      "question_text": "How many continents are there on Earth?",
+      "question_id": "eeb0c119",
+      "question_text": "Which language has the most native speakers?",
+      "answer_options": ["English", "Spanish", "Mandarin Chinese", "Hindi"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "1cf79acb",
+      "question_text": "What is the largest mammal?",
+      "answer_options": ["Elephant", "Blue Whale", "Giraffe", "Hippo"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "825e03b8",
+      "question_text": "Which instrument has 88 keys?",
+      "answer_options": ["Violin", "Piano", "Guitar", "Drums"],
+      "correct_answer_index": 1,
+      "time_limit": 15
+    },
+    {
+      "question_id": "02410333",
+      "question_text": "Which country invented pizza?",
+      "answer_options": ["France", "Spain", "Italy", "USA"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "469a752c",
+      "question_text": "What color are emeralds?",
+      "answer_options": ["Red", "Blue", "Yellow", "Green"],
+      "correct_answer_index": 3,
+      "time_limit": 15
+    },
+    {
+      "question_id": "f4e48803",
+      "question_text": "What is the world's longest river?",
+      "answer_options": ["Amazon", "Nile", "Yangtze", "Mississippi"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "5fa62cd1",
+      "question_text": "Which chess piece can only move diagonally?",
+      "answer_options": ["Rook", "Knight", "Bishop", "Queen"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "1a815c94",
+      "question_text": "Which gas do plants absorb?",
+      "answer_options": ["Oxygen", "Nitrogen", "Carbon dioxide", "Hydrogen"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "85cb6fdb",
+      "question_text": "How many colors are in a rainbow?",
       "answer_options": ["5", "6", "7", "8"],
       "correct_answer_index": 2,
       "time_limit": 20
     },
     {
-      "question_id": "1f6b3e90",
-      "question_text": "What is the largest ocean on Earth?",
-      "answer_options": ["Atlantic Ocean", "Indian Ocean", "Arctic Ocean", "Pacific Ocean"],
-      "correct_answer_index": 3,
-      "time_limit": 20
-    },
-    {
-      "question_id": "d7a42c5f",
-      "question_text": "Who painted the Mona Lisa?",
-      "answer_options": ["Leonardo da Vinci", "Vincent van Gogh"],
+      "question_id": "635e4663",
+      "question_text": "What season comes after spring?",
+      "answer_options": ["Summer", "Autumn"],
       "correct_answer_index": 0,
       "time_limit": 10
     },
     {
-      "question_id": "8e19b6c3",
-      "question_text": "What is the chemical symbol for gold?",
-      "answer_options": ["Ag", "Au", "Go", "Gd"],
+      "question_id": "f8bbecb2",
+      "question_text": "Which country gifted the Statue of Liberty to the USA?",
+      "answer_options": ["Germany", "France", "Canada", "Spain"],
       "correct_answer_index": 1,
       "time_limit": 20
     },
     {
-      "question_id": "4c7f2d8a",
-      "question_text": "Which country is home to the Great Pyramid of Giza?",
-      "answer_options": ["Greece", "Mexico", "Egypt", "Turkey"],
+      "question_id": "4d18b6cd",
+      "question_text": "Which is the smallest country in the world?",
+      "answer_options": ["Monaco", "Malta", "Vatican City", "Singapore"],
       "correct_answer_index": 2,
       "time_limit": 20
     },
     {
-      "question_id": "b91e5f34",
-      "question_text": "How many sides does an octagon have?",
-      "answer_options": ["6", "7", "8", "9"],
-      "correct_answer_index": 2,
-      "time_limit": 20
-    },
-    {
-      "question_id": "2ad8c761",
-      "question_text": "Which gas do plants absorb from the atmosphere?",
-      "answer_options": ["Oxygen", "Nitrogen", "Carbon Dioxide", "Hydrogen"],
-      "correct_answer_index": 2,
-      "time_limit": 20
-    },
-    {
-      "question_id": "f63b1e9d",
-      "question_text": "Which is the largest mammal in the world?",
-      "answer_options": ["African Elephant", "Blue Whale", "Giraffe", "Hippopotamus"],
+      "question_id": "0683add4",
+      "question_text": "Which famous ship sank in 1912?",
+      "answer_options": ["Britannic", "Titanic", "Lusitania", "Endeavor"],
       "correct_answer_index": 1,
       "time_limit": 20
     }
-  ]
+  ],
+  "do_shuffle": true,
+  "is_premade": true,
+  "is_complete": true
 }

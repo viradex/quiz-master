@@ -143,8 +143,11 @@ class CommonQuizEditorScreen(BaseScreen):
 
     def set_quiz(self, quiz: Quiz, read_only: bool) -> None:
         """Set the quiz to modify, and whether said quiz should be viewed in read-only mode."""
+        self.clear_questions()
+
         self.quiz = quiz
         self.read_only = read_only
+        self.returning_from_preview = False
 
         self.set_window_title()
 
@@ -198,13 +201,13 @@ class CommonQuizEditorScreen(BaseScreen):
         # Setup editor signals routing
         editor.error_results.connect(self._on_error_results)
         editor.question_reordered.connect(
-            lambda: self.question_reorder_requested.emit()
+            lambda q, new_num: self.question_reorder_requested.emit(q, new_num)
         )
         editor.question_text_changed.connect(self._on_question_text)
         editor.global_time_requested.connect(self._on_global_time)
         editor.preview_requested.connect(self.preview_question)
-        editor.duplicate_requested.connect(lambda: self.duplicate_requested.emit())
-        editor.delete_requested.connect(lambda: self.delete_requested.emit())
+        editor.duplicate_requested.connect(lambda q: self.duplicate_requested.emit(q))
+        editor.delete_requested.connect(lambda q: self.delete_requested.emit(q))
 
         # Setup card
         card.select()
