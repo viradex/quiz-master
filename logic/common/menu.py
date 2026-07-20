@@ -1,6 +1,7 @@
 from core.app.enums import ServerStartingError
 from core.app.screen_ids import Screens
 from core.services.game_server import GameServer
+from data.quiz_repo import QuizRepository
 from logic.base_logic import BaseLogic
 from ui.screens.common.menu import CommonMenuScreen
 
@@ -10,6 +11,7 @@ class CommonMenuLogic(BaseLogic):
         super().__init__()
         self.screen: CommonMenuScreen = screen
         self.game_server: GameServer = services.server
+        self.quiz_repo: QuizRepository = services.quiz_repo
 
         # Screen
         self.screen.started_server.connect(self.on_started_server)
@@ -20,6 +22,25 @@ class CommonMenuLogic(BaseLogic):
 
     def on_started_server(self) -> None:
         """When the server is requested to be started."""
+        # Get all available quizzes to see if any can be played
+        quizzes = self.quiz_repo.get_all()
+
+        # No quizzes are in the directory
+        if not quizzes:
+            self.screen.show_error(
+                "No Quizzes Available",
+                "There are no quizzes available. You need at least one quiz before you can host a game. Create a quiz using the quiz manager, then try again.",
+            )
+            return
+
+        # No quizzes are complete
+        if not any(quiz.is_complete for quiz in quizzes.values()):
+            self.screen.show_error(
+                "No Complete Quizzes Available",
+                "There are no quizzes available that are ready to play. Finish a quiz using the quiz editor, then try again.",
+            )
+            return
+
         self.game_server.start()
         self.screen.set_status("Starting...")
 

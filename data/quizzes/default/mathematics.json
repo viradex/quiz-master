@@ -1,79 +1,149 @@
 {
-  "quiz_id": "9c4f18d2",
+  "quiz_id": "59544231",
   "quiz_title": "Mathematics Quiz",
-  "do_shuffle": false,
-  "is_premade": true,
-  "is_complete": true,
   "questions": [
     {
-      "question_id": "a1f3c9d7",
-      "question_text": "What is 12 * 8?",
-      "answer_options": ["96", "88", "108", "84"],
-      "correct_answer_index": 0,
+      "question_id": "e5a86bbe",
+      "question_text": "What is 8 \u00d7 7?",
+      "answer_options": ["54", "56", "58", "64"],
+      "correct_answer_index": 1,
       "time_limit": 20
     },
     {
-      "question_id": "b7e2a91c",
-      "question_text": "What is the square root of 144?",
-      "answer_options": ["10", "11", "12", "14"],
+      "question_id": "24579a13",
+      "question_text": "What is 15 + 28?",
+      "answer_options": ["41", "42", "43", "44"],
       "correct_answer_index": 2,
       "time_limit": 20
     },
     {
-      "question_id": "c4d8f2a1",
-      "question_text": "What is 15 + 27?",
-      "answer_options": ["42", "41"],
+      "question_id": "a1c8f4dc",
+      "question_text": "What is \u221a64?",
+      "answer_options": ["6", "7", "8", "9"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "55ca951d",
+      "question_text": "What is 9\u00b2?",
+      "answer_options": ["18", "72", "81", "99"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "9d8a3382",
+      "question_text": "What is 144 \u00f7 12?",
+      "answer_options": ["10", "11", "12", "13"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "f0e8dc59",
+      "question_text": "What is 25% of 80?",
+      "answer_options": ["10", "15", "20", "25"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "09d4540d",
+      "question_text": "Is 17 a prime number?",
+      "answer_options": ["Yes", "No"],
       "correct_answer_index": 0,
       "time_limit": 10
     },
     {
-      "question_id": "d9a1c6f8",
-      "question_text": "What is 100 / 4?",
-      "answer_options": ["20", "25", "30", "24"],
+      "question_id": "b87ac644",
+      "question_text": "What is 5\u00b3?",
+      "answer_options": ["15", "25", "75", "125"],
+      "correct_answer_index": 3,
+      "time_limit": 20
+    },
+    {
+      "question_id": "394e0b6b",
+      "question_text": "What fraction matches \u03c0 to 2 decimal places?",
+      "answer_options": ["21/7", "22/7", "23/7", "24/7"],
       "correct_answer_index": 1,
       "time_limit": 20
     },
     {
-      "question_id": "e3b7d91a",
-      "question_text": "What is 8 * 7?",
-      "answer_options": ["54", "56", "64"],
+      "question_id": "f4fcc7ca",
+      "question_text": "How many degrees are in a right angle?",
+      "answer_options": ["45\u00b0", "90\u00b0", "180\u00b0", "360\u00b0"],
       "correct_answer_index": 1,
-      "time_limit": 10
+      "time_limit": 20
     },
     {
-      "question_id": "f2c8a4d9",
+      "question_id": "6fecaf54",
+      "question_text": "Solve: 3x = 21",
+      "answer_options": ["5", "6", "7", "8"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "ca82afe4",
+      "question_text": "What is 11 \u00d7 11?",
+      "answer_options": ["111", "121", "131", "141"],
+      "correct_answer_index": 1,
+      "time_limit": 20
+    },
+    {
+      "question_id": "95fd4205",
+      "question_text": "What is the perimeter of a square with side length 5?",
+      "answer_options": ["10", "15", "20", "25"],
+      "correct_answer_index": 2,
+      "time_limit": 20
+    },
+    {
+      "question_id": "7c3d6cf9",
       "question_text": "What is 0.5 as a fraction?",
-      "answer_options": ["1/4", "1/3", "1/2", "2/3"],
-      "correct_answer_index": 2,
-      "time_limit": 20
-    },
-    {
-      "question_id": "1d9f3c8a",
-      "question_text": "What is the value of pi approximately?",
-      "answer_options": ["2.14", "3.14", "3.41", "3.04"],
+      "answer_options": ["1/4", "1/2", "3/4", "0/5"],
       "correct_answer_index": 1,
-      "time_limit": 20
+      "time_limit": 15
     },
     {
-      "question_id": "2a7c9e4f",
-      "question_text": "What is 18 - 9?",
-      "answer_options": ["7", "8", "9", "10"],
+      "question_id": "454ba1c7",
+      "question_text": "What is 18 \u00d7 5?",
+      "answer_options": ["80", "85", "90", "95"],
       "correct_answer_index": 2,
       "time_limit": 20
     },
     {
-      "question_id": "3f8b1d6c",
-      "question_text": "What is 9 * 9?",
-      "answer_options": ["81", "72", "99", "90"],
+      "question_id": "0ae96a51",
+      "question_text": "How many sides does a hexagon have?",
+      "answer_options": ["5", "6", "7", "8"],
+      "correct_answer_index": 1,
+      "time_limit": 15
+    },
+    {
+      "question_id": "6f0f1a3f",
+      "question_text": "Is zero an even number?",
+      "answer_options": ["Yes", "No"],
       "correct_answer_index": 0,
+      "time_limit": 10
+    },
+    {
+      "question_id": "1d2eb389",
+      "question_text": "What is 7 \u00d7 12?",
+      "answer_options": ["72", "84", "91", "96"],
+      "correct_answer_index": 1,
       "time_limit": 20
     },
     {
-      "question_id": "4c6e9a1b",
-      "question_text": "What is 25% of 200?",
-      "answer_options": ["25", "50", "75", "100"],
-      "correct_answer_index": 1,
+      "question_id": "32892546",
+      "question_text": "What is 15\u00b2 \u2212 5\u00b2?",
+      "answer_options": ["175", "180", "200", "225"],
+      "correct_answer_index": 2,
+      "time_limit": 30
+    },
+    {
+      "question_id": "6952eb44",
+      "question_text": "A train travels 240 km in 3 hours. What is its average speed?",
+      "answer_options": ["60 km/h", "70 km/h", "80 km/h", "90 km/h"],
+      "correct_answer_index": 2,
       "time_limit": 20
     }
-  ]
+  ],
+  "do_shuffle": true,
+  "is_premade": true,
+  "is_complete": true
 }

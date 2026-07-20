@@ -102,6 +102,7 @@ class ClientMultiQuestionScreen(BaseScreen):
 
     def on_enter(self, payload: QuestionPayload) -> None:
         self.is_preview = payload.is_preview
+        self.read_only_quiz = payload.read_only_quiz
 
         question_progress = f"{payload.question_num} / {payload.total_questions}"
         self.set_title(
@@ -126,3 +127,16 @@ class ClientMultiQuestionScreen(BaseScreen):
 
         self.question_timer.stop()
         self.answer_button_grid.reset_buttons()
+
+    def on_window_close(self, event) -> None:
+        if self.is_preview and not self.read_only_quiz:
+            confirm = confirm_warning(
+                self,
+                "Confirm Closing",
+                "Are you sure you want to close the preview window? Any unsaved changes in the quiz editor will be lost.",
+            )
+
+            if confirm:
+                event.accept()
+            else:
+                event.ignore()

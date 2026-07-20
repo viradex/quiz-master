@@ -212,6 +212,7 @@ class CommonQuizSetupScreen(BaseScreen):
     def on_enter(self, payload: dict) -> None:
         # If there is no quiz data being passed, assume Create mode
         if payload is None:
+            self.quiz_id = None
             self.create_mode()
         else:
             self.quiz_id = payload.get("quiz_id")
