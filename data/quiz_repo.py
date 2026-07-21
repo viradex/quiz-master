@@ -37,6 +37,9 @@ class QuizRepository:
         Overwrites the file if it exists."""
         quiz.updated_at = datetime.now()
 
+        # Ensure custom quiz directory exists
+        self.custom_quiz_path.mkdir(parents=True, exist_ok=True)
+
         file_path = self.custom_quiz_path / f"{quiz.quiz_id}.json"
         with open(file_path, mode="w", encoding="utf-8") as f:
             json.dump(quiz.to_dict(), f)
@@ -69,7 +72,7 @@ class QuizRepository:
         """Loads the cache of all quizzes on disk in `quiz_cache`."""
         self.quiz_cache.clear()
 
-        for directory in (self.custom_quiz_path, self.default_quiz_path):
+        for directory in (self.default_quiz_path, self.custom_quiz_path):
             if not directory.exists():
                 continue
 

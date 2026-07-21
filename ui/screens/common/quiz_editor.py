@@ -323,7 +323,7 @@ class CommonQuizEditorScreen(BaseScreen):
             if can_delete:
                 editor.enable_delete()
             else:
-                editor.disable_delete()
+                editor.disable_delete("Cannot delete the only question")
 
     def _on_error_results(self, question: Question, error_occurred: bool) -> None:
         """Typically called when a question editor is left. Colors its respective card depending on whether

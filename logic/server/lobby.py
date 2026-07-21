@@ -7,7 +7,11 @@ from ui.screens.server.lobby import ServerLobbyScreen
 
 from ui.components.dialogs import confirm_warning
 from utils.networking import get_hostname
-from utils.error_messages import format_errors, QUIZ_ERROR_MESSAGES
+from utils.error_messages import (
+    format_errors,
+    QUIZ_ERROR_MESSAGES,
+    QUESTION_ERROR_MESSAGES,
+)
 from core.config.constants import MIN_PLAYERS_FOR_GAME
 
 
@@ -95,6 +99,22 @@ class ServerLobbyLogic(BaseLogic):
                 f"The program has found critical errors with this quiz that prevent it from being played.\n\n{format_errors(issues)}",
             )
             return
+
+        # Even if quiz data reports no errors, check to ensure the file itself hasn't been tampered with
+        for question_num, question in enumerate(quiz.questions, start=1):
+            # The issues list should be empty if at this stage
+            validation_errors = question.validate_question()
+
+            if validation_errors:
+                for error in QUESTION_ERROR_MESSAGES:
+                    if error in validation_errors:
+                        issues.append(QUESTION_ERROR_MESSAGES[error])
+
+                self.screen.show_error(
+                    "Quiz Question Errors",
+                    f"The program has found errors with Question #{question_num} on this quiz that prevents it from being played.\n\n{format_errors(issues)}",
+                )
+                return
 
         # Remove any empty C and D answers, if not already done
         for question in quiz.questions:

@@ -1,3 +1,4 @@
+import secrets
 import socket
 import threading
 import time
@@ -8,13 +9,18 @@ from core.services.network.transport import JSONSocket
 class ConnectedClient:
     """Represents a connected client in the server."""
 
-    def __init__(self, sock: socket.socket, player_id: str) -> None:
+    def __init__(self, client_id: str, sock: socket.socket) -> None:
+        self.client_id = client_id
         self.socket = sock
-        self.player_id = player_id
         self.jsock = JSONSocket(sock)
 
         self.last_seen = time.monotonic()
         self.lock = threading.Lock()
+
+    @staticmethod
+    def generate_random_id() -> str:
+        """Generate a random ID. Static method; can be used when initializing a ConnectedClient."""
+        return secrets.token_hex(4)
 
     def update_last_seen(self) -> None:
         """Update time since client was last seen."""

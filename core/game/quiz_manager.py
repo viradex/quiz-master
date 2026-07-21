@@ -61,7 +61,7 @@ class QuizManager:
         return len(self.quiz.questions)
 
     def prepare_for_question(self) -> None:
-        """Preare for an upcoming question."""
+        """Prepare for an upcoming question."""
         self.leaderboard.snapshot_points()
 
     def submit_answer(

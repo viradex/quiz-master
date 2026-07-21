@@ -42,6 +42,9 @@ PORT = 7878
 # Maximum players to allow joining the server
 MAX_PLAYERS = 50
 
+# Maximum message size of a single network request before it is rejected
+MAX_MESSAGE_SIZE = 64 * 1024  # (64 KiB)
+
 # Time in seconds until client stops connecting to server
 CLIENT_CONNECTION_TIMEOUT = 10
 

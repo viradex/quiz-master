@@ -42,7 +42,7 @@
     },
     {
       "question_id": "0baec664",
-      "question_text": "Which programming language is known for its snake logo?",
+      "question_text": "Which programming language is represented by a snake logo?",
       "answer_options": ["Java", "Python", "C++", "Swift"],
       "correct_answer_index": 1,
       "time_limit": 20
@@ -76,7 +76,7 @@
     {
       "question_id": "2c9236b7",
       "question_text": "Which of these is an operating system?",
-      "answer_options": ["Chrome", "Windows", "Intel", "NVIDIA"],
+      "answer_options": ["Google Chrome", "Windows", "Intel", "NVIDIA"],
       "correct_answer_index": 1,
       "time_limit": 20
     },
@@ -162,7 +162,7 @@
     },
     {
       "question_id": "8d02410b",
-      "question_text": "Which company/person developed the Linux kernel?",
+      "question_text": "Who developed the Linux kernel?",
       "answer_options": ["Microsoft", "Apple", "Linus Torvalds", "IBM"],
       "correct_answer_index": 2,
       "time_limit": 20

@@ -249,7 +249,7 @@ class CommonQuizManagerScreen(BaseScreen):
 
     def remove_all_quizzes(self) -> None:
         """Remove all quizzes from the GUI."""
-        # Doing in reversed order as removing indicies while iterating starting from 0
+        # Doing in reversed order as removing indices while iterating starting from 0
         # can cause some to be skipped. Starting from the end prevents that.
         for i in reversed(range(self.quiz_vbox.count())):
             item = self.quiz_vbox.itemAt(i)
@@ -261,7 +261,7 @@ class CommonQuizManagerScreen(BaseScreen):
             elif widget is self.empty_quizzes:
                 continue
             else:
-                # Remove all other widets
+                # Remove all other widgets
                 self.quiz_vbox.removeWidget(widget)
                 widget.deleteLater()
 

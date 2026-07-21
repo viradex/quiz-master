@@ -134,9 +134,9 @@ class GameClient(QObject):
                 continue
             except OSError:
                 break
-            except ValueError:
-                # Invalid JSON data
-                self.error_occurred.emit("Invalid message data from server")
+            except ValueError as e:
+                # Invalid JSON received or message too large
+                self.error_occurred.emit(f"Invalid message from server: {e}")
                 self.disconnect_client()
                 break
 
@@ -163,7 +163,7 @@ class GameClient(QObject):
 
             self.jsock.set_socket(self.client_socket)
         except ConnectionRefusedError:
-            # Server refused connction
+            # Server refused connection
             self.connection_failed.emit(ClientConnectionError.CONNECTION_REFUSED)
             return
         except TimeoutError:
@@ -246,17 +246,14 @@ class GameClient(QObject):
 
         # Message type does not have a respective handler
         if handler is None:
-            print(f"Unknown message type: {msg_type}")
             return
 
         try:
             handler(msg)
-        except KeyError as e:
+        except KeyError:
             # If the handler tries accessing data that does not exist, assume server sent invalid data
             self.error_occurred.emit("Missing fields in data")
             self.disconnect_client()
-
-            print(f"Missing field: {e}")
             return
 
     def get_data_fields(self, msg: dict, field_names: list[str]) -> dict | None:

@@ -40,7 +40,7 @@
     {
       "question_id": "e413c910",
       "question_text": "Which country is home to the pyramids of Giza?",
-      "answer_options": ["Greeze", "Egypt", "Mexico", "India"],
+      "answer_options": ["Greece", "Egypt", "Mexico", "India"],
       "correct_answer_index": 1,
       "time_limit": 20
     },
@@ -88,7 +88,7 @@
     },
     {
       "question_id": "f4e48803",
-      "question_text": "What is the world's longest river?",
+      "question_text": "Which river is traditionally regarded as the world's longest?",
       "answer_options": ["Amazon", "Nile", "Yangtze", "Mississippi"],
       "correct_answer_index": 1,
       "time_limit": 20
@@ -138,7 +138,7 @@
     {
       "question_id": "0683add4",
       "question_text": "Which famous ship sank in 1912?",
-      "answer_options": ["Britannic", "Titanic", "Lusitania", "Endeavor"],
+      "answer_options": ["Britannic", "Titanic", "Lusitania", "Endeavour"],
       "correct_answer_index": 1,
       "time_limit": 20
     }

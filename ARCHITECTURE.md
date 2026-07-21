@@ -4,6 +4,9 @@
 
 If you are in VS Code, press Ctrl+Shift+V for easier reading!
 
+Note: Throughout the document, in diagrams, dotted lines are PyQt signals that the receiving
+end listens to, and solid lines are direct method calls.
+
 ## 1. Overview
 
 This project is a client-server quiz application built with Python and PyQt6,
@@ -86,6 +89,10 @@ The root `models/` folder (not in `core/`) contains representations of entities 
 
 Manages quiz storage and persistent data.
 
+### 3.5 Data Layer (`models/`)
+
+Contains data representations used throughout the app. Models do not contain UI behavior or networking logic.
+
 ## 4. Screen System
 
 The screen system is controlled by the MainWindow, which is controlled by the QApplication (a core component of PyQt).
@@ -149,8 +156,6 @@ sequenceDiagram
     AppController->>Screen: Payloads
 ```
 
-Note: Dotted lines are PyQt signals that the receiving end listens to, and solid lines are direct method calls.
-
 #### QuizManager
 
 The "brain" of the quiz. It knows how the quiz works and manages players as well as the leaderboard, but does not know
@@ -173,7 +178,7 @@ are delegated to `QuizManager`).
 
 - **Does...**
   - Orchestrate the overall flow of the quiz game, including timers and progression.
-  - Coordinate `QuizManager` and the other components indirectly via signals.
+  - Coordinate `QuizManager` directly and the other components indirectly via signals.
   - Validate and process player answers.
 
 - **Does not...**

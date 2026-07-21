@@ -40,7 +40,7 @@ class PlayerRegistry:
                 return AddPlayerResult.LONG_NICKNAME
 
             # Create player
-            player_id = client.player_id
+            player_id = client.client_id
             player = Player(player_id, nickname)
 
             # Save session
@@ -80,7 +80,7 @@ class PlayerRegistry:
             return self._has_nickname_unlocked(nickname)
 
     def _has_nickname_unlocked(self, nickname: str) -> bool:
-        """Unlocked version of `has_nickname()`. Only call this method if `self.lock` has been aquired."""
+        """Unlocked version of `has_nickname()`. Only call this method if `self.lock` has been acquired."""
         for session in self.sessions.values():
             if session.player.nickname == nickname:
                 return True

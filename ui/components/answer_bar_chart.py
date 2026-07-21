@@ -45,7 +45,7 @@ class AnswerBarChart(QWidget):
         # Background
         painter.fillRect(self.rect(), QColor("#1e1e1e"))
 
-        # Layout caluclations for determining drawable area
+        # Layout calculations for determining drawable area
         top_margin = 30
         bottom_margin = 25
         side_margin = 10
@@ -74,7 +74,7 @@ class AnswerBarChart(QWidget):
         for i, (value, label, color) in enumerate(
             zip(self.values, self.labels, self.colors)
         ):
-            # Caluculates height based on bar with max height,
+            # Calculates height based on bar with max height,
             # and ratio of other bars to that, ensuring 0 values
             # will have a thin sliver
             if value == 0:
