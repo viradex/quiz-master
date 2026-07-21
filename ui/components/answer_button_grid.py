@@ -161,7 +161,7 @@ class AnswerButtonGrid(QWidget):
         for i, answer in enumerate(self.answers):
             color_name = color_names[i]
 
-            # If server mode, buttons are unclickable, so make
+            # If server mode, buttons are disabled, so make
             # all states the same 'normal' state
             if self.mode == "server":
                 btn = self._create_answer_button(
@@ -233,7 +233,7 @@ class AnswerButtonGrid(QWidget):
         button = QPushButton(text)
         button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
 
-        # If button clickable, show respective cursor to denote clickability
+        # If button clickable, show respective cursor
         if self.mode == "live":
             button.setCursor(Qt.CursorShape.PointingHandCursor)
 

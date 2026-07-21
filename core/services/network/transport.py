@@ -1,6 +1,8 @@
 import json
 import socket
 
+from core.config.constants import MAX_MESSAGE_SIZE
+
 
 class JSONSocket:
     """Allows sending/receiving JSON messages over the network."""
@@ -8,7 +10,7 @@ class JSONSocket:
     def __init__(self, sock: socket.socket | None = None) -> None:
         self.sock = sock
 
-        # Buffer is of bytes type, not str
+        # Networking data doesn't always arrive as complete strings, so use buffer
         self.buffer = b""
 
     def send(self, data: dict) -> None:
@@ -28,6 +30,8 @@ class JSONSocket:
         """
         Receives any incoming message. The data is deserialized before returning.
 
+        Raises a ValueError if the JSON is invalid or the message exceeds the maximum size as defined in `MAX_MESSAGE_SIZE`.
+
         Return values:
             `False`
                 No message currently, though other end is still alive. Occurs when socket times out.
@@ -41,7 +45,6 @@ class JSONSocket:
         self._validate_socket()
 
         # Keeps reading until reaching end of message
-        # TODO Protect against huge messages (these can spike memory and CPU usage)
         while b"\n" not in self.buffer:
             try:
                 chunk = self.sock.recv(4096)
@@ -55,6 +58,10 @@ class JSONSocket:
                 return None
 
             self.buffer += chunk
+
+            # Protects server against huge messages, which can cause intense CPU and memory usage
+            if len(self.buffer) > MAX_MESSAGE_SIZE:
+                raise ValueError("Message too large")
 
         # Retrieves first complete message, and saves remaining data in buffer
         line, self.buffer = self.buffer.split(b"\n", 1)

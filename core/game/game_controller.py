@@ -64,7 +64,7 @@ class GameController(QObject):
         """
         Remote a player from the game, and perform checks to ensure the game remains
         flowing or ends prematurely depending on the players remaining and their state.
-        When a player is removed from the game, they are permantly removed from records and
+        When a player is removed from the game, they are permanently removed from records and
         the leaderboard.
         """
         self.quiz_manager.remove_player(player_id)

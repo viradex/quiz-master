@@ -32,7 +32,7 @@
     },
     {
       "question_id": "893c4898",
-      "question_text": "Who discovered Australia for Britain in 1770?",
+      "question_text": "Who charted the east coast of Australia and claimed it for Britain in 1770?",
       "answer_options": ["James Cook", "Christopher Columbus", "Edmund Barton", "Marco Polo"],
       "correct_answer_index": 0,
       "time_limit": 20
@@ -141,7 +141,7 @@
       "question_text": "Who was the British Prime Minister for most of World War II?",
       "answer_options": [
         "Neville Chamberlain",
-        "Winston Chruchill",
+        "Winston Churchill",
         "Margaret Thatcher",
         "Tony Blair"
       ],

@@ -342,14 +342,13 @@ class QuestionEditor(QWidget):
         self.question_num_input.setMaximum(int(self.total_questions))
         self.total_question_lbl.setText(f"/ {self.total_questions}")
 
-    def disable_delete(self) -> None:
+    def disable_delete(self, reason: str = "Cannot delete question") -> None:
         """Disable the delete button (typically for if this question is the last remaining)."""
         if not self.read_only:
             delete_disabled_icon = self.icons_path / "delete_disabled.png"
             self.delete_btn.setIcon(QIcon(str(delete_disabled_icon)))
 
-            # TODO This tooltip message should be customizable
-            self.delete_btn.setToolTip("Cannot delete the only question")
+            self.delete_btn.setToolTip(reason)
             self.delete_btn.setDisabled(True)
 
     def enable_delete(self) -> None:
@@ -420,7 +419,7 @@ class QuestionEditor(QWidget):
             self.issues_btn.hide()
             return
 
-        # Iterate over dict to preserve order in UI, as sets do not preverse order
+        # Iterate over dict to preserve order in UI, as sets do not preserve order
         for error in QUESTION_ERROR_MESSAGES:
             if error in self.question_validation_results:
                 issues.append(QUESTION_ERROR_MESSAGES[error])
@@ -466,7 +465,7 @@ class QuestionEditor(QWidget):
         confirm = confirm_warning(
             self,
             "Confirm Deleting Question",
-            "Are you sure you want to delete this question? This action is irreversable!",
+            "Are you sure you want to delete this question? This action is irreversible!",
         )
 
         if confirm:

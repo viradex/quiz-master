@@ -156,7 +156,7 @@ class CommonQuizSetupScreen(BaseScreen):
         }
 
     def validate_data(self) -> bool:
-        """Validate the data entered, showing an error message if it does not fullfill the requirements.
+        """Validate the data entered, showing an error message if it does not fulfill the requirements.
         Returns True if the data passes all tests, else False."""
         title = self.title_counter.line_edit.text().strip()
 

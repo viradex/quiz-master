@@ -60,7 +60,7 @@
     },
     {
       "question_id": "394e0b6b",
-      "question_text": "What fraction matches \u03c0 to 2 decimal places?",
+      "question_text": "Which fraction is the closest approximation to \u03c0?",
       "answer_options": ["21/7", "22/7", "23/7", "24/7"],
       "correct_answer_index": 1,
       "time_limit": 20

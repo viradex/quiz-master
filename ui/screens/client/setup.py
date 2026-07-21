@@ -154,5 +154,5 @@ class ClientSetupScreen(BaseScreen):
 
     def on_enter(self, payload: dict | None = None) -> None:
         # Keeps fields populated if an error occurred while connecting
-        if payload is not None and not payload.get("error_occurred"):
+        if payload is None or not payload["error_occurred"]:
             self.clear_fields()

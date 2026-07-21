@@ -54,7 +54,7 @@
     {
       "question_id": "3edb2f1b",
       "question_text": "Which river flows through London?",
-      "answer_options": ["Seine", "Daunbe", "Thames", "Rhine"],
+      "answer_options": ["Seine", "Danube", "Thames", "Rhine"],
       "correct_answer_index": 2,
       "time_limit": 20
     },

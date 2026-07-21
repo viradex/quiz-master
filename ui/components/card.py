@@ -268,7 +268,7 @@ class QuestionCard(QFrame):
         self.question_num_lbl.setText(str(self.question_num))
 
     def _update_styles(self) -> None:
-        """Update styles so changes from selection, unselection, etc. are applied visually."""
+        """Update styles so changes from selection, deselection, etc. are applied visually."""
         self.style().unpolish(self)
         self.style().polish(self)
         self.update()
@@ -325,7 +325,7 @@ class QuizCard(QFrame):
         else:
             formatted_date = "-"
 
-        # This label is hidden if the quiz is a default quiz, therefore must explicitely set parent=self
+        # This label is hidden if the quiz is a default quiz, therefore must explicitly set parent=self
         self.updated_lbl = QLabel(f"Updated {formatted_date}", self)
         self.updated_lbl.setHidden(self.quiz.is_premade)
         self.updated_lbl.setStyleSheet("font-size: 12px;" "color: #8A8A8A;")
@@ -338,7 +338,7 @@ class QuizCard(QFrame):
             lambda: self.delete_quiz_requested.emit(self.quiz)
         )
 
-        # Must be explicitely made a child of 'self' otherwise it will briefly appear as a pop-up window
+        # Must be explicitly made a child of 'self' otherwise it will briefly appear as a pop-up window
         self.edit_btn = create_tool_icon_button(
             edit_icon, "Edit", icon_size=24, parent=self
         )

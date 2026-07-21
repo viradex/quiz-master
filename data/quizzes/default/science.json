@@ -32,7 +32,7 @@
     },
     {
       "question_id": "77aaa72a",
-      "question_text": "What gas do humans breathe in?",
+      "question_text": "Which gas do humans need for respiration?",
       "answer_options": ["Carbon dioxide", "Nitrogen", "Oxygen", "Helium"],
       "correct_answer_index": 2,
       "time_limit": 20
@@ -117,7 +117,7 @@
     {
       "question_id": "2d18d3c3",
       "question_text": "Which star is closest to Earth?",
-      "answer_options": ["Sun", "Proxima Cenaturi"],
+      "answer_options": ["Sun", "Proxima Centauri"],
       "correct_answer_index": 0,
       "time_limit": 10
     },

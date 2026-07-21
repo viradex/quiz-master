@@ -1,5 +1,4 @@
 import errno
-import secrets
 import socket
 import threading
 import time
@@ -73,12 +72,8 @@ class GameServer(QObject):
         return None
 
     def get_total_players(self) -> int:
-        """Gets the numer of players connected to the server."""
+        """Gets the number of players connected to the server."""
         return len(self.registry.get_all())
-
-    def generate_player_id(self) -> str:
-        """Generate a random unique player ID."""
-        return secrets.token_hex(4)
 
     def start(self) -> None:
         """Starts the server and accepts clients."""
@@ -193,7 +188,7 @@ class GameServer(QObject):
                 self._kick_client(session.client, "Failed to broadcast")
 
     def kick_player(self, player_id: str, reason: str) -> None:
-        """Kicks a player from the server, and sends a `KICK` message if they are in the registry."""
+        """Kicks a player from the server based on player ID, and sends a `KICK` message if they are in the registry."""
         session = self.registry.get(player_id)
         if session:
             self._kick_client(session.client, reason)
@@ -222,7 +217,7 @@ class GameServer(QObject):
         """Handles an individual client by assigning a player ID and ConnectedClient.
         Receives requests from the server and handles messages.
         """
-        client = ConnectedClient(sock, self.generate_player_id())
+        client = ConnectedClient(ConnectedClient.generate_random_id(), sock)
 
         try:
             while self.is_running:
@@ -237,11 +232,11 @@ class GameServer(QObject):
                 self.handle_message(client, msg)
         except OSError:
             pass
-        except ValueError:
-            # Invalid JSON received
-            self._kick_error(client, "Invalid message data from client")
+        except ValueError as e:
+            # Invalid JSON received or message too large
+            self._kick_error(client, f"Invalid message from client: {e}")
         finally:
-            self.remove_client(client.player_id)
+            self.remove_client(client.client_id)
 
     def handle_message(self, client: ConnectedClient, msg: dict) -> None:
         """Handle a message from a client by delegating it to a respective handler."""
@@ -256,7 +251,6 @@ class GameServer(QObject):
 
         # Message type does not have a respective handler
         if handler is None:
-            print(f"Unknown message type: {msg_type}")
             self._kick_error(client, "Unknown message type")
             return
 
@@ -308,8 +302,8 @@ class GameServer(QObject):
             return
 
         # Client sent join request after already joining
-        if self.registry.has_id(client.player_id):
-            self.send_invalid_action(client.player_id, "Cannot join again")
+        if self.registry.has_id(client.client_id):
+            self.send_invalid_action(client.client_id, "Cannot join again")
             return
 
         if self.game_started:
@@ -338,7 +332,7 @@ class GameServer(QObject):
             self._kick_client(client, "The player does not fit in the server")
             return
 
-        self.player_joined.emit(client.player_id, nickname)
+        self.player_joined.emit(client.client_id, nickname)
 
         # Inform clients of player join
         self.broadcast(
@@ -356,13 +350,13 @@ class GameServer(QObject):
         client.send(
             {
                 "type": ServerMessageType.CONNECTION_SUCCESSFUL,
-                "data": {"player_id": client.player_id, "player_list": player_list},
+                "data": {"player_id": client.client_id, "player_list": player_list},
             }
         )
 
     def handle_leave_lobby(self, client: ConnectedClient, msg: dict) -> None:
         """Handles the `LEAVE_LOBBY` message type."""
-        self.remove_client(client.player_id)
+        self.remove_client(client.client_id)
 
     def handle_answer_submit(self, client: ConnectedClient, msg: dict) -> None:
         """Handles the `ANSWER_SUBMIT` message type. Also records the time the data was received."""
@@ -378,14 +372,14 @@ class GameServer(QObject):
 
         if not self.game_started:
             self.send_invalid_action(
-                client.player_id, "Cannot submit an answer when a game is not running"
+                client.client_id, "Cannot submit an answer when a game is not running"
             )
             return
 
         # Record the time the message was received for points calculations
         # Don't trust client ;)
         received_time = time.monotonic()
-        self.answer_submitted.emit(client.player_id, selected_index, received_time)
+        self.answer_submitted.emit(client.client_id, selected_index, received_time)
 
     def send_countdown_start(self, duration: int) -> None:
         """Sends a `COUNTDOWN_STARTED` message to all clients."""
@@ -438,8 +432,8 @@ class GameServer(QObject):
         except OSError:
             pass
 
-        if self.registry.get(client.player_id) is not None:
-            self.remove_client(client.player_id)
+        if self.registry.get(client.client_id) is not None:
+            self.remove_client(client.client_id)
 
         client.close()
 
@@ -451,7 +445,10 @@ class GameServer(QObject):
         )
 
     def _kick_client(self, client: ConnectedClient, reason: str) -> None:
-        """Sends an `KICK` message type to the client, then disconnects them."""
+        """
+        Sends an `KICK` message type to the client, then disconnects them. Should be used when
+        the `ConnectedClient` is readily available. If only the player ID is known, use `kick_player()`.
+        """
         self._send_and_disconnect(
             client,
             {
