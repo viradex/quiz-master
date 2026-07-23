@@ -12,7 +12,7 @@ from core.services.network.player_registry import PlayerRegistry
 from core.services.network.types import ClientMessageType, ServerMessageType
 from models.player import Player
 
-from core.config.constants import PORT, RESPONSE_TIMEOUT
+from core.config.constants import PORT, CLIENT_PING_INTERVAL, RESPONSE_TIMEOUT
 
 
 class GameServer(QObject):
@@ -24,6 +24,8 @@ class GameServer(QObject):
     # Player ID, nickname
     player_joined = pyqtSignal(str, str)
     player_left = pyqtSignal(str, str)
+
+    latency_updated = pyqtSignal(str, float)
 
     # Player ID, answer index, time submitted (monotonic server-side)
     answer_submitted = pyqtSignal(str, int, float)
@@ -45,7 +47,7 @@ class GameServer(QObject):
         self.handlers: dict[
             ClientMessageType, Callable[[ConnectedClient, dict], None]
         ] = {
-            ClientMessageType.PING: self.handle_ping,
+            ClientMessageType.PONG: self.handle_pong,
             ClientMessageType.JOIN_LOBBY: self.handle_join_lobby,
             ClientMessageType.LEAVE_LOBBY: self.handle_leave_lobby,
             ClientMessageType.ANSWER_SUBMIT: self.handle_answer_submit,
@@ -60,6 +62,14 @@ class GameServer(QObject):
 
         # Player does not exist
         return None
+
+    def get_client_latency(self, client_id: str) -> float | None:
+        """Get the latency of the client in milliseconds."""
+        session = self.registry.get(client_id)
+        if session is None:
+            return None
+
+        return session.client.rtt_ms
 
     def get_player(self, player_id: str) -> Player | None:
         """Get the player instance from the registry."""
@@ -144,8 +154,26 @@ class GameServer(QObject):
         self.started.emit()
 
         # Start global watchdog and accept clients
+        threading.Thread(target=self._client_latency_loop, daemon=True).start()
         threading.Thread(target=self._client_watchdog_loop, daemon=True).start()
         self.accept_clients()
+
+    def _client_latency_loop(self) -> None:
+        """Sends pings to clients to measure latency."""
+        while self.is_running:
+            time.sleep(CLIENT_PING_INTERVAL)
+
+            for session in self.registry.get_all().values():
+                try:
+                    # Use perf counter rather than monotonic for accurate timing
+                    client = session.client
+                    client.last_ping_sent = time.perf_counter()
+
+                    # Use -1 rather than None since client won't accept a None value
+                    rtt = -1 if client.rtt_ms is None else client.rtt_ms
+                    client.send({"type": ServerMessageType.PING, "data": {"rtt": rtt}})
+                except OSError:
+                    self._kick_client(session.client, "Failed to ping client")
 
     def _client_watchdog_loop(self) -> None:
         """
@@ -234,7 +262,7 @@ class GameServer(QObject):
             pass
         except ValueError as e:
             # Invalid JSON received or message too large
-            self._kick_error(client, f"Invalid message from client: {e}")
+            self._kick_error(client, f"Protocol violation: {e}")
         finally:
             self.remove_client(client.client_id)
 
@@ -285,9 +313,21 @@ class GameServer(QObject):
 
         return fields
 
-    def handle_ping(self, client: ConnectedClient, msg: dict) -> None:
-        """Handles the `PONG` message type."""
-        client.send({"type": ServerMessageType.PONG})
+    def handle_pong(self, client: ConnectedClient, msg: dict) -> None:
+        """Handles the `PONG` message type and calculates client round trip time."""
+        if client.last_ping_sent is None:
+            return
+
+        # Save last ping sent and reset
+        sent_time = client.last_ping_sent
+        client.last_ping_sent = None
+
+        # Calculate round trip time and convert to milliseconds
+        # Most games display RTT, not one-way time, so do not divide by 2 unless that is wanted
+        rtt = time.perf_counter() - sent_time
+        client.rtt_ms = rtt * 1000
+
+        self.latency_updated.emit(client.client_id, client.rtt_ms)
 
     def handle_join_lobby(self, client: ConnectedClient, msg: dict) -> None:
         """Handles the `JOIN_LOBBY` message type. Validates player data and adds them."""
@@ -303,7 +343,7 @@ class GameServer(QObject):
 
         # Client sent join request after already joining
         if self.registry.has_id(client.client_id):
-            self.send_invalid_action(client.client_id, "Cannot join again")
+            self._invalid_action_client(client, "Cannot join again")
             return
 
         if self.game_started:
@@ -371,8 +411,8 @@ class GameServer(QObject):
             return
 
         if not self.game_started:
-            self.send_invalid_action(
-                client.client_id, "Cannot submit an answer when a game is not running"
+            self._invalid_action_client(
+                client, "Cannot submit an answer when a game is not running"
             )
             return
 
@@ -420,9 +460,13 @@ class GameServer(QObject):
         session = self.registry.get(player_id)
 
         if session:
-            session.client.send(
-                {"type": ServerMessageType.INVALID_ACTION, "data": {"reason": reason}}
-            )
+            self._invalid_action_client(session.client, reason)
+
+    def _invalid_action_client(self, client: ConnectedClient, reason: str) -> None:
+        """Sends an `INVALID_ACTION` message to the client directly. This does not disconnect them."""
+        client.send(
+            {"type": ServerMessageType.INVALID_ACTION, "data": {"reason": reason}}
+        )
 
     def _send_and_disconnect(self, client: ConnectedClient, msg: dict) -> None:
         """Sends a message to a client and disconnects them immediately afterwards."""

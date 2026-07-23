@@ -17,6 +17,7 @@ class ClientLobbyLogic(BaseLogic):
         self.game_client.connected.connect(self.on_connected)
         self.game_client.player_joined.connect(self.on_player_joined)
         self.game_client.player_left.connect(self.on_player_left)
+        self.game_client.latency_updated.connect(self.on_latency_updated)
 
     def on_connected(self, player_list: list[str]) -> None:
         """When successfully connected to the server. Prompts UI to show player list."""
@@ -43,6 +44,13 @@ class ClientLobbyLogic(BaseLogic):
         """When another player leaves. Prompts UI to add a player to the player list."""
         self.screen.remove_player_lobby(nickname)
 
+    def on_latency_updated(self, rtt: float) -> None:
+        """When the round trip time is updated. Prompts UI to update it on UI."""
+        if rtt == -1:
+            self.screen.update_ping(None)
+        else:
+            self.screen.update_ping(rtt)
+
     def on_left_server(self) -> None:
         """When the client leaves the server."""
         self.game_client.disconnect_client()
@@ -50,8 +58,3 @@ class ClientLobbyLogic(BaseLogic):
 
         self.screen.reset_status()
         self.screen.set_status("Disconnected from server", 2000)
-
-    def on_enter(self, payload=None) -> None:
-        # Get IP and port of server to display in UI
-        ip, port = self.game_client.get_server_address()
-        self.screen.set_connection_details(ip, port)

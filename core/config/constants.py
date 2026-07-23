@@ -48,7 +48,7 @@ MAX_MESSAGE_SIZE = 64 * 1024  # (64 KiB)
 # Time in seconds until client stops connecting to server
 CLIENT_CONNECTION_TIMEOUT = 10
 
-# Interval in seconds for client sending a heartbeat
+# Interval in seconds for server sending PING to client (heartbeat)
 CLIENT_PING_INTERVAL = 6
 
 # Time in seconds for no response until the client is disconnected

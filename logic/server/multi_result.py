@@ -5,6 +5,7 @@ from models.payloads import ClientFinalResultsPayload, ServerFinalResultsPayload
 from logic.base_logic import BaseLogic
 from ui.screens.server.multi_result import ServerMultiResultScreen
 
+from utils.formatting import format_ping
 from utils.networking import get_hostname
 
 
@@ -46,9 +47,12 @@ class ServerMultiResultLogic(BaseLogic):
         ip, port = self.server.get_player_address(player_id)
         hostname = get_hostname(ip)
 
+        latency = self.server.get_client_latency(player_id)
+        latency_text = format_ping(latency)
+
         self.screen.show_info(
             "Player Info",
-            f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
+            f"Player name: {nickname}\nPing: {latency_text}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
         )
 
     def on_player_kicked(self, player_id: str) -> None:

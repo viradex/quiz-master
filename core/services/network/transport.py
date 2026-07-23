@@ -24,7 +24,10 @@ class JSONSocket:
             raise ValueError("Invalid JSON data") from e
 
         # sendall() to automatically send all bytes
-        self.sock.sendall(msg.encode())
+        try:
+            self.sock.sendall(msg.encode())
+        except UnicodeEncodeError as e:
+            raise ValueError("Invalid UTF-8 data") from e
 
     def recv(self) -> dict | bool | None:
         """
@@ -68,6 +71,8 @@ class JSONSocket:
 
         try:
             return json.loads(line.decode())
+        except UnicodeDecodeError as e:
+            raise ValueError("Invalid UTF-8 data") from e
         except json.JSONDecodeError as e:
             raise ValueError("Invalid JSON data") from e
 

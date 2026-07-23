@@ -13,7 +13,6 @@ from core.services.network.types import ClientMessageType, ServerMessageType
 from utils.networking import is_valid_ipv4
 from core.config.constants import (
     CLIENT_CONNECTION_TIMEOUT,
-    CLIENT_PING_INTERVAL,
     MAX_NICKNAME_LENGTH,
     PORT,
     RESPONSE_TIMEOUT,
@@ -28,6 +27,7 @@ class GameClient(QObject):
 
     player_joined = pyqtSignal(str)  # Player name
     player_left = pyqtSignal(str)  # Player name
+    latency_updated = pyqtSignal(float)  # Ping time in milliseconds
 
     countdown_started = pyqtSignal(int)  # Countdown duration (seconds)
     question_received = pyqtSignal(dict)  # Question payload
@@ -36,7 +36,7 @@ class GameClient(QObject):
 
     # Reason (for all below)
     kicked = pyqtSignal(str)
-    error_occurred = pyqtSignal(str)
+    error_occurred = pyqtSignal(str, str)  # Second is either 'client' or 'server'
     invalid_action_occurred = pyqtSignal(str)
 
     def __init__(self) -> None:
@@ -51,11 +51,11 @@ class GameClient(QObject):
         self.client_socket: socket.socket | None = None
         self.player_id: str | None = None
         self.nickname: str | None = None
-        self.last_server_response_time: float | None = None
+        self.last_server_message_time: float | None = None
 
         # Handlers for incoming server messages
         self.handlers: dict[ServerMessageType, Callable[[dict], None]] = {
-            ServerMessageType.PONG: lambda *args: None,
+            ServerMessageType.PING: self.handle_ping,
             ServerMessageType.CONNECTION_SUCCESSFUL: self.handle_connection_successful,
             ServerMessageType.PLAYER_JOINED: self.handle_player_joined,
             ServerMessageType.PLAYER_LEFT: self.handle_player_left,
@@ -114,7 +114,7 @@ class GameClient(QObject):
         self.client_socket.close()
         self.client_socket = None
 
-    def time_out(self) -> None:
+    def timeout(self) -> None:
         """Disconnect the client due to a timeout from the watchdog."""
         self.is_connected = False
 
@@ -136,7 +136,7 @@ class GameClient(QObject):
                 break
             except ValueError as e:
                 # Invalid JSON received or message too large
-                self.error_occurred.emit(f"Invalid message from server: {e}")
+                self.error_occurred.emit(f"Invalid message: {e}", "client")
                 self.disconnect_client()
                 break
 
@@ -149,7 +149,7 @@ class GameClient(QObject):
                 continue
 
             # Any message from server means connection is still alive
-            self.last_server_response_time = time.monotonic()
+            self.last_server_message_time = time.monotonic()
             self.handle_message(msg)
 
     def _connect_and_listen(self) -> None:
@@ -200,26 +200,14 @@ class GameClient(QObject):
 
         self.is_connected = True
 
-        # Start listening for server pings and ensure connection remains through watchdog
+        # Start listening for server messages and monitor server availability
         threading.Thread(target=self.listen, daemon=True).start()
 
         # Inform server of join and reset server ping time
         self.send_join()
-        self.last_server_response_time = time.monotonic()
+        self.last_server_message_time = time.monotonic()
 
-        threading.Thread(target=self._ping_loop, daemon=True).start()
         threading.Thread(target=self._watchdog_loop, daemon=True).start()
-
-    def _ping_loop(self) -> None:
-        """Pings the server at a certain interval, to request a `PONG` and inform the server that the client is alive."""
-        while self.is_connected:
-            try:
-                self.jsock.send({"type": ClientMessageType.PING})
-            except OSError:
-                break
-
-            # Do not keep sending PINGs, wait for a few seconds
-            time.sleep(CLIENT_PING_INTERVAL)
 
     def _watchdog_loop(self) -> None:
         """Checks last response time from server. If it exceeds response timeout, disconnect server."""
@@ -228,8 +216,8 @@ class GameClient(QObject):
             time.sleep(1)
 
             # If difference between now and last ping time exceeds response timeout, disconnect client
-            if time.monotonic() - self.last_server_response_time > RESPONSE_TIMEOUT:
-                self.time_out()
+            if time.monotonic() - self.last_server_message_time > RESPONSE_TIMEOUT:
+                self.timeout()
                 break
 
     def handle_message(self, msg: dict) -> None:
@@ -238,7 +226,7 @@ class GameClient(QObject):
 
         # No message type; client cannot delegate it
         if msg_type is None:
-            self.error_occurred.emit("Missing message type in data")
+            self.error_occurred.emit("Missing message type in data", "client")
             self.disconnect_client()
             return
 
@@ -252,7 +240,7 @@ class GameClient(QObject):
             handler(msg)
         except KeyError:
             # If the handler tries accessing data that does not exist, assume server sent invalid data
-            self.error_occurred.emit("Missing fields in data")
+            self.error_occurred.emit("Missing fields in data", "client")
             self.disconnect_client()
             return
 
@@ -262,7 +250,7 @@ class GameClient(QObject):
         data = msg.get("data")
 
         if not isinstance(data, dict):
-            self.error_occurred.emit("Invalid message data from server")
+            self.error_occurred.emit("Invalid message data from server", "client")
             self.disconnect_client()
             return None
 
@@ -276,7 +264,7 @@ class GameClient(QObject):
 
             if field is None:
                 self.error_occurred.emit(
-                    f"Missing required field from server: {field_name}"
+                    f"Missing required field: {field_name}", "client"
                 )
                 self.disconnect_client()
                 return None
@@ -284,6 +272,21 @@ class GameClient(QObject):
             fields[field_name] = field
 
         return fields
+
+    def handle_ping(self, msg: dict) -> None:
+        """Handles the `PING` message type. Gets the RTT and return-sends a `PONG`."""
+        data_fields = self.get_data_fields(msg, ["rtt"])
+        if data_fields is None:
+            return
+
+        rtt = data_fields.get("rtt")
+        self.latency_updated.emit(rtt)
+
+        try:
+            self.jsock.send({"type": ClientMessageType.PONG})
+        except OSError:
+            # If socket is closed for some reason
+            self.disconnect_client()
 
     def handle_connection_successful(self, msg: dict) -> None:
         """Handles the `CONNECTION_SUCCESSFUL` message type. Sets player ID."""
@@ -327,18 +330,26 @@ class GameClient(QObject):
     def handle_question_data(self, msg: dict) -> None:
         """Handles the `QUESTION_DATA` message type."""
         data = self.get_data_fields(msg, [])
+        if data is None:
+            return
+
         self.question_received.emit(data)
 
     def handle_results(self, msg: dict) -> None:
         """Handles the `RESULTS` message type."""
         data = self.get_data_fields(msg, [])
+        if data is None:
+            return
+
         self.results_received.emit(data)
 
     def handle_final_results(self, msg: dict) -> None:
         """Handles the `FINAL_RESULTS` message type. Disconnects the client from the server."""
         data = self.get_data_fields(msg, [])
-        self.final_results_received.emit(data)
+        if data is None:
+            return
 
+        self.final_results_received.emit(data)
         self.disconnect_client()
 
     def handle_kick(self, msg: dict) -> None:
@@ -359,7 +370,7 @@ class GameClient(QObject):
             return
 
         reason = data_fields.get("reason")
-        self.error_occurred.emit(reason)
+        self.error_occurred.emit(reason, "server")
 
         self.disconnect_client()
 

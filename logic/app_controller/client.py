@@ -35,20 +35,23 @@ class ClientAppController:
 
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
 
-    def on_error_occurred(self, reason: str) -> None:
+    def on_error_occurred(self, reason: str, from_who: str) -> None:
         """When the client has been kicked due to an error."""
+        if from_who not in ("client", "server"):
+            raise ValueError(f"Invalid 'from_who': {from_who}")
+
         self.window.reset_status()
-        self.window.set_status("Disconnected from server (unexpected error)", 5000)
+        self.window.set_status("Disconnected from server (fatal error)", 5000)
 
         self.window.go_to(Screens.CLIENT_DISCONNECT, {"reason": reason})
         self.window.show_error(
             "Protocol Error",
-            f"The connection was terminated due to a communication error.\n\nReason: {reason}",
+            f"The connection was terminated by the {from_who} due to a fatal communication error.\n\nReason: {reason}",
         )
 
     def on_invalid_action_occurred(self, reason: str) -> None:
         """When the client has sent a request deemed invalid by the server."""
-        self.window.set_status("Invalid action rejected by sever", 5000)
+        self.window.set_status("Invalid action rejected by server", 5000)
 
         self.window.show_warning(
             "Invalid Action",
