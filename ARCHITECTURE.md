@@ -56,7 +56,7 @@ flowchart TD
 Responsible for rendering screens and handling user interaction.
 
 At the root of the directory is the `main_window.py` file, responsible for rendering screens and running
-navigation, as well as pairing screens with their respective logic and running lifecycles for each screen
+navigation, as well as pairing screens with their respective logic and running lifecycle for each screen
 (with `on_enter` and `on_leave`).
 
 The `screens/` folder contains each screen as an individual file, split into `client`, `server`, or `common`.
@@ -191,6 +191,16 @@ are delegated to `QuizManager`).
 
 Acts as the communication layer between clients and the server. Transfers data from the client to the higher-up layers
 server-side, and sends data to clients. It does not determine how the quiz works.
+
+- **Does...**
+  - Start, stop, and manage the game's TCP server and connections.
+  - Handle player and client management, including joining, leaving, and validation.
+  - Receive, validate, and process client messages, and send messages to clients.
+  - Monitor client connectivity and disconnect them in case of protocol errors or unresponsiveness.
+
+- **Does not...**
+  - Implement game rules or game logic.
+  - Manage the GUI or direct user interactions.
 
 #### AppController
 

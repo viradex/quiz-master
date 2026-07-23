@@ -12,6 +12,7 @@ from utils.error_messages import (
     QUIZ_ERROR_MESSAGES,
     QUESTION_ERROR_MESSAGES,
 )
+from utils.formatting import format_ping
 from core.config.constants import MIN_PLAYERS_FOR_GAME
 
 
@@ -32,6 +33,7 @@ class ServerLobbyLogic(BaseLogic):
         # Server
         self.server.player_joined.connect(self.on_player_joined)
         self.server.player_left.connect(self.on_player_left)
+        self.server.latency_updated.connect(self.on_latency_updated)
 
     def on_player_joined(self, player_id: str, nickname: str) -> None:
         """When a player joins. Prompts UI to add a player to the player list."""
@@ -41,6 +43,10 @@ class ServerLobbyLogic(BaseLogic):
         """When a player leaves. Prompts UI to remove a player from the player list."""
         self.screen.remove_player_lobby(player_id)
 
+    def on_latency_updated(self, player_id: str, rtt: float) -> None:
+        """When a player's latency is updated. Prompts UI to update visual latency display."""
+        self.screen.update_ping(player_id, rtt)
+
     def on_player_info_requested(self, player_id: str) -> None:
         """When player info is requested by the UI. Returns player info to user."""
         nickname = self.server.get_player(player_id).nickname
@@ -48,9 +54,16 @@ class ServerLobbyLogic(BaseLogic):
         ip, port = self.server.get_player_address(player_id)
         hostname = get_hostname(ip)
 
+        latency = self.server.get_client_latency(player_id)
+
+        if latency is None:
+            latency_text = "Unknown"
+        else:
+            latency_text = format_ping(latency)
+
         self.screen.show_info(
             "Player Info",
-            f"Player name: {nickname}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
+            f"Player name: {nickname}\nPing: {latency_text}\n\nIP address: {ip}\nPort: {port}\nHostname: {hostname}",
         )
 
     def on_player_kicked(self, player_id: str) -> None:

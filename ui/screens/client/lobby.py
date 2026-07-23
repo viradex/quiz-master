@@ -14,6 +14,7 @@ from ui.screens.base_screen import BaseScreen
 
 from ui.components.button import create_return_button
 from ui.components.dialogs import confirm_warning
+from utils.formatting import format_ping
 
 
 class ClientLobbyScreen(BaseScreen):
@@ -35,8 +36,8 @@ class ClientLobbyScreen(BaseScreen):
         table_font = QFont()
         table_font.setPointSize(12)
 
-        connected_font = QFont()
-        connected_font.setPointSize(8)
+        ping_font = QFont()
+        ping_font.setPointSize(10)
 
         waiting_font = QFont()
         waiting_font.setPointSize(18)
@@ -65,8 +66,8 @@ class ClientLobbyScreen(BaseScreen):
             }
         """)
 
-        self.connection_details = QLabel("Connected to server")
-        self.connection_details.setFont(connected_font)
+        self.ping_time = QLabel("Ping: Calculating...")
+        self.ping_time.setFont(ping_font)
 
         # Right side
         waiting_lbl = QLabel("Waiting for the host to start the game...")
@@ -90,7 +91,7 @@ class ClientLobbyScreen(BaseScreen):
         vbox_left.addWidget(self.lobby_table, stretch=1)
         vbox_left.addStretch()
         vbox_left.addSpacing(20)
-        vbox_left.addWidget(self.connection_details)
+        vbox_left.addWidget(self.ping_time)
 
         vbox_right = QVBoxLayout()
         vbox_right.addStretch(1)
@@ -148,17 +149,18 @@ class ClientLobbyScreen(BaseScreen):
         """Reset lobby table to remove all rows."""
         self.lobby_table.setRowCount(0)
 
-    def set_connection_details(
-        self, ip: str | None = None, port: str | None = None
-    ) -> None:
-        """Set connection details on the UI. The message text changes depending on the values provided."""
+    def update_ping(self, rtt: float | None) -> None:
+        """Update the ping time on the UI."""
+        if rtt is None:
+            self.ping_time.setText("Ping: Calculating...")
+            return
 
-        if ip is None:
-            self.connection_details.setText("Connected to server")
-        elif port is None:
-            self.connection_details.setText(f"Connected to {ip}")
+        self.ping_time.setText(f"Ping: {format_ping(rtt)}")
+
+        if rtt < 150:
+            self.ping_time.setStyleSheet("color: white;")
         else:
-            self.connection_details.setText(f"Connected to {ip}:{port}")
+            self.ping_time.setStyleSheet("color: #D16969;")
 
     def leave_lobby(self) -> None:
         """Displays a warning modal box before leaving the server."""
@@ -176,6 +178,7 @@ class ClientLobbyScreen(BaseScreen):
 
     def on_leave(self) -> None:
         self.spinner.stop()
-
         self.reset_lobby()
-        self.set_connection_details()
+
+        self.ping_time.setStyleSheet("color: white;")
+        self.ping_time.setText("Ping: Calculating...")

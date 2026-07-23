@@ -1,5 +1,5 @@
-from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QColor
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
+from PyQt6.QtGui import QFont, QColor, QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QLabel,
@@ -16,6 +16,7 @@ from ui.components.spinner import Spinner
 from ui.screens.base_screen import BaseScreen
 
 from ui.components.button import create_return_button
+from utils.color import get_ping_color
 from utils.networking import get_ip_address
 
 from core.config.constants import MAX_PLAYERS, MIN_PLAYERS_FOR_GAME
@@ -81,6 +82,7 @@ class ServerLobbyScreen(BaseScreen):
         self.lobby_table.setColumnCount(1)
         self.lobby_table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.lobby_table.resizeColumnsToContents()
+        self.lobby_table.setIconSize(QSize(12, 12))
         self.lobby_table.itemSelectionChanged.connect(self.on_selection_changed)
 
         self.lobby_table.verticalHeader().setVisible(False)
@@ -213,6 +215,14 @@ class ServerLobbyScreen(BaseScreen):
         self.set_player_count()
         self.check_spinner_visibility()
 
+    def update_ping(self, player_id: str, rtt: float) -> None:
+        """Update the ping color of a specific player."""
+        player = self._get_player_item(player_id)
+        if player is None:
+            return
+
+        player.setIcon(QIcon(str(get_ping_color(rtt))))
+
     def reset_lobby(self) -> None:
         """Resets the player counter to `0`, and removes all values from the lobby table."""
         self.lobby_table.setRowCount(0)
@@ -289,12 +299,25 @@ class ServerLobbyScreen(BaseScreen):
         selected_items = self.lobby_table.selectedItems()
         return selected_items[0] if selected_items else None
 
+    def _get_player_item(self, player_id: str) -> QTableWidgetItem | None:
+        """Return the table item for the given player ID."""
+        for row in range(self.lobby_table.rowCount()):
+            item = self.lobby_table.item(row, 0)
+
+            if item and item.data(Qt.ItemDataRole.UserRole) == player_id:
+                return item
+
+        return None
+
     def _add_player(self, player_id: str, nickname: str) -> None:
         """Add a player to the lobby table."""
         row = self.lobby_table.rowCount()
         self.lobby_table.insertRow(row)
 
         item = QTableWidgetItem(nickname)
+
+        # Set gray latency at start
+        item.setIcon(QIcon(str(get_ping_color(None))))
         item.setTextAlignment(
             Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft
         )

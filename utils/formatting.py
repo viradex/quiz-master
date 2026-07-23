@@ -40,3 +40,14 @@ def format_datetime(dt: datetime, start_lower: bool = False) -> str:
     # 12-hour format without leading zero
     time = dt.strftime("%I:%M %p").lstrip("0").lower()
     return f"{day}, {time}"
+
+
+def format_ping(rtt: float | None) -> str:
+    """Formats ping (round trip time) to include 'ms' at the end."""
+    if rtt is None:
+        return "-"
+
+    if rtt < 1:
+        return "<1ms"
+
+    return f"{round(rtt)}ms"

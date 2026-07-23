@@ -14,6 +14,9 @@ class ConnectedClient:
         self.socket = sock
         self.jsock = JSONSocket(sock)
 
+        self.last_ping_sent: float | None = None
+        self.rtt_ms: float | None = None
+
         self.last_seen = time.monotonic()
         self.lock = threading.Lock()
 

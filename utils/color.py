@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from PyQt6.QtGui import QColor
 
 
@@ -15,3 +17,18 @@ def darken_color(color_str: str, factor: float = 0.5) -> str:
 
     # Returns hex code with .name()
     return color.darker(strength).name()
+
+
+def get_ping_color(latency_ms: float | None) -> Path:
+    """Gets the correct color to pair the latency of a client with."""
+    base_dir = Path(__file__).resolve().parent.parent
+    icons_path = base_dir / "ui" / "assets" / "icons"
+
+    if latency_ms is None:
+        return icons_path / "latency_gray.png"
+    elif latency_ms < 50:
+        return icons_path / "latency_green.png"
+    elif latency_ms < 150:
+        return icons_path / "latency_yellow.png"
+    else:
+        return icons_path / "latency_red.png"
