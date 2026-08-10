@@ -1,6 +1,13 @@
+"""
+feedback_generator.py
+
+Generates feedback depending on the place that the player came at, among other conditions, giving
+a personalized feedback that is (mostly) unique every game.
+"""
+
 import random
 
-# Feedback messages definition, with weighting
+# Feedback messages definition, with weighting % respective to the string at the same index.
 # {nickname} is the name of the player in front
 # {points} is the amount of points the player is behind the player in front
 MESSAGES: dict[str, tuple[list[str], list[int]]] = {
@@ -76,35 +83,77 @@ def feedback_generator(
     behind_nickname: str | None,
     behind_points: int | None,
 ) -> str:
-    """Generate a personalized random feedback message based on certain cases."""
+    """
+    Generate personalized feedback messages based on certain conditions.
+
+    Arguments:
+        is_podium: Whether or not the player is on the podium. A boolean is used as it is naturally a
+            yes/no-style value.
+
+        is_first: Whether or not the player is in first place. A boolean is used as it is naturally a
+            yes/no-style value.
+
+        is_last: Whether or not the player is in last place. A boolean is used as it is naturally a
+            yes/no-style value.
+
+        behind_nickname: The nickname of the player the current player is behind, or None if the player
+            is first place. A string is used as a nickname is easily represented by a string.
+
+        behind_points: The number of points the current player is behind the player in front, or None
+            if the player is first place. An integer is used as the number of points is typically a whole
+            number.
+
+    Returns:
+        The string of the personalized feedback message. A string is used as strings naturally represent
+        sentences.
+    """
+    # Generate boolean conditions derived from the number of points behind
     is_close = behind_points is not None and behind_points < 50
     is_tie = behind_points is not None and behind_points == 0
 
+    # Decide the key depending on conditions
     if is_first:
-        text = _get_random_message("first", behind_nickname, behind_points)
+        key = "first"
     elif is_podium and is_tie:
-        text = _get_random_message("tie_podium", behind_nickname, behind_points)
+        key = "tie_podium"
     elif is_podium and is_close:
-        text = _get_random_message("close_podium", behind_nickname, behind_points)
+        key = "close_podium"
     elif is_podium:
-        text = _get_random_message("podium", behind_nickname, behind_points)
+        key = "podium"
     elif is_last:
-        text = _get_random_message("last", behind_nickname, behind_points)
+        key = "last"
     elif is_tie:
-        text = _get_random_message("tie_regular", behind_nickname, behind_points)
+        key = "tie_regular"
     elif is_close:
-        text = _get_random_message("close_regular", behind_nickname, behind_points)
+        key = "close_regular"
     else:
-        text = _get_random_message("regular", behind_nickname, behind_points)
+        key = "regular"
 
-    return text
+    return _get_random_message(key, behind_nickname, behind_points)
 
 
 def _get_random_message(message_type: str, nickname: str, points: str | int) -> str:
-    """Get a random message from the MESSAGES constant based on the message type, and format it."""
+    """
+    Internal function. Chooses a random message from the MESSAGES constant, and chooses a random message
+    from the pool of messages depending on the message type, considering weighting. The string has its
+    nickname and points replaced, if necessary.
+
+    Arguments:
+        message_type: A string that represents the type of message pool to search in. This must be a
+            valid key in the MESSAGES constant.
+
+        nickname: The nickname of the player in front of the current player. A string is used as a nickname
+            is easily represented by a string.
+
+        points: The number of points the current player is behind the player in front. An integer is used
+            as the number of points is typically a whole number and naturally an integer, but a string is
+            also accepted, as the integer is inevitably converted to a string when formatted.
+    """
     messages, weights = MESSAGES[message_type]
 
-    # choices() always returns a list, even if k=1, therefore get first element
+    # The choices() function always returns a list, even if k=1, therefore get
+    # first element. Then, replace all instances of {nickname} and {points} with
+    # their actual values, if required.
     return random.choices(messages, weights=weights)[0].format(
         nickname=nickname, points=points
     )

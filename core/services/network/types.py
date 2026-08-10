@@ -1,9 +1,20 @@
+"""
+types.py
+
+Contains message types for client-server communication. All messages between the client and the
+server must use one of these defined message types.
+"""
+
 # Must use StrEnum for proper serialization when communicating over network
 from enum import StrEnum
 
 
 class ClientMessageType(StrEnum):
-    """Defines messages a client can send to the server."""
+    """
+    Defines the message types the client can send to the server, and that the server can listen to
+    from the client. A StrEnum is used to allow proper serialization when communicating across the
+    network, without having to use `.value`.
+    """
 
     PONG = "pong"
 
@@ -14,7 +25,11 @@ class ClientMessageType(StrEnum):
 
 
 class ServerMessageType(StrEnum):
-    """Defines messages the server can send to clients."""
+    """
+    Defines the message types the server can send to the client, and that the client can listen to
+    from the server. A StrEnum is used to allow proper serialization when communicating across the
+    network, without having to use `.value`.
+    """
 
     PING = "ping"
 

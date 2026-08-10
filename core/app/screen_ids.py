@@ -1,8 +1,17 @@
+"""
+screen_ids.py
+
+Contains IDs for every screen in the application as an enum, to avoid using strings or integers
+literally, which can cause readability issues and typos.
+"""
+
 from enum import Enum
 
 
-class Screens(Enum):
-    """Screen IDs within the app."""
+class Screen(Enum):
+    """
+    Describes a screen within the app, to reference a certain screen.
+    """
 
     # Client
     CLIENT_SETUP = "client_setup"
@@ -20,9 +29,9 @@ class Screens(Enum):
 
     # Common
     COMMON_MENU = "common_menu"
-    COMMON_QUIZ_MANAGER = "common_quiz_manager"
-    COMMON_QUIZ_SETUP = "common_quiz_setup"
-    COMMON_QUIZ_EDITOR = "common_quiz_editor"
     COMMON_LOADING = "common_loading"
     COMMON_COUNTDOWN = "common_countdown"
     COMMON_ABOUT = "common_about"
+    COMMON_QUIZ_MANAGER = "common_quiz_manager"
+    COMMON_QUIZ_SETUP = "common_quiz_setup"
+    COMMON_QUIZ_EDITOR = "common_quiz_editor"
