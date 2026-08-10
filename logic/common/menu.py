@@ -1,27 +1,58 @@
+"""
+menu.py
+
+The logic respective to the common main menu screen.
+"""
+
 from core.app.enums import ServerStartingError
-from core.app.screen_ids import Screens
+from core.app.screen_ids import Screen
+from core.services.app_context import Services
 from core.services.game_server import GameServer
 from data.quiz_repo import QuizRepository
 from logic.base_logic import BaseLogic
 from ui.screens.common.menu import CommonMenuScreen
+from utils.error_messages import SERVER_STARTING_ERROR_MESSAGES
 
 
 class CommonMenuLogic(BaseLogic):
-    def __init__(self, screen, services) -> None:
+    """
+    Creates the main menu logic class, inheriting BaseLogic. This logic is part of the 'common' category.
+
+    This logic class is responsible for allowing the server to be started, as well as reporting any errors
+    with starting server, if any occurred.
+
+    Arguments:
+        screen: The screen respective to this logic class, to allow listening to signals from it and invoking
+            methods to modify the UI.
+
+        services: All the application Services, to allow access to various functions of the application
+            in one single wrapper class.
+    """
+
+    def __init__(self, screen: CommonMenuScreen, services: Services) -> None:
         super().__init__()
         self.screen: CommonMenuScreen = screen
         self.game_server: GameServer = services.server
         self.quiz_repo: QuizRepository = services.quiz_repo
 
-        # Screen
-        self.screen.started_server.connect(self.on_started_server)
+        # Screen PyQt signal connections
+        self.screen.started_server.connect(self._on_started_server)
 
-        # Server
-        self.game_server.started.connect(self.on_started)
-        self.game_server.start_failed.connect(self.on_start_failed)
+        # Server PyQt signal connections
+        self.game_server.started.connect(self._on_started)
+        self.game_server.start_failed.connect(self._on_start_failed)
 
-    def on_started_server(self) -> None:
-        """When the server is requested to be started."""
+    def _on_started_server(self) -> None:
+        """
+        Internal method. Intended to be called when the user clicks the button for starting the server on the UI.
+
+        The method checks for if there are any quizzes available, and if all those quizzes are completed. If
+        either check fails, the server is prevented from starting until the user creates new quizzes and/or
+        completes existing ones.
+
+        Returns:
+            None.
+        """
         # Get all available quizzes to see if any can be played
         quizzes = self.quiz_repo.get_all()
 
@@ -41,41 +72,45 @@ class CommonMenuLogic(BaseLogic):
             )
             return
 
+        # If all quiz validation checks pass, start the server
         self.game_server.start()
         self.screen.set_status("Starting...")
 
-    def on_started(self) -> None:
-        """When the server has successfully started."""
-        self.screen.go_to(Screens.SERVER_LOBBY)
+    def _on_started(self) -> None:
+        """
+        Internal method. Intended to be called when the server successfully starts.
+
+        Shows the lobby UI screen.
+
+        Returns:
+            None.
+        """
+        self.screen.go_to(Screen.SERVER_LOBBY)
         self.screen.set_status("In lobby")
 
-    def on_start_failed(self, reason: ServerStartingError) -> None:
-        """When the server failed to start. Shows an error modal window displaying the reason."""
+    def _on_start_failed(self, reason: ServerStartingError) -> None:
+        """
+        Internal method. Intended to be called when the server fails to start for any reason.
+
+        The reason for the failure to connect is given as a ServerStartingError enum, which is in term used
+        to provide a user-friendly error message to the client explaining the issue in an error modal box.
+
+        Arguments:
+            reason: The reason for the connection to fail, as a ServerStartingError enum. An enum is used
+                as it is more type-safe than a regular string and provides easier readability.
+
+        Returns:
+            None.
+        """
         self.screen.reset_status()
         self.screen.set_status("Failed to start server", 5000)
 
-        if reason == ServerStartingError.IN_USE:
-            self.screen.show_error(
-                "Failed to Start",
-                "Unable to start the server. Another instance of the server is already running on this device, or the port is in use. Please try again.",
-            )
-        if reason == ServerStartingError.PERMISSION:
-            self.screen.show_error(
-                "Failed to Start",
-                "Unable to start the server. Permission denied. Please try again.",
-            )
-        if reason == ServerStartingError.INVALID_IP:
-            self.screen.show_error(
-                "Failed to Start",
-                "Unable to start the server. The server was attempted to be started on an IP that does not belong to the device. Please try again.",
-            )
-        if reason == ServerStartingError.INVALID:
-            self.screen.show_error(
-                "Failed to Start",
-                "Unable to start the server. Invalid argument(s). Please try again.",
-            )
-        if reason == ServerStartingError.UNKNOWN:
-            self.screen.show_error(
-                "Failed to Start",
-                "Unable to start the server. An unknown error occurred. Please try again.",
-            )
+        # Get and show error message box
+        message = SERVER_STARTING_ERROR_MESSAGES.get(
+            reason, "An unknown error occurred."
+        )
+
+        self.screen.show_error(
+            "Failed to Start",
+            f"Unable to start the server. {message} Please try again.",
+        )

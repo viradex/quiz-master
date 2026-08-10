@@ -1,84 +1,169 @@
+"""
+quiz_manager.py
+
+The logic respective to the common quiz manager screen.
+"""
+
 from core.app.enums import QuizSortingOrder
-from core.app.screen_ids import Screens
+from core.app.screen_ids import Screen
+from core.services.app_context import Services
 from data.quiz_repo import QuizRepository
-from models.quiz import Quiz
 from logic.base_logic import BaseLogic
+from models.quiz import Quiz
 from ui.screens.common.quiz_manager import CommonQuizManagerScreen
+from utils.error_messages import QUIZ_ERROR_MESSAGES, format_errors
 
 
 class CommonQuizManagerLogic(BaseLogic):
-    def __init__(self, screen, services) -> None:
+    """
+    Creates the quiz manager logic class, inheriting BaseLogic. This logic is part of the 'common' category.
+
+    This logic class is responsible for displaying all the quizzes currently saved on disk, and allowing the
+    user to sort and search through the quizzes, as well as edit/delete their own custom quizzes and preview
+    default quizzes.
+
+    Arguments:
+        screen: The screen respective to this logic class, to allow listening to signals from it and invoking
+            methods to modify the UI.
+
+        services: All the application Services, to allow access to various functions of the application
+            in one single wrapper class.
+    """
+
+    def __init__(self, screen: CommonQuizManagerScreen, services: Services) -> None:
         super().__init__()
         self.screen: CommonQuizManagerScreen = screen
         self.quiz_repo: QuizRepository = services.quiz_repo
 
         # Values for logic
-        self.quizzes: dict[str, Quiz] | None = None
-        self.current_search = ""
-        self.current_sort = QuizSortingOrder.NEWEST
+        self.quizzes: list[Quiz] = []
+        self.invalid_quizzes: list[Quiz] = []
 
-        # Screen
-        self.screen.edit_requested.connect(self.on_edit_requested)
-        self.screen.delete_requested.connect(self.on_delete_requested)
-        self.screen.search_requested.connect(self.on_search_requested)
-        self.screen.sort_requested.connect(self.on_sort_requested)
+        # Current modifications/filters to list
+        self.current_search: str = ""
+        self.current_sort: QuizSortingOrder = QuizSortingOrder.NEWEST
 
-    def refresh_quizzes(self) -> None:
-        """Refresh the quiz list in the UI. Applies filter and search as defined in
-        `self.current_sort` and `self.current_search`, respectively."""
+        # Used for counter at top of screen
+        self.total_quizzes: int = 0
+        self.custom_quizzes: int = 0
+
+        # Screen PyQt signal connections
+        self.screen.edit_requested.connect(self._on_edit_requested)
+        self.screen.delete_requested.connect(self._on_delete_requested)
+        self.screen.invalid_quiz_info_requested.connect(
+            self._on_invalid_quiz_info_requested
+        )
+        self.screen.search_requested.connect(self._on_search_requested)
+        self.screen.sort_requested.connect(self._on_sort_requested)
+
+    def refresh_quizzes(self, on_first_load: bool = False) -> None:
+        """
+        Refreshes the list of quizzes in the UI, applying any search criteria defined in the attributes, as
+        well as any search query. The quizzes are sorted by the custom quizzes first, then the default quizzes,
+        sorted separately (for example, alphabetical sorting applies to the custom and default quizzes as if
+        completely separate).
+
+        If this is being called when the screen is first shown, the total number of quizzes and custom quizzes
+        is also saved and displayed.
+
+        Any quizzes that are corrupted at the file level are not shown in the quiz list. If a quiz is incomplete,
+        they are still shown in the quiz list, however.
+
+        Arguments:
+            on_first_load: A boolean that determines whether this method is being called when the screen is being
+                shown or simply when the sorting/search criteria have been modified. If True, the total and custom
+                quiz numbers are updated. Otherwise, they are untouched. Defaults to False.
+
+        Returns:
+            None.
+        """
+        # Refresh cache in case quizzes have been modified on disk
         self.quiz_repo.refresh_cache()
-        self.quizzes = self.quiz_repo.get_all()
+        self.invalid_quizzes.clear()
 
-        quizzes = list(self.quizzes.values())
-        if quizzes is None:
+        quizzes = self.quiz_repo.get_all()
+
+        self.quizzes = list(quizzes.values())
+        if not self.quizzes:
             return
 
-        # Sort
+        valid_quizzes = []
+
+        # If there are quizzes with corruption errors, do not show them in the list
+        for quiz in self.quizzes:
+            errors = quiz.validate_quiz(critical_only=True)
+
+            if errors:
+                self.invalid_quizzes.append(quiz)
+            else:
+                valid_quizzes.append(quiz)
+
+        self.quizzes = valid_quizzes
+
+        # Search by lowercase criteria, contains-style search
         if self.current_search:
-            quizzes = [
+            self.quizzes = [
                 q
-                for q in quizzes
+                for q in self.quizzes
                 if self.current_search.lower() in q.quiz_title.lower()
             ]
 
         # Filter
         # Separate quizzes ensuring the unique sorting that happens in some
-        # places doesn't affect the other. Also, the UI prefers them split
-        custom_quizzes = [q for q in quizzes if not q.is_premade]
-        default_quizzes = [q for q in quizzes if q.is_premade]
+        # places doesn't affect the other. Also, the UI prefers them split.
+        custom_quizzes = [q for q in self.quizzes if not q.is_premade]
+        default_quizzes = [q for q in self.quizzes if q.is_premade]
 
         # Default quizzes don't have an updated_at field, so for sorting related
-        # to dates, they sort alphabetically instead
-        if self.current_sort == QuizSortingOrder.NEWEST:
+        # to dates, they sort alphabetically instead.
+        if self.current_sort is QuizSortingOrder.NEWEST:
             custom_quizzes.sort(key=lambda q: q.updated_at, reverse=True)
             default_quizzes.sort(key=lambda q: q.quiz_title)
-
-        elif self.current_sort == QuizSortingOrder.OLDEST:
+        elif self.current_sort is QuizSortingOrder.OLDEST:
             custom_quizzes.sort(key=lambda q: q.updated_at)
             default_quizzes.sort(key=lambda q: q.quiz_title)
-
-        elif self.current_sort == QuizSortingOrder.NAME_ASC:
+        elif self.current_sort is QuizSortingOrder.NAME_ASC:
             custom_quizzes.sort(key=lambda q: q.quiz_title)
             default_quizzes.sort(key=lambda q: q.quiz_title)
-
-        elif self.current_sort == QuizSortingOrder.NAME_DESC:
+        elif self.current_sort is QuizSortingOrder.NAME_DESC:
             custom_quizzes.sort(key=lambda q: q.quiz_title, reverse=True)
             default_quizzes.sort(key=lambda q: q.quiz_title, reverse=True)
 
-        quizzes = custom_quizzes + default_quizzes
+        self.quizzes = custom_quizzes + default_quizzes
 
         # Refresh UI
         self.screen.remove_all_quizzes()
-        self.screen.add_quizzes(quizzes)
+        self.screen.add_quizzes(self.quizzes)
 
-    def on_edit_requested(self, quiz: Quiz) -> None:
-        """Open the setup screen in Edit mode. If the quiz is a default quiz,
-        directly opens the editor in read-only mode."""
+        # Only update the totals when first loading, with no search criteria
+        # or sorting, to avoid the numbers from changing when applying those.
+        if on_first_load:
+            self.total_quizzes = len(self.quizzes)
+            self.custom_quizzes = len(custom_quizzes)
+            self.screen.set_quizzes_number(self.total_quizzes, self.custom_quizzes)
+
+    def _on_edit_requested(self, quiz: Quiz) -> None:
+        """
+        Internal method. Intended to be called when a quiz is requested to be edited by the user, or to be
+        previewed if the quiz is a default quiz.
+
+        If the quiz is not a default quiz, opens the quiz setup screen to allow editing the quiz details
+        such as the title. Otherwise, the editor is opened directly if the quiz is a default quiz, as for
+        those quizzes, the Edit button acts instead as the Preview button.
+
+        Arguments:
+            quiz: The Quiz instance to edit/preview. A Quiz instance is used as it can be easily used to
+                extract specific needed details from it.
+
+        Returns:
+            None.
+        """
         self.quiz_repo.refresh_cache()
 
         if not quiz.is_premade:
+            # Opens setup screen to allow editing high-level quiz details
             self.screen.go_to(
-                Screens.COMMON_QUIZ_SETUP,
+                Screen.COMMON_QUIZ_SETUP,
                 {
                     "quiz_id": quiz.quiz_id,
                     "quiz_title": quiz.quiz_title,
@@ -86,32 +171,129 @@ class CommonQuizManagerLogic(BaseLogic):
                 },
             )
         else:
-            # Skips setup screen if default quiz
-            self.screen.go_to(Screens.COMMON_QUIZ_EDITOR, {"quiz": quiz})
+            # Skips setup screen if default quiz; goes directly to editor to preview
+            self.screen.go_to(Screen.COMMON_QUIZ_EDITOR, {"quiz": quiz})
 
-    def on_delete_requested(self, quiz: Quiz) -> None:
-        """Deletes a quiz from disk and removes it from the UI. Default quizzes cannot be deleted."""
+    def _on_delete_requested(self, quiz: Quiz) -> None:
+        """
+        Internal method. Intended to be called when a quiz is requested to be deleted by the user. Default
+        quizzes cannot be deleted.
+
+        This method does not contain a confirmation prompt. It removes the quiz save file from disk and
+        updates the UI to remove it from the UI as well. The counters are also updated to reflect the removal.
+
+        Arguments:
+            quiz: The Quiz instance to remove. A Quiz instance is used as it can be easily used to get the quiz
+                ID from it.
+
+        Returns:
+            None.
+        """
         self.quiz_repo.refresh_cache()
 
         if quiz.is_premade:
+            # Should never happen in regular use; this is here as a safeguard
             self.screen.show_error(
                 "Cannot Delete Default Quiz",
                 "Default quizzes cannot be deleted. Only custom quizzes may be modified.",
             )
             return
 
+        # Remove from disk and refresh list to show that
         self.quiz_repo.remove(quiz.quiz_id)
         self.refresh_quizzes()
 
-    def on_search_requested(self, query: str) -> None:
-        """Applies the search query and refreshes UI."""
+        # Update counters
+        self.total_quizzes -= 1
+        self.custom_quizzes -= 1
+        self.screen.set_quizzes_number(self.total_quizzes, self.custom_quizzes)
+
+    def _on_invalid_quiz_info_requested(self) -> None:
+        """
+        Internal method. Intended to be called when the user wishes to understand why certain quizzes could not
+        be loaded onto the quiz list.
+
+        Searches through the list of invalid quizzes and takes note of all the errors within each quiz that has
+        issues. When done, displays all the errors in a warning modal box.
+
+        Returns:
+            None.
+        """
+        if not self.invalid_quizzes:
+            # Should never happen under normal operation. This is here as defensive programming.
+            self.screen.show_info(
+                "No Invalid Quizzes", "No invalid quizzes were found in the quiz list."
+            )
+            self.screen.set_invalid_quizzes_visibility(False)
+            return
+
+        # Quiz title -> list of errors
+        issues: dict[str, list[str]] = {}
+
+        # Go through every invalid quiz and get a list of errors for each
+        for quiz_num, quiz in enumerate(self.invalid_quizzes, start=1):
+            quiz_errors: list[str] = []
+
+            # Validate the quiz for only issues that prevent editing, not playing
+            validation_errors = quiz.validate_quiz(critical_only=True)
+
+            # Adds the user-friendly error messages
+            for error in QUIZ_ERROR_MESSAGES:
+                if error in validation_errors:
+                    quiz_errors.append(QUIZ_ERROR_MESSAGES[error])
+
+            # Set the key to the quiz title, or if that is corrupt, an increasing generic counter
+            key = str(quiz.quiz_title) if quiz.quiz_title else f"Quiz #{quiz_num}"
+            issues[key] = quiz_errors
+
+        error_str = ""
+
+        # Make a list for each quiz, labelled by its title as the subheading
+        for title, errors in issues.items():
+            error_str += f"{title}:\n{format_errors(errors)}\n\n"
+
+        self.screen.show_warning(
+            "Invalid Quizzes",
+            f"The following quizzes contain invalid data and have been excluded from the quiz manager.\n\n{error_str}These issues must be fixed manually in the quiz file(s).",
+        )
+
+    def _on_search_requested(self, query: str) -> None:
+        """
+        Internal method. Intended to be called when the user updates the search query.
+
+        Sets the query and updates the quiz list to only show quizzes that match the search query.
+
+        Arguments:
+            query: The query to search for in the quiz titles, to see if the titles contain the query. A string
+                is used to allow flexibility in what can be searched for.
+
+        Returns:
+            None.
+        """
         self.current_search = query
         self.refresh_quizzes()
 
-    def on_sort_requested(self, sort_order: QuizSortingOrder) -> None:
-        """Applies the sort order and refreshes UI."""
+    def _on_sort_requested(self, sort_order: QuizSortingOrder) -> None:
+        """
+        Internal method. Intended to be called when the user updates the sorting order.
+
+        Sets the sorting order and updates the quiz list to show the quizzes in the correct order that the user
+        requested.
+
+        Arguments:
+            sort_order: The order that the user wishes for the quizzes to be sorted in, as a QuizSortingOrder
+                enum. An enum is used as opposed to a string to allow for better type safety and type hints.
+
+        Returns:
+            None.
+        """
         self.current_sort = sort_order
         self.refresh_quizzes()
 
-    def on_enter(self, payload=None) -> None:
-        self.refresh_quizzes()
+    def on_enter(self, payload: None = None) -> None:
+        self.refresh_quizzes(on_first_load=True)
+
+        # Set number of invalid quizzes after refresh_quizzes() has calculated it
+        self.screen.set_invalid_quizzes_visibility(
+            bool(self.invalid_quizzes), len(self.invalid_quizzes)
+        )

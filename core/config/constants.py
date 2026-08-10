@@ -1,20 +1,38 @@
-from core.app.screen_ids import Screens
+"""
+constants.py
+
+Contains customizable global constants that can change the behavior of the program. These values are
+not validated and should not be set to extreme values or values that may break the program indirectly.
+
+Categories:
+- Screen config: Configuration relating to the screens, such as the first screen and eager screens to
+    load immediately.
+- Window config: Configuration relating to the application window, such as the window size.
+- Client/server config: Configuration relating to the client and server as a whole, not the game itself.
+    Mainly contains data relating to the networking concepts of the server and client, such as the port.
+- Generic config: The miscellaneous configuration relating to the application, such as game configuration
+    and quiz editor configuration.
+- Generic validation config: The configuration relating to the validation across the application, such as
+    maximum character limits.
+"""
+
+from core.app.screen_ids import Screen
 
 ###################
 ## SCREEN CONFIG ##
 ###################
 
 # Screen to start the app on
-STARTUP_SCREEN = Screens.COMMON_MENU
+STARTUP_SCREEN = Screen.COMMON_MENU
 
 # Screens that should be preloaded
-EAGER_SCREENS = {
-    Screens.CLIENT_SETUP,
-    Screens.CLIENT_LOBBY,
-    Screens.SERVER_LOBBY,
-    Screens.COMMON_MENU,
-    Screens.COMMON_QUIZ_MANAGER,
-    Screens.COMMON_LOADING,
+EAGER_SCREENS: set[Screen] = {
+    Screen.CLIENT_SETUP,
+    Screen.CLIENT_LOBBY,
+    Screen.SERVER_LOBBY,
+    Screen.COMMON_MENU,
+    Screen.COMMON_QUIZ_MANAGER,
+    Screen.COMMON_LOADING,
 }
 
 ###################
@@ -31,10 +49,6 @@ DEFAULT_STATUS_BAR_MESSAGE = "Ready"
 ##########################
 ## CLIENT/SERVER CONFIG ##
 ##########################
-
-# TODO Only for development; set blank or remove when done
-# Populates the IP address field when connecting to a server
-DEFAULT_IP_ADDRESS = "127.0.0.1"
 
 # Port to start the server on and connect to
 PORT = 7878
@@ -66,6 +80,12 @@ COUNTDOWN_TIME = 3
 
 # Interval in seconds for when a quiz will autosave in the quiz editor
 QUIZ_AUTOSAVE_INTERVAL = 10
+
+# The maximum round trip time in milliseconds which is considered 'good'
+RTT_GOOD_THRESHOLD_MS = 50
+
+# The maximum round trip time in milliseconds which is considered as a 'warning'
+RTT_WARNING_THRESHOLD_MS = 150
 
 ###############################
 ## GENERIC VALIDATION CONFIG ##

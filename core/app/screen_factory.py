@@ -1,6 +1,14 @@
+"""
+screen_factory.py
+
+Contains the screen factory and registry for the application. Centralizes the creation of screens
+and their respective logic to prevent other classes from knowing about the exact screen classes.
+"""
+
+# ruff: noqa: I001
 from PyQt6.QtWidgets import QWidget
 
-from core.app.screen_ids import Screens
+from core.app.screen_ids import Screen
 from core.services.app_context import Services
 from ui.screens.base_screen import BaseScreen
 from logic.base_logic import BaseLogic
@@ -47,41 +55,60 @@ from logic.common.loading import CommonLoadingLogic
 from logic.common.countdown import CommonCountdownLogic
 from logic.common.about import CommonAboutLogic
 
-# Registry for all screens and respective logic
-SCREEN_INFO: dict[Screens, tuple[BaseScreen, BaseLogic]] = {
+# Registry for all screens and their respective logic
+SCREEN_INFO: dict[Screen, tuple[BaseScreen, BaseLogic]] = {
     # Client
-    Screens.CLIENT_SETUP: (ClientSetupScreen, ClientSetupLogic),
-    Screens.CLIENT_LOBBY: (ClientLobbyScreen, ClientLobbyLogic),
-    Screens.CLIENT_MULTI_QUESTION: (
+    Screen.CLIENT_SETUP: (ClientSetupScreen, ClientSetupLogic),
+    Screen.CLIENT_LOBBY: (ClientLobbyScreen, ClientLobbyLogic),
+    Screen.CLIENT_MULTI_QUESTION: (
         ClientMultiQuestionScreen,
         ClientMultiQuestionLogic,
     ),
-    Screens.CLIENT_MULTI_RESULT: (ClientMultiResultScreen, ClientMultiResultLogic),
-    Screens.CLIENT_FINAL_RESULT: (ClientFinalResultScreen, ClientFinalResultLogic),
-    Screens.CLIENT_DISCONNECT: (ClientDisconnectScreen, ClientDisconnectLogic),
+    Screen.CLIENT_MULTI_RESULT: (ClientMultiResultScreen, ClientMultiResultLogic),
+    Screen.CLIENT_FINAL_RESULT: (ClientFinalResultScreen, ClientFinalResultLogic),
+    Screen.CLIENT_DISCONNECT: (ClientDisconnectScreen, ClientDisconnectLogic),
     # Server
-    Screens.SERVER_LOBBY: (ServerLobbyScreen, ServerLobbyLogic),
-    Screens.SERVER_MULTI_QUESTION: (
+    Screen.SERVER_LOBBY: (ServerLobbyScreen, ServerLobbyLogic),
+    Screen.SERVER_MULTI_QUESTION: (
         ServerMultiQuestionScreen,
         ServerMultiQuestionLogic,
     ),
-    Screens.SERVER_MULTI_RESULT: (ServerMultiResultScreen, ServerMultiResultLogic),
-    Screens.SERVER_FINAL_RESULT: (ServerFinalResultScreen, ServerFinalResultLogic),
+    Screen.SERVER_MULTI_RESULT: (ServerMultiResultScreen, ServerMultiResultLogic),
+    Screen.SERVER_FINAL_RESULT: (ServerFinalResultScreen, ServerFinalResultLogic),
     # Common
-    Screens.COMMON_MENU: (CommonMenuScreen, CommonMenuLogic),
-    Screens.COMMON_QUIZ_MANAGER: (CommonQuizManagerScreen, CommonQuizManagerLogic),
-    Screens.COMMON_QUIZ_SETUP: (CommonQuizSetupScreen, CommonQuizSetupLogic),
-    Screens.COMMON_QUIZ_EDITOR: (CommonQuizEditorScreen, CommonQuizEditorLogic),
-    Screens.COMMON_LOADING: (CommonLoadingScreen, CommonLoadingLogic),
-    Screens.COMMON_COUNTDOWN: (CommonCountdownScreen, CommonCountdownLogic),
-    Screens.COMMON_ABOUT: (CommonAboutScreen, CommonAboutLogic),
+    Screen.COMMON_MENU: (CommonMenuScreen, CommonMenuLogic),
+    Screen.COMMON_LOADING: (CommonLoadingScreen, CommonLoadingLogic),
+    Screen.COMMON_COUNTDOWN: (CommonCountdownScreen, CommonCountdownLogic),
+    Screen.COMMON_ABOUT: (CommonAboutScreen, CommonAboutLogic),
+    Screen.COMMON_QUIZ_MANAGER: (CommonQuizManagerScreen, CommonQuizManagerLogic),
+    Screen.COMMON_QUIZ_SETUP: (CommonQuizSetupScreen, CommonQuizSetupLogic),
+    Screen.COMMON_QUIZ_EDITOR: (CommonQuizEditorScreen, CommonQuizEditorLogic),
 }
 
 
 def create_screen_bundle(
-    screen: Screens, services: Services, parent: QWidget | None = None
+    screen: Screen, services: Services, parent: QWidget | None = None
 ) -> tuple[BaseScreen, BaseLogic]:
-    """Creates a screen bundle, containing a screen and its respective logic."""
+    """
+    A factory function; used to create the correct screen and its respective logic depending on the screen
+    ID provided by searching the screen registry. Initializes both the screen and logic classes with its
+    required arguments, and returns both initialized classes.
+
+    Arguments:
+        screen: The screen ID to create the bundle from, as the identifier. An enum is used as it is safer
+            to use than a string to avoid accidental typos and provide easier readability.
+
+        services: The services class for providing to the logic, to allow it to access the core logic.
+
+        parent: The parent to make the screen a child of, or None to set no parent. Defaults to None.
+
+    Returns:
+        The screen and logic classes created as a tuple, with the screen first and the logic second.
+        A tuple is used as it can group similar values together and allows for tuple unpacking.
+
+    Raises:
+        ValueError: If the screen provided could not be found in the registry.
+    """
     try:
         screen_cls, logic_cls = SCREEN_INFO[screen]
 
