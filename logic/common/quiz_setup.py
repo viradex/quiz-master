@@ -35,6 +35,38 @@ class CommonQuizSetupLogic(BaseLogic):
         # Screen PyQt signal connections
         self.screen.save_requested.connect(self._on_save_requested)
 
+    def check_quiz_duplicate(self, quiz_title: str) -> bool:
+        """
+        Checks if the quiz title already exists in the set of custom (not default) quizzes on disk. If it does,
+        it ensures the user wants to create a quiz with the duplicate title or not (but does not prevent creation;
+        it just warns the user).
+
+        Arguments:
+            quiz_title: The quiz title string to check if it exists in the list of custom quizzes. A string is used
+                as it matches the same type as the quiz title stored on the file.
+
+        Returns:
+            A boolean depending on whether to create the new quiz with the existing title or not. Returns True if the
+            title does not exist, or the title did exist but the user allowed creation, or False if the title existed
+            and the user explicitely denied creation.
+        """
+        # Get all custom quiz titles (not default quizzes) to see if it exists or not
+        all_quizzes = self.quiz_repo.get_all()
+        custom_quiz_titles = [
+            q.quiz_title for q in all_quizzes.values() if not q.is_premade
+        ]
+
+        # Confirms that the user still wishes to make the quiz if the title already exists
+        if quiz_title in custom_quiz_titles:
+            confirm = self.screen.show_question(
+                "Create Duplicate Quiz?",
+                f'A quiz named "{quiz_title}" already exists. Do you want to create another quiz with this title?',
+            )
+
+            return confirm
+
+        return True
+
     def _on_save_requested(self, data: dict, edit_questions: bool = True) -> None:
         """
         Internal method. Intended to be called when the user wishes to save the quiz, and possibly further edit
@@ -68,12 +100,24 @@ class CommonQuizSetupLogic(BaseLogic):
         # Quiz already exists, so edit an existing quiz from disk
         if quiz_id is not None:
             quiz = self.quiz_repo.get(quiz_id)
+
+            # If the quiz file was deleted for some reason
             if quiz is None:
+                self.screen.show_error(
+                    "Quiz File Not Found", "Could not find the quiz save file to edit."
+                )
+                self.screen.go_to(Screen.COMMON_QUIZ_MANAGER)
                 return
+
+            if quiz.quiz_title != data["quiz_title"]:
+                confirm = self.check_quiz_duplicate(data["quiz_title"])
+                if not confirm:
+                    return
 
             # Set properties from setup screen
             quiz.quiz_title = data["quiz_title"]
             quiz.do_shuffle = data["do_shuffle"]
+
         else:
             # Create new blank quiz if it doesn't exist with some data provided in setup
             quiz = Quiz(
@@ -85,21 +129,9 @@ class CommonQuizSetupLogic(BaseLogic):
                 is_complete=False,
             )
 
-            # Get all custom quiz titles (not default quizzes) to see if it exists or not
-            all_quizzes = self.quiz_repo.get_all()
-            custom_quiz_titles = [
-                q.quiz_title for q in all_quizzes.values() if not q.is_premade
-            ]
-
-            # Confirms that the user still wishes to make the quiz if the title already exists
-            if quiz.quiz_title in custom_quiz_titles:
-                confirm = self.screen.show_question(
-                    "Create Duplicate Quiz?",
-                    f'A quiz named "{quiz.quiz_title}" already exists. Do you want to create another quiz with this name?',
-                )
-
-                if not confirm:
-                    return
+            confirm = self.check_quiz_duplicate(quiz.quiz_title)
+            if not confirm:
+                return
 
         # Saves the quiz to the disk, overwriting it if it exists
         self.quiz_repo.save(quiz)

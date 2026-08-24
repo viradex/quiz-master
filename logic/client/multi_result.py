@@ -59,7 +59,8 @@ class ClientMultiResultLogic(BaseLogic):
         Internal method. Intended to be called when the quiz game has ended and the final results data has
         been received.
 
-        The final results screen is displayed with the data provided, which is turned into a ClientFinalResultsPayload.
+        The player is disconnected from the server, and the final results screen is displayed with the data
+        provided, which is turned into a ClientFinalResultsPayload.
 
         Arguments:
             data: A dictionary containing all the information needed for to display final results information.
@@ -69,7 +70,16 @@ class ClientMultiResultLogic(BaseLogic):
         Returns:
             None.
         """
-        self.screen.set_status("Showing final results")
-        self.screen.go_to(
-            Screen.CLIENT_FINAL_RESULT, ClientFinalResultsPayload.from_dict(data)
-        )
+        try:
+            payload = ClientFinalResultsPayload.from_dict(data)
+        except ValueError:
+            self.game_client.disconnect_error("Invalid final results payload format")
+            return
+
+        # Here instead of server to prevent the server from possibly leaving
+        # the UI on a screen such as the loading screen which the user cannot
+        # leave, forcing the user to close the app.
+        self.game_client.disconnect_client()
+
+        self.screen.reset_status()
+        self.screen.go_to(Screen.CLIENT_FINAL_RESULT, payload)

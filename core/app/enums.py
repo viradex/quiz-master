@@ -35,6 +35,7 @@ class ServerStartingError(Enum):
     IN_USE = "in_use"
     PERMISSION = "permission"
     INVALID_IP = "invalid_ip"
+    INVALID_PORT = "invalid_port"
     INVALID = "invalid"
     UNKNOWN = "unknown"
 
@@ -76,6 +77,7 @@ class QuizValidationError(Enum):
     NO_SHUFFLE_INFO = "no_shuffle_info"
     NO_PREMADE_INFO = "no_premade_info"
     NO_COMPLETENESS_INFO = "no_completeness_info"
+    INVALID_UPDATED_AT = "invalid_updated_at"
 
     # Individual question errors
     INVALID_QUESTION_ID = "invalid_question_id"
@@ -107,8 +109,8 @@ class QuizSortingOrder(Enum):
 
     NEWEST = "newest"
     OLDEST = "oldest"
-    NAME_ASC = "name_asc"
-    NAME_DESC = "name_desc"
+    TITLE_ASC = "title_asc"
+    TITLE_DESC = "title_desc"
 
 
 class AnswerButtonGridMode(Enum):

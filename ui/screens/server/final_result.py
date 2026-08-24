@@ -160,8 +160,8 @@ class ServerFinalResultScreen(BaseScreen):
         leaderboard_vertical_header.setDefaultSectionSize(32)
 
         # Set fixed width for columns that cannot expand
-        self.leaderboard_table.setColumnWidth(0, 80)
-        self.leaderboard_table.setColumnWidth(2, 80)
+        self.leaderboard_table.setColumnWidth(0, 120)
+        self.leaderboard_table.setColumnWidth(2, 120)
 
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {

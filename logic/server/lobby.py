@@ -14,11 +14,6 @@ from logic.base_logic import BaseLogic
 from models.quiz import Quiz
 from ui.components.dialog import confirm_warning
 from ui.screens.server.lobby import ServerLobbyScreen
-from utils.error_messages import (
-    QUESTION_ERROR_MESSAGES,
-    QUIZ_ERROR_MESSAGES,
-    format_errors,
-)
 from utils.formatting import format_ping
 
 
@@ -74,8 +69,7 @@ class ServerLobbyLogic(BaseLogic):
 
         # In normal operation, the address should never be None
         if address is not None:
-            ip = address[0]
-            port = address[1]
+            ip, port = address
         else:
             ip = "N/A"
             port = "N/A"
@@ -153,21 +147,13 @@ class ServerLobbyLogic(BaseLogic):
             )
             return
 
-        # Store issues for quizzes, and if no errors in quizzes, questions
-        issues: list[str] = []
-
         # Start by validating the quiz as a whole for any corruption errors
         validation_errors = quiz.validate_quiz()
 
         if validation_errors:
-            # If there are errors, display them to the user with user-friendly messages
-            for error in QUIZ_ERROR_MESSAGES:
-                if error in validation_errors:
-                    issues.append(QUIZ_ERROR_MESSAGES[error])
-
             self.screen.show_error(
                 "Quiz Errors",
-                f"The program has found critical errors with this quiz that prevent it from being played.\n\n{format_errors(issues)}",
+                "The program has found critical errors with this quiz that prevent it from being played. Please select a different quiz.",
             )
             return
 
@@ -179,14 +165,9 @@ class ServerLobbyLogic(BaseLogic):
             validation_errors = question.validate_question()
 
             if validation_errors:
-                # If there are errors, display them to the user with user-friendly messages
-                for error in QUESTION_ERROR_MESSAGES:
-                    if error in validation_errors:
-                        issues.append(QUESTION_ERROR_MESSAGES[error])
-
                 self.screen.show_error(
                     "Quiz Question Errors",
-                    f"The program has found errors with Question #{question_num} on this quiz that prevents it from being played.\n\n{format_errors(issues)}",
+                    f"The program has found errors with Question #{question_num} on this quiz that prevents it from being played. Please select a different quiz.",
                 )
                 return
 
@@ -222,6 +203,7 @@ class ServerLobbyLogic(BaseLogic):
 
         # Stop the server and return to main menu
         self.server.stop()
+        self.controller.reset()
         self.screen.go_to(Screen.COMMON_MENU)
 
         self.screen.reset_status()
@@ -288,10 +270,10 @@ class ServerLobbyLogic(BaseLogic):
 
         valid_quizzes: dict[str, Quiz] = {}
 
-        for quiz_id, quiz in quizzes.items():
+        for quiz in quizzes.values():
             # Only add the quiz to valid quizzes if there are no errors returned in the set
             if not quiz.validate_quiz():
-                valid_quizzes[quiz_id] = quiz
+                valid_quizzes[quiz.quiz_id] = quiz
 
         # Index 1 is the value of the dict, therefore look at index 1 for quiz data
         sorted_quizzes = dict(

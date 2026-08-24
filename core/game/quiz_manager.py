@@ -567,7 +567,7 @@ class QuizManager:
         )
 
     def get_client_final_result_stats(
-        self, player_id: str
+        self, player_id: str, completed_questions: int
     ) -> ClientFinalResultsPayload:
         """
         Gets the final results statistics for the entire played quiz and returns it structured in a data transfer
@@ -578,6 +578,9 @@ class QuizManager:
             player_id: A string describing the ID of the Player instance to get the statistics for. A string
                 is used as it can flexibly store IDs and can store many characters to make them more unique.
 
+            completed_questions: The total number of questions that were fully completed in the game so far.
+                An integer is used as the number of completed questions is a whole number.
+
         Returns:
             The ClientFinalResultsPayload instance to provide to the client to display the final results to the UI.
         """
@@ -587,8 +590,8 @@ class QuizManager:
         rank = self.leaderboard.get_player_rank(player_id)
         total_points = player.total_points
         total_correct = player.total_correct
-        total_questions = self.get_total_questions()
-        accuracy = player.calculate_accuracy(self.get_total_questions())
+        total_questions = completed_questions
+        accuracy = player.calculate_accuracy(completed_questions)
 
         on_podium = self.leaderboard.is_on_podium(player_id)
         is_first = self.leaderboard.is_first(player_id)
@@ -643,21 +646,28 @@ class QuizManager:
         return individual_stats
 
     def generate_clients_final_result_stats(
-        self,
+        self, completed_questions: int
     ) -> dict[str, ClientFinalResultsPayload]:
         """
         Generates final result statistics for each player in the quiz game, categorizing them by player ID and
         automatically obtaining final result statistics for each one in the form of a data transfer object.
 
+        Arguments:
+            completed_questions: The total number of questions that were fully completed in the game so far.
+                An integer is used as the number of completed questions is a whole number.
+
         Returns:
             A dictionary containing ClientFinalResultsPayload respective to the player they represent by the player
             ID key.
         """
+        # Prevent completed questions exceeding total questions
+        completed_questions = min(completed_questions, self.get_total_questions())
+
         individual_stats = {}
 
         # Generate DTO for each player and save them identified by the player ID
         for player_id in self.players:
-            stats = self.get_client_final_result_stats(player_id)
+            stats = self.get_client_final_result_stats(player_id, completed_questions)
             individual_stats[player_id] = stats
 
         return individual_stats

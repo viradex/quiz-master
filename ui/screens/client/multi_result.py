@@ -103,7 +103,7 @@ class ClientMultiResultScreen(BaseScreen):
 
         self.time_stat = StatCard("Time", "")
         self.points_stat = StatCard("Total Points", "")
-        self.rank_stat = StatCard("Leaderboard Rank", "")
+        self.rank_stat = StatCard("Rank", "")
 
     def _setup_layouts(self) -> None:
         """

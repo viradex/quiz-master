@@ -54,6 +54,7 @@ class CommonMenuLogic(BaseLogic):
             None.
         """
         # Get all available quizzes to see if any can be played
+        self.quiz_repo.refresh_cache()
         quizzes = self.quiz_repo.get_all()
 
         # No quizzes are in the directory
@@ -65,7 +66,9 @@ class CommonMenuLogic(BaseLogic):
             return
 
         # No quizzes are complete
-        if not any(quiz.is_complete for quiz in quizzes.values()):
+        if not any(quiz.is_complete for quiz in quizzes.values()) or all(
+            quiz.validate_quiz() for quiz in quizzes.values()
+        ):
             self.screen.show_error(
                 "No Complete Quizzes Available",
                 "There are no quizzes available that are ready to play. Finish a quiz using the quiz editor, then try again.",

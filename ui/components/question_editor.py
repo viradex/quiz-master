@@ -299,10 +299,16 @@ class QuestionEditor(QWidget):
         # Make line edit disabled if in read-only mode
         self.question_input.line_edit.setDisabled(self.read_only)
 
+        if self.read_only:
+            self.question_input.line_edit.setToolTip(READ_ONLY_WARNING)
+
         # Add more padding on the top to ensure the text does not overlap with the character count
-        self.question_input.line_edit.setStyleSheet(
-            "font-size: 22px;" "padding: 12px 8px 8px 8px;"
-        )
+        self.question_input.line_edit.setStyleSheet("""
+            QLineEdit {
+                font-size: 22px;
+                padding: 12px 8px 8px 8px;
+            }
+        """)
 
     def _setup_answer_input_widgets(self) -> None:
         """
@@ -345,7 +351,7 @@ class QuestionEditor(QWidget):
                 # Sets the placeholder to contain the letter, and then suffixed with 'optional' if
                 # the field is not required to be filled in. For example: "Answer 'A'" or "Answer 'D' (optional)".
                 answer_input.line_edit.setPlaceholderText(
-                    f"Answer '{data['letter']}' {'(optional)' if not data['required'] else ''}"
+                    f"Answer {data['letter']} {'(optional)' if not data['required'] else ''}"
                 )
 
                 # Set answer input disabled if in read-only mode
@@ -403,7 +409,7 @@ class QuestionEditor(QWidget):
             data = ANSWER_DATA[i]
 
             # Set default text to answer letter
-            correct_radio = QRadioButton(f"Answer '{data['letter']}'")
+            correct_radio = QRadioButton(f"Answer {data['letter']}")
             correct_radio.setStyleSheet(f"""
                 QRadioButton {{
                     font-size: 18px; font-weight: 600; color: {data['color']};
@@ -414,7 +420,7 @@ class QuestionEditor(QWidget):
             correct_radio.setDisabled(self.read_only)
 
             if self.read_only:
-                self.setToolTip(READ_ONLY_WARNING)
+                correct_radio.setToolTip(READ_ONLY_WARNING)
 
             # Add button to the group with its ID set to the index 0-3, and store it in list
             self.correct_group.addButton(correct_radio, i)
@@ -460,6 +466,9 @@ class QuestionEditor(QWidget):
 
         # Set combobox disabled if in read-only mode
         self.time_combo.setDisabled(self.read_only)
+
+        if self.read_only:
+            self.time_combo.setToolTip(READ_ONLY_WARNING)
 
         # Add all default values, with display value and hidden internal
         # data attached (seconds as an integer).
@@ -606,7 +615,7 @@ class QuestionEditor(QWidget):
     def set_time_limit(self, seconds: int) -> None:
         """
         Sets the time limit in the dropdown, and also modifies the time limit data of the question to reflect
-        the new time limit passed in.
+        the new time limit passed in. If the time limit could not be found, it is set to 20 seconds.
 
         Arguments:
             seconds: The number of seconds to change the dropdown to, and to change the time limit stored in
@@ -615,16 +624,14 @@ class QuestionEditor(QWidget):
 
         Returns:
             None.
-
-        Raises:
-            ValueError: If the time limit is invalid, meaning it does not exist in `TIME_DATA` nor does it exist
-                in the dropdown.
         """
         index = self.time_combo.findData(seconds)
 
-        # Could not find time limit
+        # Could not find time limit, set to 20 seconds
         if index == -1:
-            raise ValueError(f"Invalid time limit: {seconds}")
+            self.time_combo.setCurrentIndex(3)
+            self.question.time_limit = 20
+            return
 
         # Set combobox and question data
         self.time_combo.setCurrentIndex(index)
@@ -871,19 +878,16 @@ class QuestionEditor(QWidget):
         Returns:
             None.
         """
-        # If this method is somehow run while in read-only mode, prevent it here
-        if self.read_only:
-            return
-
         text = text.strip()
 
-        # If there are less answers than the index, adds blank strings before
-        # inserting the answer to prevent it from being saved at the wrong position.
-        while len(self.question.answer_options) <= index:
-            self.question.answer_options.append("")
+        if not self.read_only:
+            # If there are less answers than the index, adds blank strings before
+            # inserting the answer to prevent it from being saved at the wrong position.
+            while len(self.question.answer_options) <= index:
+                self.question.answer_options.append("")
 
-        # Save to Question object
-        self.question.answer_options[index] = text
+            # Save to Question object
+            self.question.answer_options[index] = text
 
         # Retrieves correct answer radio button respective to the input field
         answer_radio = self.correct_group.button(index)
@@ -895,7 +899,7 @@ class QuestionEditor(QWidget):
                 answer_radio.setText(text)
             else:
                 data = ANSWER_DATA[index]
-                answer_radio.setText(f"Answer '{data['letter']}'")
+                answer_radio.setText(f"Answer {data['letter']}")
 
         # Update the state of the radio buttons
         self._update_correct_answer_buttons()

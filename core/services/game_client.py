@@ -16,6 +16,7 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from core.app.enums import ClientConnectionError
 from core.config.constants import (
     CLIENT_CONNECTION_TIMEOUT,
+    CONNECTION_SUCCESSFUL_TIMEOUT,
     MAX_NICKNAME_LENGTH,
     PORT,
     RESPONSE_TIMEOUT,
@@ -145,6 +146,10 @@ class GameClient(QObject):
 
         # Last monotonic time the client detected a message from the server, for watchdog
         self.last_server_message_time: float | None = None
+
+        # When the client receives the CONNECTION_SUCCESSFUL message
+        self.connection_successful: bool = False
+        self.connection_start_time: float | None = None
 
         # Handlers for incoming server messages, that are redirected to a handler
         # method. Instead of using 'if' statements, this allows the dispatch table
@@ -305,7 +310,7 @@ class GameClient(QObject):
                 # Server is unreachable
                 self.connection_failed.emit(ClientConnectionError.UNREACHABLE)
             elif e.errno == errno.EADDRNOTAVAIL:
-                # Invalid IP (e.g. 0.0.0.0)
+                # Invalid IP
                 self.connection_failed.emit(ClientConnectionError.INVALID)
             elif e.errno == errno.ECONNRESET:
                 # Connection was forcibly reset
@@ -329,6 +334,9 @@ class GameClient(QObject):
         threading.Thread(target=self._listen, daemon=True).start()
 
         # Inform server of join
+        self.connection_successful = False
+        self.connection_start_time = time.monotonic()
+
         self.jsock.send(
             {"type": ClientMessageType.JOIN_LOBBY, "data": {"nickname": self.nickname}}
         )
@@ -359,8 +367,7 @@ class GameClient(QObject):
                 msg = self.jsock.recv()
             except (ValueError, TypeError) as e:
                 # Invalid JSON or UTF-8 received, message too large, or not a dictionary
-                self.error_occurred.emit(f"Invalid message: {e}", "client")
-                self.disconnect_client()
+                self.disconnect_error(f"Protocol violation: {e}")
                 break
 
             # Connection is dead
@@ -386,6 +393,10 @@ class GameClient(QObject):
         time before the server is considered 'dead', the client assumes the server has stopped responding and
         disconnects the client through a timeout.
 
+        Also checks if the client has received a `CONNECTION_SUCCESSFUL` message from the server, if it is
+        awaiting one. If it exceeds the timeout for waiting, the client is automatically disconnected to avoid
+        waiting forever.
+
         This method should be run in a background thread to prevent freezing the main GUI loop, as some of
         its function calls are blocking.
 
@@ -395,6 +406,20 @@ class GameClient(QObject):
         while self.is_connected:
             # Prevent constant checking
             time.sleep(1)
+
+            if not self.connection_successful:
+                if (
+                    self.connection_start_time is not None
+                    and time.monotonic() - self.connection_start_time
+                    > CONNECTION_SUCCESSFUL_TIMEOUT
+                ):
+                    self.disconnect_error(
+                        f"No connection successful message received within {CONNECTION_SUCCESSFUL_TIMEOUT} seconds"
+                    )
+                    break
+
+                # Don't run watchdog until client has been connected successfully
+                continue
 
             # If difference between now and last ping time exceeds response timeout, disconnect client
             if (
@@ -455,8 +480,7 @@ class GameClient(QObject):
 
         # No message type means a protocol violation, as the client cannot delegate it
         if msg_type is None:
-            self.error_occurred.emit("Missing message type in data", "client")
-            self.disconnect_client()
+            self.disconnect_error("Missing message type in data")
             return
 
         handler = self.handlers.get(msg_type)
@@ -473,8 +497,7 @@ class GameClient(QObject):
             # server sent invalid data. This should be largely prevented by
             # _get_data_fields(), however, so this is here largely as a defensive
             # check.
-            self.error_occurred.emit("Missing fields in data", "client")
-            self.disconnect_client()
+            self.disconnect_error("Missing fields in data")
             return
 
     def _get_data_fields(
@@ -523,8 +546,7 @@ class GameClient(QObject):
         # isn't a dictionary, it is treated as a protocol violation on part of
         # the server and the client is disconnected for safety.
         if not isinstance(data, dict):
-            self.error_occurred.emit("Invalid message data from server", "client")
-            self.disconnect_client()
+            self.disconnect_error("Invalid message data")
             return None
 
         # If no field names were directly specified, returns whole data dictionary
@@ -538,10 +560,7 @@ class GameClient(QObject):
 
             # Only treats it as a protocol violation if empty values are disallowed
             if not empty_allowed and field is None:
-                self.error_occurred.emit(
-                    f"Missing required field: {field_name}", "client"
-                )
-                self.disconnect_client()
+                self.disconnect_error(f"Missing required field: {field_name}")
                 return None
 
             # Makes new fields dictionary rather than returning data dictionary
@@ -569,16 +588,20 @@ class GameClient(QObject):
         if data_fields is None:
             return
 
-        # Informs UI of new RTT
         rtt = data_fields.get("rtt")
+
+        if rtt is not None and not isinstance(rtt, float):
+            self.disconnect_error("The round-trip time is not a float or None")
+            return
+
+        # Informs UI of new RTT
         self.rtt_updated.emit(rtt)
 
         try:
             # Attempts to send a PONG to notify the server that the client is alive
             self.jsock.send({"type": ClientMessageType.PONG})
         except OSError:
-            self.error_occurred.emit("Failed to respond to server ping", "client")
-            self.disconnect_client()
+            self.disconnect_error("Failed to respond to server ping")
 
     def _handle_connection_successful(self, msg: dict) -> None:
         """
@@ -598,8 +621,21 @@ class GameClient(QObject):
         if data_fields is None:
             return
 
+        self.connection_successful = True
+
         # Informs UI of current player list at time of joining for a starting value
         player_list = data_fields.get("player_list")
+
+        if not isinstance(player_list, list):
+            self.disconnect_error("The player list is not a list")
+            return
+
+        if not all(isinstance(player, str) for player in player_list):
+            self.disconnect_error(
+                "The player list contains a value other than a string"
+            )
+            return
+
         self.connected.emit(player_list)
 
     def _handle_player_joined(self, msg: dict) -> None:
@@ -621,6 +657,11 @@ class GameClient(QObject):
 
         # Informs UI of nickname of the player who joined
         nickname = data_fields.get("nickname")
+
+        if not isinstance(nickname, str):
+            self.disconnect_error("The nickname is not a string")
+            return
+
         self.player_joined.emit(nickname)
 
     def _handle_player_left(self, msg: dict) -> None:
@@ -642,6 +683,11 @@ class GameClient(QObject):
 
         # Informs UI of nickname of the player who left
         nickname = data_fields.get("nickname")
+
+        if not isinstance(nickname, str):
+            self.disconnect_error("The nickname is not a string")
+            return
+
         self.player_left.emit(nickname)
 
     def _handle_countdown_started(self, msg: dict) -> None:
@@ -664,6 +710,11 @@ class GameClient(QObject):
 
         # Informs UI that countdown has begun, while giving duration in seconds
         duration = data_fields.get("duration")
+
+        if not isinstance(duration, int):
+            self.disconnect_error("The duration is not an integer")
+            return
+
         self.countdown_started.emit(duration)
 
     def _handle_question_data(self, msg: dict) -> None:
@@ -719,10 +770,6 @@ class GameClient(QObject):
         not have its required fields extracted here, as it is converted into a specialized payload object
         further on.
 
-        After obtaining the data, the client manually disconnects from the server as the game is over, and the
-        server nor the client need to transfer any further information. Without a manual disconnection, the server
-        would kick the player when the game finishes.
-
         Arguments:
             msg: The message passed directly from the message given by the server, including the 'type' key and
                 'data' key. A dictionary is used as that is what is directly provided by the message handler.
@@ -737,7 +784,6 @@ class GameClient(QObject):
 
         # Informs UI of raw final results data as dictionary, then closes client
         self.final_results_received.emit(data)
-        self.disconnect_client()
 
     def _handle_kick(self, msg: dict) -> None:
         """
@@ -760,6 +806,11 @@ class GameClient(QObject):
 
         # Informs UI of kick with reason
         reason = data_fields.get("reason")
+
+        if not isinstance(reason, str):
+            self.disconnect_error("The reason is not a string")
+            return
+
         self.kicked.emit(reason)
 
         # Disconnects client if, for some reason, the server hasn't disconnected the client yet
@@ -786,6 +837,11 @@ class GameClient(QObject):
 
         # Informs UI of error disconnection with reason
         reason = data_fields.get("reason")
+
+        if not isinstance(reason, str):
+            self.disconnect_error("The reason is not a string")
+            return
+
         self.error_occurred.emit(reason, "server")
 
         # Disconnects client if, for some reason, the server hasn't disconnected the client yet
@@ -813,7 +869,26 @@ class GameClient(QObject):
 
         # Informs UI of invalid action with reason
         reason = data_fields.get("reason")
+
+        if not isinstance(reason, str):
+            self.disconnect_error("The reason is not a string")
+            return
+
         self.invalid_action_occurred.emit(reason)
+
+    def disconnect_error(self, reason: str) -> None:
+        """
+        Disconnect the client due to an error from the server, such as a protocol violation.
+
+        Arguments:
+            reason: The reason for the client being disconnected, which is shown on the UI. A string
+                is used to allow variety in the message sent.
+
+        Returns:
+            None.
+        """
+        self.disconnect_client()
+        self.error_occurred.emit(reason, "client")
 
     def send_answer_submit(self, index: int) -> None:
         """

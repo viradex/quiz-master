@@ -596,9 +596,6 @@ class ServerLobbyScreen(BaseScreen):
             A `QTableWidgetItem` of the item the user selected from the lobby table, or None if nothing
             was selected by the user.
         """
-        # In some modes, the user can select multiple rows. Due to the configuration
-        # of the lobby table, only one row can be selected, yet this returns a
-        # list, so get the first element of the list.
         selected_items = self.lobby_table.selectedItems()
         return selected_items[0] if selected_items else None
 

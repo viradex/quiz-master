@@ -5,6 +5,7 @@ Contains customizable global constants that can change the behavior of the progr
 not validated and should not be set to extreme values or values that may break the program indirectly.
 
 Categories:
+- App config: Configuration relating to application logic as a whole.
 - Screen config: Configuration relating to the screens, such as the first screen and eager screens to
     load immediately.
 - Window config: Configuration relating to the application window, such as the window size.
@@ -17,6 +18,14 @@ Categories:
 """
 
 from core.app.screen_ids import Screen
+
+################
+## APP CONFIG ##
+################
+
+# Whether to show the app in Demo Mode
+# If setting this to True, it is highly recommended to configure CLIENT_PREFILLED_IP_ADDRESS
+DEMO_MODE = False
 
 ###################
 ## SCREEN CONFIG ##
@@ -50,6 +59,10 @@ DEFAULT_STATUS_BAR_MESSAGE = "Ready"
 ## CLIENT/SERVER CONFIG ##
 ##########################
 
+# ONLY FUNCTIONAL IN DEMO MODE
+# The value to prefill the IP address with when connecting
+CLIENT_PREFILLED_IP_ADDRESS = "127.0.0.1"
+
 # Port to start the server on and connect to
 PORT = 7878
 
@@ -61,6 +74,9 @@ MAX_MESSAGE_SIZE = 64 * 1024  # (64 KiB)
 
 # Time in seconds until client stops connecting to server
 CLIENT_CONNECTION_TIMEOUT = 10
+
+# Time in seconds until client disconnects due to not receiving a CONNECTION_SUCCESSFUL message
+CONNECTION_SUCCESSFUL_TIMEOUT = 10
 
 # Interval in seconds for server sending PING to client (heartbeat)
 CLIENT_PING_INTERVAL = 6

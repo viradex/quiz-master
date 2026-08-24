@@ -273,9 +273,10 @@ class CommonQuizEditorScreen(BaseScreen):
             for i, question in enumerate(questions, start=1):
                 self.add_question(question, i)
 
-            # Show the first question when entering for the first time
+            # Show the first question when entering
+            # Since this can only happen while editing an existing quiz, it is not the first time
             first_question = questions[0]
-            self.display_question(first_question)
+            self.display_question(first_question, first_time=False)
 
     def set_window_title(self) -> None:
         """
@@ -290,7 +291,9 @@ class CommonQuizEditorScreen(BaseScreen):
         else:
             self.set_title(f"Quiz Master – Editing {self.quiz.quiz_title}")
 
-    def add_question(self, question: Question, question_num: int) -> None:
+    def add_question(
+        self, question: Question, question_num: int, first_time: bool = True
+    ) -> None:
         """
         Adds a question to the UI. A QuestionCard is added to represent the question on the sidebar and allow
         the user to click on the card to show the respective question editor. The QuestionEditor is also added
@@ -305,6 +308,10 @@ class CommonQuizEditorScreen(BaseScreen):
 
             question_num: An integer representing the question number of the question to add, which is used for
                 UI purposes. An integer is used as it easily represents a whole number position.
+
+            first_time: Whether or not this is the first time the editor is being shown in this session. A
+                boolean is used as it gives an easy yes/no value for whether this is the first time or not.
+                Default is True.
 
         Returns:
             None.
@@ -323,7 +330,7 @@ class CommonQuizEditorScreen(BaseScreen):
         # Save and show editor on stacked widget
         self.editors[question.question_id] = editor
         self.editor_stack.addWidget(editor)
-        self._show_editor(editor, first=True)
+        self._show_editor(editor, first_time)
 
         # Save and show card on sidebar (as last element)
         self.cards[question.question_id] = card
@@ -343,7 +350,7 @@ class CommonQuizEditorScreen(BaseScreen):
         editor.delete_requested.connect(self.delete_requested.emit)
 
         # Connect signals from card to here
-        card.clicked.connect(self.display_question)
+        card.clicked.connect(lambda q: self.display_question(q, first_time=False))
 
         # Checks if the question(s) can be deleted
         self._update_delete_state()
@@ -385,7 +392,16 @@ class CommonQuizEditorScreen(BaseScreen):
         self._update_question_numbers()
         self._update_delete_state()
 
-        self.display_question(next_question)
+        # Do not use _show_editor(), as that method won't call on_enter() for the
+        # question editor and thus won't inform it that it isn't the first time
+        next_editor = self.editors.get(next_question.question_id)
+        next_card = self.cards.get(next_question.question_id)
+
+        if next_editor is not None and next_card is not None:
+            self.editor_stack.setCurrentWidget(next_editor)
+
+            next_card.select()
+            next_editor.on_enter(self.quiz.get_total_questions(), is_first=False)
 
     def clear_questions(self) -> None:
         """
@@ -409,7 +425,7 @@ class CommonQuizEditorScreen(BaseScreen):
         self.editors.clear()
         self.cards.clear()
 
-    def display_question(self, question: Question) -> None:
+    def display_question(self, question: Question, first_time: bool = True) -> None:
         """
         Displays a specific question on the UI, highlighting the card respective to the editor, and showing the
         question editor in the `QStackedWidget`. If the question doesn't have a corresponding QuestionEditor
@@ -418,6 +434,10 @@ class CommonQuizEditorScreen(BaseScreen):
         Arguments:
             question: The Question to display on the UI. This should correspond to existing UI widgets created
                 by `add_question()`.
+
+            first_time: Whether or not this is the first time the editor is being shown in this session. A
+                boolean is used as it gives an easy yes/no value for whether this is the first time or not.
+                Default is True.
 
         Returns:
             None.
@@ -436,7 +456,7 @@ class CommonQuizEditorScreen(BaseScreen):
             card.select()
             return
 
-        self._show_editor(editor)
+        self._show_editor(editor, first_time)
         card.select()
 
     def update_question_order(self) -> None:
@@ -450,7 +470,7 @@ class CommonQuizEditorScreen(BaseScreen):
         self._refresh_card_order()
         self._update_question_numbers()
 
-    def _show_editor(self, editor: QuestionEditor, first: bool = False) -> None:
+    def _show_editor(self, editor: QuestionEditor, first_time: bool = False) -> None:
         """
         Internal method. Shows the current question editor from the `QStackedWidget` and brings it to the front
         in the user's view. This does not update any QuestionCard styling or positioning.
@@ -462,7 +482,7 @@ class CommonQuizEditorScreen(BaseScreen):
         Arguments:
             editor: The QuestionEditor widget to show in place of the old one.
 
-            first: Whether or not this is the first time the editor is being shown in this session. This is
+            first_time: Whether or not this is the first time the editor is being shown in this session. This is
                 passed directly into the new QuestionEditor to be utilized however it wishes. A boolean is used
                 as it gives an easy yes/no value for whether this is the first time or not. Default is False.
 
@@ -479,7 +499,7 @@ class CommonQuizEditorScreen(BaseScreen):
         self.editor_stack.setCurrentWidget(editor)
 
         # Notify the new widget that it is visible, with relevant information
-        editor.on_enter(self.quiz.get_total_questions(), first)
+        editor.on_enter(self.quiz.get_total_questions(), first_time)
 
     def _refresh_card_order(self) -> None:
         """

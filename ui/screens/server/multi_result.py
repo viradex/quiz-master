@@ -198,11 +198,6 @@ class ServerMultiResultScreen(BaseScreen):
             QAbstractItemView.SelectionBehavior.SelectRows
         )
 
-        # Prevents selecting multiple rows
-        self.leaderboard_table.setSelectionMode(
-            QAbstractItemView.SelectionMode.SingleSelection
-        )
-
         # Prevents users from editing the table, making it read-only
         self.leaderboard_table.setEditTriggers(
             QAbstractItemView.EditTrigger.NoEditTriggers
@@ -230,9 +225,9 @@ class ServerMultiResultScreen(BaseScreen):
         leaderboard_vertical_header.setDefaultSectionSize(32)
 
         # Set fixed width for columns that cannot expand
-        self.leaderboard_table.setColumnWidth(0, 80)
-        self.leaderboard_table.setColumnWidth(2, 80)
-        self.leaderboard_table.setColumnWidth(3, 80)
+        self.leaderboard_table.setColumnWidth(0, 100)
+        self.leaderboard_table.setColumnWidth(2, 100)
+        self.leaderboard_table.setColumnWidth(3, 100)
 
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {
@@ -571,13 +566,13 @@ class ServerMultiResultScreen(BaseScreen):
             A `QTableWidgetItem` of the nickname item the user selected from the leaderboard table, or None
             if nothing was selected by the user.
         """
-        row = self.leaderboard_table.currentRow()
+        selected_items = self.leaderboard_table.selectedItems()
 
-        # Nothing is selected
-        if row == -1:
+        if not selected_items:
             return None
 
-        # Return item at nickname column, column 1
+        # Get the row of the first selected item and return the nickname column
+        row = selected_items[0].row()
         return self.leaderboard_table.item(row, 1)
 
     def _refresh_ranks(self) -> None:

@@ -211,7 +211,9 @@ class CommonAboutScreen(BaseScreen):
         """
         # Get the key pressed in string representation
         key = event.text().lower()
+
         if not key:
+            super().keyPressEvent(event)
             return
 
         expected = self.target[self.index]

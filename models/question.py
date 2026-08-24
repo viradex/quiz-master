@@ -57,6 +57,17 @@ class Question:
         """
         return secrets.token_hex(4)
 
+    @classmethod
+    def create_blank_question(cls) -> "Question":
+        """
+        Convenience method to create a new blank question, with a random ID, empty question, no answers, no
+        correct answer, and a default time limit of 20 seconds.
+
+        Returns:
+            The newly-created blank Question, with the values discussed above.
+        """
+        return cls(Question.generate_random_id(), "", [], None, 20)
+
     def remove_empty_answers(self, mutate_answers: bool = True) -> list[str]:
         """
         Removes empty answer options that are empty or only contain whitespace. This should only be run when
