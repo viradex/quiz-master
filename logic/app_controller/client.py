@@ -35,14 +35,16 @@ class ClientAppController:
     def __init__(self, window: "MainWindow", services: Services) -> None:
         super().__init__()
         self.window: MainWindow = window
-        self.client: GameClient = services.client
+        self.game_client: GameClient = services.client
 
         # Client PyQt signal connections
-        self.client.countdown_started.connect(self._on_countdown_started)
-        self.client.question_received.connect(self._on_question_received)
-        self.client.kicked.connect(self._on_kicked)
-        self.client.error_occurred.connect(self._on_error_occurred)
-        self.client.invalid_action_occurred.connect(self._on_invalid_action_occurred)
+        self.game_client.countdown_started.connect(self._on_countdown_started)
+        self.game_client.question_received.connect(self._on_question_received)
+        self.game_client.kicked.connect(self._on_kicked)
+        self.game_client.error_occurred.connect(self._on_error_occurred)
+        self.game_client.invalid_action_occurred.connect(
+            self._on_invalid_action_occurred
+        )
 
     def _on_countdown_started(self, duration: int) -> None:
         """
@@ -79,9 +81,14 @@ class ClientAppController:
         # Listens for a question received here rather than in countdown logic as
         # countdown logic is shared between the client and server, so adding a
         # listener there would have been messy.
+        try:
+            payload = QuestionPayload.from_dict(data)
+        except ValueError:
+            self.game_client.disconnect_error("Invalid question payload format")
+            return
 
         # Multi-question screen expects a QuestionPayload object
-        self.window.go_to(Screen.CLIENT_MULTI_QUESTION, QuestionPayload.from_dict(data))
+        self.window.go_to(Screen.CLIENT_MULTI_QUESTION, payload)
         self.window.set_status("Waiting for answer")
 
     def _on_kicked(self, reason: str) -> None:
@@ -174,7 +181,7 @@ class ClientAppController:
             None.
         """
         # Only warn the user if the client is currently connected to the server
-        if self.client.is_connected:
+        if self.game_client.is_connected:
             confirm = confirm_warning(
                 self.window,
                 "Confirm Leaving",
@@ -182,7 +189,7 @@ class ClientAppController:
             )
 
             if confirm:
-                self.client.disconnect_client()
+                self.game_client.disconnect_client()
                 event.accept()
             else:
                 event.ignore()

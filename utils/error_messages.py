@@ -33,14 +33,15 @@ SERVER_STARTING_ERROR_MESSAGES: dict[ServerStartingError, str] = {
     ServerStartingError.IN_USE: "Another instance of the server is already running on this device, or the port is in use.",
     ServerStartingError.PERMISSION: "Permission denied.",
     ServerStartingError.INVALID_IP: "The server was attempted to be started on an IP that does not belong to the device.",
+    ServerStartingError.INVALID_PORT: "The TCP server port is out of range.",
     ServerStartingError.INVALID: "Invalid argument(s).",
     ServerStartingError.UNKNOWN: "An unknown error occurred.",
 }
 
 # Errors relating to an individual question. Should mainly contain errors that are possible from the editor.
 QUESTION_ERROR_MESSAGES: dict[QuestionValidationError, str] = {
-    QuestionValidationError.MISSING_QUESTION: "The question is blank.",
-    QuestionValidationError.QUESTION_TOO_LONG: f"The question exceeds the character limit of {MAX_QUESTION_LENGTH} characters.",
+    QuestionValidationError.MISSING_QUESTION: "The question text is blank.",
+    QuestionValidationError.QUESTION_TOO_LONG: f"The question text exceeds the character limit of {MAX_QUESTION_LENGTH} characters.",
     QuestionValidationError.MISSING_REQUIRED_ANSWERS: "The first two answers are blank.",
     QuestionValidationError.ANSWER_TOO_LONG: f"An answer, or answers, exceed the character limit of {MAX_ANSWER_LENGTH} characters.",
     QuestionValidationError.DUPLICATE_ANSWER: "Two or more answers are the same.",
@@ -56,11 +57,12 @@ QUIZ_ERROR_MESSAGES: dict[QuizValidationError, str] = {
     QuizValidationError.NO_SHUFFLE_INFO: "The quiz does not contain information about shuffling questions.",
     QuizValidationError.NO_PREMADE_INFO: "The quiz does not contain information about whether it is a default quiz.",
     QuizValidationError.NO_COMPLETENESS_INFO: "The quiz does not contain information for if it is completed.",
+    QuizValidationError.INVALID_UPDATED_AT: "The quiz does not contain a valid updated at date.",
     # Individual question errors
     QuizValidationError.INVALID_QUESTION_ID: "One or more questions have an invalid question ID.",
     QuizValidationError.DUPLICATED_QUESTION_ID: "Two or more questions have the same question ID.",
     QuizValidationError.INVALID_QUESTION_TEXT: "One or more questions have invalid question text.",
-    QuizValidationError.INVALID_ANSWERS: "One or more questions contain too few or too many answers.",
+    QuizValidationError.INVALID_ANSWERS: "One or more questions contain either invalid answers, or too few/many answers.",
     QuizValidationError.INVALID_CORRECT_ANSWER: "One or more questions have a correct answer that does not correspond to a valid answer.",
     QuizValidationError.INVALID_TIME: "One or more questions have the time limit less than or equal to zero.",
 }

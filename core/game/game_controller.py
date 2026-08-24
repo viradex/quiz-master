@@ -79,8 +79,7 @@ class GameController(QObject):
         self.question_running: bool = False
 
         # Question state
-        # Zero-based index, starts at -1 to ensure question progressing
-        # logic works on the first question.
+        # Zero-based index. Starts at -1 so the first increment sets the index to 0; the first question.
         self.current_question_index: int = -1
         self.current_question: Question | None = None
         self.question_start_time: float | None = None
@@ -157,7 +156,7 @@ class GameController(QObject):
         # If the number of players remaining is less than the minimum players
         # that was needed for the game to start, prematurely end the game.
         if self.game_running and len(self.quiz_manager.players) < MIN_PLAYERS_FOR_GAME:
-            self._reset()
+            self.reset()
             self.no_players_found.emit()
             return
 
@@ -265,21 +264,18 @@ class GameController(QObject):
     def _finish_current_question(self) -> None:
         """
         Internal method. Finishes the current question. This method concludes the question internally and
-        sends the question results payloads to both client and server, and should only be called when the
-        current question is set and was running previously.
+        sends the question results payloads to both client and server. If the current question is not set,
+        this method does nothing.
 
         Returns:
             None.
-
-        Raises:
-            RuntimeError: If the `current_question` property has not been set.
         """
         # Prevents certain race conditions with timers going off when the game is ended prematurely
         if not self.game_running:
             return
 
         if self.current_question is None:
-            raise RuntimeError("There is no current question to conclude")
+            return
 
         self.question_running = False
         self.quiz_manager.finish_question()
@@ -313,8 +309,7 @@ class GameController(QObject):
         answered after submitting this answer, the current question is finished.
 
         While this method checks the answer's legality before submitting, if the checks fail, the method will
-        raise a `RuntimeError`. To avoid this, run `is_answer_legal()` before this method. This method can only
-        be called when a question is currently active.
+        raise a `RuntimeError`. To avoid this, run `is_answer_legal()` before this method.
 
         Arguments:
             player_id: The player ID of the player to submit this answer on behalf of. A string is used as it
@@ -333,10 +328,10 @@ class GameController(QObject):
             None.
 
         Raises:
-            RuntimeError: If there is no current question set, or if the answer provided is not legal.
+            RuntimeError: If the answer provided is not legal.
         """
         if self.current_question is None or self.question_start_time is None:
-            raise RuntimeError("There is no current question to submit an answer for")
+            return
 
         # Ensure answer is legal before submitting. This should have been run
         # beforehand, so instead of returning the result it will raise an exception.
@@ -396,7 +391,7 @@ class GameController(QObject):
             or self.question_start_time is None
             or self.question_deadline is None
         ):
-            raise RuntimeError("There is no current question to determine legality")
+            return AnswerValidationResult.TIME
 
         if not self.quiz_manager.is_answer_valid(self.current_question, answer_index):
             return AnswerValidationResult.ANSWER
@@ -414,18 +409,24 @@ class GameController(QObject):
         Returns:
             None.
         """
+        # Avoid race conditions
+        if not self.game_running:
+            return
+
         server_data = self.quiz_manager.get_server_final_result_stats()
-        clients_data = self.quiz_manager.generate_clients_final_result_stats()
+        clients_data = self.quiz_manager.generate_clients_final_result_stats(
+            self.current_question_index + 1
+        )
 
         # Reset quiz manager and game controller to prepare for any future game
-        self._reset()
+        self.reset()
         self.final_results_ready.emit(server_data, clients_data)
 
-    def _reset(self) -> None:
+    def reset(self) -> None:
         """
-        Internal method. Resets the game controller and quiz manager attributes to their original initial
-        values, to prepare for any future game and ensure no data from the current game remains in the
-        next game. All timers are also stopped immediately.
+        Resets the game controller and quiz manager attributes to their original initial values, to prepare
+        for any future game and ensure no data from the current game remains in the next game. All timers
+        are also stopped immediately.
 
         Returns:
             None.

@@ -93,10 +93,12 @@ class CommonQuizEditorLogic(BaseLogic):
 
         Returns:
             A boolean that determines whether the quizzes are identical or not. True if the quizzes match,
-            else, False.
+            else, False. Also returns True if the quiz file no longer exists.
         """
         if not only_manual:
-            return self.quiz != self.last_saved_quiz
+            return self.quiz != self.last_saved_quiz or not self.quiz_repo.file_exists(
+                self.quiz.quiz_id
+            )
         else:
             return self.quiz != self.checkpoint_quiz
 
@@ -110,7 +112,7 @@ class CommonQuizEditorLogic(BaseLogic):
             None.
         """
         # Create new blank question and add to Quiz
-        question = Question(Question.generate_random_id(), "", [], None, 20)
+        question = Question.create_blank_question()
         index = self.quiz.add_question(question)
 
         # Adds question to end of sidebar on UI
@@ -179,7 +181,7 @@ class CommonQuizEditorLogic(BaseLogic):
         # zero-based, but the screen uses one-based numbering, so the value needs
         # to have one added to suit that starting position, and then another one
         # added to match the same position as the internal quiz saved location.
-        self.screen.add_question(duplicate, index + 2)
+        self.screen.add_question(duplicate, index + 2, first_time=False)
 
         self.screen.update_question_order()
 
@@ -275,6 +277,9 @@ class CommonQuizEditorLogic(BaseLogic):
             if confirm:
                 self.quiz_repo.save(self.checkpoint_quiz)
         else:
+            if not self.quiz_repo.file_exists(self.quiz.quiz_id) and not self.read_only:
+                self.quiz_repo.save(self.checkpoint_quiz)
+
             confirm = True
 
         # Returns back to quiz manager

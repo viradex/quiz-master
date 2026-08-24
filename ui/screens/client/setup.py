@@ -19,7 +19,12 @@ from PyQt6.QtWidgets import (
 )
 
 from core.app.screen_ids import Screen
-from core.config.constants import MAX_NICKNAME_LENGTH, PORT
+from core.config.constants import (
+    CLIENT_PREFILLED_IP_ADDRESS,
+    DEMO_MODE,
+    MAX_NICKNAME_LENGTH,
+    PORT,
+)
 from ui.components.button import create_return_button
 from ui.components.input import CharacterCountLineEdit
 from ui.screens.base_screen import BaseScreen
@@ -100,8 +105,13 @@ class ClientSetupScreen(BaseScreen):
         self.ip_input.setFont(self.form_font)
         self.ip_input.returnPressed.connect(self._on_submit)
 
+        if DEMO_MODE:
+            self.ip_input.setDisabled(True)
+            self.ip_input.setText(CLIENT_PREFILLED_IP_ADDRESS)
+            self.ip_input.setToolTip("This field is disabled in Demo Mode")
+
         # Static port text below IP for technical information
-        self.port_lbl = QLabel(f"Connecting to port: {PORT}")
+        self.port_lbl = QLabel(f"Server port: {PORT}")
         self.port_lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.port_lbl.setStyleSheet("font-size: 12px;" "color: #A7A7A7;")
 
@@ -109,9 +119,9 @@ class ClientSetupScreen(BaseScreen):
         self.nickname_lbl = QLabel("Nickname:")
         self.nickname_lbl.setFont(self.form_font)
 
-        self.nickname_counter = CharacterCountLineEdit(MAX_NICKNAME_LENGTH)
-        self.nickname_counter.line_edit.setFont(self.form_font)
-        self.nickname_counter.line_edit.returnPressed.connect(self._on_submit)
+        self.nickname_input = CharacterCountLineEdit(MAX_NICKNAME_LENGTH)
+        self.nickname_input.line_edit.setFont(self.form_font)
+        self.nickname_input.line_edit.returnPressed.connect(self._on_submit)
 
         # Action buttons
         self.return_btn = create_return_button(
@@ -140,7 +150,7 @@ class ClientSetupScreen(BaseScreen):
         form_layout.addRow(self.ip_lbl, self.ip_input)
         form_layout.addRow(self.port_lbl)
         form_layout.addItem(QSpacerItem(0, 10))
-        form_layout.addRow(self.nickname_lbl, self.nickname_counter)
+        form_layout.addRow(self.nickname_lbl, self.nickname_input)
 
         # Button row at bottom of screen
         btn_hbox = QHBoxLayout()
@@ -186,7 +196,7 @@ class ClientSetupScreen(BaseScreen):
         """
         return {
             "ip_address": self.ip_input.text().strip(),
-            "nickname": self.nickname_counter.line_edit.text().strip(),
+            "nickname": self.nickname_input.line_edit.text().strip(),
         }
 
     def validate_data(self, data: dict) -> bool:
@@ -214,7 +224,7 @@ class ClientSetupScreen(BaseScreen):
         elif not is_valid_ipv4(ip_address, allow_localhost=True):
             self.show_error(
                 "Invalid IP Address",
-                "The IP address is not valid. Please enter a valid IPv4 address (e.g. 192.168.1.100) or use 'localhost' for a local connection, and try again.",
+                "The IP address is not valid. Please enter a valid IPv4 address (e.g. 192.168.1.100), or use 'localhost' for a local connection, and try again.",
             )
             return False
         elif len(nickname) > MAX_NICKNAME_LENGTH:
@@ -247,4 +257,8 @@ class ClientSetupScreen(BaseScreen):
         # Fields are not cleared as users will likely want to connect to the same
         # IP with the same nickname if they are connecting to a server more than
         # once in the same session. Just set focus to the IP input field in case.
-        self.ip_input.setFocus()
+        if DEMO_MODE:
+            self.nickname_input.line_edit.setText("")
+            self.nickname_input.line_edit.setFocus()
+        else:
+            self.ip_input.setFocus()

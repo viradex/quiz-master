@@ -1,6 +1,6 @@
 # Quiz Master - Architecture Overview
 
-⚠️ This file is a work in progress! ⚠️
+⚠️ This file is incomplete! ⚠️
 
 If you are in VS Code, press Ctrl+Shift+V for easier reading!
 

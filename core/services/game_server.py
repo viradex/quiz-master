@@ -283,6 +283,10 @@ class GameServer(QObject):
         try:
             # Start server using TCP
             self.server_socket = socket.create_server((self.host_ip, self.port))
+        except OverflowError:
+            # Port out of range
+            self.start_failed.emit(ServerStartingError.INVALID_PORT)
+            return
         except OSError as e:
             if e.errno == errno.EADDRINUSE:
                 # Port in use (by an external application or the same program running the server)
@@ -417,7 +421,9 @@ class GameServer(QObject):
             try:
                 client.send(msg)
             except OSError:
-                self._kick_client(client, "Failed to broadcast")
+                # Don't kick here: _kick_client() -> _send_and_disconnect() -> _remove_client() -> _broadcast()
+                # Due to it eventually calling _remove_client() which calls _broacast() again.
+                continue
 
     def kick_player(self, player_id: str, reason: str) -> None:
         """
@@ -603,7 +609,7 @@ class GameServer(QObject):
             # server sent invalid data. This should be largely prevented by
             # _get_data_fields(), however, so this is here largely as a defensive
             # check.
-            self._error_disconnection(client, "Missing fields in data from client")
+            self._error_disconnection(client, "Missing fields in data")
             return
 
     def _get_data_fields(
@@ -659,7 +665,7 @@ class GameServer(QObject):
         # isn't a dictionary, it is treated as a protocol violation and the
         # client is disconnected.
         if not isinstance(data, dict):
-            self._error_disconnection(client, "Invalid message data from client")
+            self._error_disconnection(client, "Invalid message data")
             return None
 
         # If no field names were directly specified, returns whole data dictionary
@@ -674,7 +680,7 @@ class GameServer(QObject):
             # Only treats it as a protocol violation if empty values are disallowed
             if not empty_allowed and field is None:
                 self._error_disconnection(
-                    client, f"Missing required field from client: {field_name}"
+                    client, f"Missing required field: {field_name}"
                 )
                 return None
 
@@ -852,14 +858,15 @@ class GameServer(QObject):
 
         selected_index = data_fields.get("selected_index")
 
-        if not isinstance(selected_index, int):
+        # Use type() rather than isinstance() since bool is a subclass of int
+        if type(selected_index) is not int:
             self._error_disconnection(client, "The selected answer is not an integer")
             return
 
         # Prevent sending an answer submission when the game isn't running
         if not self.game_started:
             self._client_invalid_action(
-                client, "Cannot submit an answer when a game is not running"
+                client, "Cannot submit an answer when the game is not running"
             )
             return
 

@@ -231,12 +231,13 @@ class Quiz:
         - Whether the shuffling information is a boolean.
         - Whether the pre-made quiz information is a boolean.
         - Whether the completeness information is a boolean.
+        - Whether the updated at is a datetime, if the Quiz is not a pre-made quiz.
         - For any question, whether the question ID is a string.
         - For any question, whether the question ID has been used more than once.
         - For any question, whether the question text is a string.
         - For any question, whether the answer options is a list.
-        - For any question, whether the correct answer index is an integer and within the valid range. Not
-          checked when performing critical-only checks.
+        - For any question, whether the correct answer index is an integer or None, and within the valid range.
+            When performing non-critical checks, the index being None is treated as invalid.
         - For any question, whether the time limit is an integer and a positive integer.
 
         Arguments:
@@ -272,6 +273,9 @@ class Quiz:
         if not isinstance(self.is_complete, bool):
             errors.add(QuizValidationError.NO_COMPLETENESS_INFO)
 
+        if not self.is_premade and not isinstance(self.updated_at, datetime):
+            errors.add(QuizValidationError.INVALID_UPDATED_AT)
+
         # Individual question validation
         for question in self.questions:
             if not isinstance(question.question_id, str):
@@ -286,19 +290,23 @@ class Quiz:
             if not isinstance(question.question_text, str):
                 errors.add(QuizValidationError.INVALID_QUESTION_TEXT)
 
-            if not isinstance(question.answer_options, list):
+            if (
+                not isinstance(question.answer_options, list)
+                or not 0 <= len(question.answer_options) <= 4
+            ):
                 errors.add(QuizValidationError.INVALID_ANSWERS)
 
-            # Only checks if non-critical checks allowed.
             # Checks if the correct answer index is out of the range for the
             # amount of answers. For example, if the correct answer index is 4
             # when question indexes are only 0-3.
-            if not critical_only and (
+            if question.correct_answer_index is not None and (
                 not isinstance(question.correct_answer_index, int)
-                or not 0
-                <= int(question.correct_answer_index)
-                < len(question.answer_options)
+                or not 0 <= question.correct_answer_index < len(question.answer_options)
             ):
+                errors.add(QuizValidationError.INVALID_CORRECT_ANSWER)
+
+            # Only checks if non-critical checks allowed
+            if not critical_only and question.correct_answer_index is None:
                 errors.add(QuizValidationError.INVALID_CORRECT_ANSWER)
 
             if not isinstance(question.time_limit, int) or question.time_limit <= 0:

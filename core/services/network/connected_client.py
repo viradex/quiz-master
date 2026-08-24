@@ -116,11 +116,15 @@ class ConnectedClient:
         """
         Closes the client socket network connection. If the socket has already been closed, ignores it.
 
+        Uses a threading lock to avoid errors from closing while sending messages, meaning it should not be run
+        inside another method that holds the lock to avoid deadlocks.
+
         Returns:
             None.
         """
-        try:
-            self.socket.close()
-        except OSError:
-            # If the socket has already been closed
-            pass
+        with self._lock:
+            try:
+                self.socket.close()
+            except OSError:
+                # If the socket has already been closed
+                pass

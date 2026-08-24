@@ -89,7 +89,11 @@ class ClientMultiQuestionLogic(BaseLogic):
         Returns:
             None.
         """
+        try:
+            payload = ClientResultsPayload.from_dict(data)
+        except ValueError:
+            self.game_client.disconnect_error("Invalid results payload format")
+            return
+
         self.screen.set_status("Showing results")
-        self.screen.go_to(
-            Screen.CLIENT_MULTI_RESULT, ClientResultsPayload.from_dict(data)
-        )
+        self.screen.go_to(Screen.CLIENT_MULTI_RESULT, payload)

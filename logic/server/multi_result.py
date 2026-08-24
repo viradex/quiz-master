@@ -90,8 +90,7 @@ class ServerMultiResultLogic(BaseLogic):
 
         # In normal operation, the address should never be None
         if address is not None:
-            ip = address[0]
-            port = address[1]
+            ip, port = address
         else:
             ip = "N/A"
             port = "N/A"
@@ -166,7 +165,7 @@ class ServerMultiResultLogic(BaseLogic):
         Returns:
             None.
         """
-        self.screen.set_status("Showing final results")
+        self.screen.reset_status()
         self.screen.go_to(Screen.SERVER_FINAL_RESULT, server_data)
 
         # Provide each client with its own specialized payload, converted to a

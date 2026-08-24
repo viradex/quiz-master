@@ -216,8 +216,8 @@ class ClientFinalResultScreen(BaseScreen):
         leaderboard_vertical_header.setDefaultSectionSize(32)
 
         # Set fixed width for columns that cannot expand
-        self.leaderboard_table.setColumnWidth(0, 80)
-        self.leaderboard_table.setColumnWidth(2, 80)
+        self.leaderboard_table.setColumnWidth(0, 120)
+        self.leaderboard_table.setColumnWidth(2, 120)
 
         self.leaderboard_table.setStyleSheet("""
             QTableWidget::item {
@@ -363,10 +363,12 @@ class ClientFinalResultScreen(BaseScreen):
             self.leaderboard_table.insertRow(row)
 
             # Suffix '(you)' if the nickname matches the own nickname
-            nickname = f"{nickname} (you)" if nickname == own_nickname else nickname
+            display_nickname = (
+                f"{nickname} (you)" if nickname == own_nickname else nickname
+            )
 
             rank_item = QTableWidgetItem(rank)
-            nickname_item = QTableWidgetItem(nickname)
+            nickname_item = QTableWidgetItem(display_nickname)
             total_item = QTableWidgetItem(total)
 
             rank_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)

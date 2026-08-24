@@ -37,13 +37,13 @@ class ServerAppController:
     def __init__(self, window: "MainWindow", services: Services) -> None:
         super().__init__()
         self.window: MainWindow = window
-        self.server: GameServer = services.server
+        self.game_server: GameServer = services.server
         self.controller: GameController = services.controller
         self.quiz_repo: QuizRepository = services.quiz_repo
 
         # Server PyQt signal connections
-        self.server.player_joined.connect(self._on_player_joined)
-        self.server.player_left.connect(self._on_player_left)
+        self.game_server.player_joined.connect(self._on_player_joined)
+        self.game_server.player_left.connect(self._on_player_left)
 
         # Game controller PyQt signal connections
         self.controller.started_countdown.connect(self._on_started_countdown)
@@ -66,7 +66,7 @@ class ServerAppController:
         Returns:
             None.
         """
-        player = self.server.get_player(player_id)
+        player = self.game_server.get_player(player_id)
         if player is None:
             return
 
@@ -111,7 +111,7 @@ class ServerAppController:
             None.
         """
         # Send countdown duration to all clients, then display on server UI
-        self.server.send_countdown_start(duration)
+        self.game_server.send_countdown_start(duration)
         self.window.go_to(Screen.COMMON_COUNTDOWN, {"duration": duration * 1000})
 
         self.window.set_status("Counting down...")
@@ -135,7 +135,7 @@ class ServerAppController:
         # listener there would have been messy.
 
         # The server can only send dictionaries, not data transfer objects
-        self.server.send_question_data(question_info.to_dict())
+        self.game_server.send_question_data(question_info.to_dict())
         self.window.go_to(Screen.SERVER_MULTI_QUESTION, question_info)
 
         self.window.set_status("In question")
@@ -155,7 +155,7 @@ class ServerAppController:
         self.window.set_status("Game ended prematurely", 5000)
 
         # Disconnect all clients and show warning to host
-        self.server.stop("Game over")
+        self.game_server.stop("Game over")
         self.window.show_warning(
             "Quiz Ended Early",
             "There are not enough players to continue the quiz, so the game has ended prematurely.",
@@ -179,7 +179,7 @@ class ServerAppController:
             None.
         """
         # Only warn the user if the server is currently running and there are players currently connected
-        if self.server.is_running and self.server.get_total_players() > 0:
+        if self.game_server.is_running and self.game_server.get_total_players() > 0:
             confirm = confirm_warning(
                 self.window,
                 "Confirm Closing",
@@ -187,7 +187,7 @@ class ServerAppController:
             )
 
             if confirm:
-                self.server.stop()
+                self.game_server.stop()
                 event.accept()
             else:
                 event.ignore()

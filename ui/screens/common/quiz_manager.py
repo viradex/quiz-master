@@ -26,7 +26,6 @@ from core.app.screen_ids import Screen
 from models.quiz import Quiz
 from ui.components.button import create_return_button
 from ui.components.card import Card, QuizCard
-from ui.components.dialog import confirm_warning
 from ui.screens.base_screen import BaseScreen
 from utils.paths import get_icons_dir
 
@@ -36,8 +35,8 @@ from utils.paths import get_icons_dir
 SORT_BY_DATA: dict[QuizSortingOrder, str] = {
     QuizSortingOrder.NEWEST: "Newest",
     QuizSortingOrder.OLDEST: "Oldest",
-    QuizSortingOrder.NAME_ASC: "Name (A-Z)",
-    QuizSortingOrder.NAME_DESC: "Name (Z-A)",
+    QuizSortingOrder.TITLE_ASC: "Title (A-Z)",
+    QuizSortingOrder.TITLE_DESC: "Title (Z-A)",
 }
 
 
@@ -602,23 +601,13 @@ class CommonQuizManagerScreen(BaseScreen):
         Internal method. Intended to be called when a quiz has been requested to be deleted by the user. Emits
         a signal that signals the quiz that the user wishes to delete, with the provided Quiz.
 
-        The user is asked to confirm deleting the quiz before the action is emitted. If the user declines, the
-        operation is cancelled.
-
         Arguments:
             quiz: The Quiz instance of the quiz that the user wishes to delete.
 
         Returns:
             None.
         """
-        confirm = confirm_warning(
-            self,
-            "Confirm Deleting Quiz",
-            f'Are you sure you want to permanently delete the quiz "{quiz.quiz_title}"? This cannot be undone!',
-        )
-
-        if confirm:
-            self.delete_requested.emit(quiz)
+        self.delete_requested.emit(quiz)
 
     def on_leave(self) -> None:
         # Reset quiz list modification inputs

@@ -19,6 +19,9 @@ class QuizRepository:
 
     This class manages both default and custom quizzes. Default quizzes cannot be created, updated, or
     deleted, but custom quizzes can be fully modified. Custom quizzes are saved as `{quiz_id}.json`.
+
+    JSON is used for internal storage as it can easily store key-value pairs, and is simpler to read. The values
+    stored in JSON naturally convert to Python data types as well.
     """
 
     def __init__(self) -> None:
@@ -123,7 +126,8 @@ class QuizRepository:
 
     def exists(self, quiz_id: str) -> bool:
         """
-        Whether the disk/cache already contains the quiz ID provided.
+        Whether the disk/cache already contains the quiz ID provided. To see if the file itself exists, use
+        `file_exists()` instead.
 
         If the cache is empty, the cache is refreshed before retrieving the Quiz. The cache is not automatically
         refreshed if it already has at least one value in it.
@@ -140,6 +144,23 @@ class QuizRepository:
             self._load_cache()
 
         return quiz_id in self.quiz_cache
+
+    def file_exists(self, quiz_id: str) -> bool:
+        """
+        Whether the quiz file with the same ID already exists in the custom quizzes directory.
+
+        Arguments:
+            quiz_id: A string describing the ID of the filename to check, typically the quiz ID. A string is
+                used as it can flexibly store IDs and can store many characters to make them more unique.
+
+        Returns:
+            A boolean stating if the file exists or not. Returns True if the file was found on disk, else,
+            returns False.
+        """
+        # This method was added, rather than updating self.exists(), to prevent
+        # breaking other code that may rely on the cache.
+        file_path = self.custom_quiz_path / f"{quiz_id}.json"
+        return file_path.exists()
 
     def refresh_cache(self) -> None:
         """
@@ -186,4 +207,9 @@ class QuizRepository:
 
                 # Convert dictionary to a Quiz object and store it in cache
                 quiz = Quiz.from_dict(data)
-                self.quiz_cache[quiz.quiz_id] = quiz
+
+                # Use the quiz ID as the cache key when available. If the quiz is
+                # missing an ID, use a unique key based on the filename so invalid
+                # quizzes are not overwritten in the cache.
+                cache_key = quiz.quiz_id or f"INVALID_{file.name}"
+                self.quiz_cache[cache_key] = quiz

@@ -154,6 +154,4 @@ def _get_random_message(message_type: str, nickname: str, points: str | int) -> 
     # The choices() function always returns a list, even if k=1, therefore get
     # first element. Then, replace all instances of {nickname} and {points} with
     # their actual values, if required.
-    return random.choices(messages, weights=weights)[0].format(
-        nickname=nickname, points=points
-    )
+    return random.choices(messages, weights)[0].format(nickname=nickname, points=points)
